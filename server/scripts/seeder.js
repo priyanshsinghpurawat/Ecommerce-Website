@@ -73,12 +73,20 @@ const couponsData = [
   { code: 'FIT100', discountType: 'flat', discountValue: 100, minCartAmount: 999, isActive: true }
 ];
 
+/**
+ * THE MAIN SEED FUNCTION
+ * This is the engine that actually talks to MongoDB.
+ */
 const seed = async () => {
   try {
+    // 1. Connect to the Database (Local or Production)
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/e-commerce';
     await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB...');
 
+    // 2. CLEAR THE SLATE
+    // We delete EVERYTHING first so we don't get duplicate data errors.
+    console.log('Clearing old data...');
     await User.deleteMany({});
     await Category.deleteMany({});
     await Subcategory.deleteMany({});
@@ -87,11 +95,15 @@ const seed = async () => {
     await Cart.deleteMany({});
     await Order.deleteMany({});
 
+    // 3. CREATE USERS
+    // We create one of each role (Admin, Seller, Regular User)
+    console.log('Creating demo users...');
     await User.create({
       name: 'Vibe Admin',
       email: 'admin@mensvibe.in',
       password: 'adminpassword',
       role: 'admin',
+      // ... rest of admin data ...
       avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1974&auto=format&fit=crop',
       addresses: [{
         fullName: 'Vibe Admin',
@@ -208,6 +220,12 @@ const seed = async () => {
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);
+    process.exit(1);
+  }
+};
+
+seed();
+:', error);
     process.exit(1);
   }
 };

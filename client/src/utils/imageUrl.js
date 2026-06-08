@@ -7,7 +7,7 @@ const PLACEHOLDER = '/assets/mens_shirt.png';
  */
 export function resolveImageUrl(url, width = 800) {
   if (!url || typeof url !== 'string') return PLACEHOLDER;
-  
+
   let trimmed = url.trim();
   if (!trimmed) return PLACEHOLDER;
 

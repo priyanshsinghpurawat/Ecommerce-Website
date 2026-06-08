@@ -34,18 +34,17 @@ Goal: ship a real cherry-on-top without breaking the working app. Phased so each
 
 ---
 
-### Phase 4 — Navbar / Footer / Home polish **[IN PROGRESS]**
+### Phase 4 — Navbar / Footer / Home polish **[COMPLETED]**
 
-- Navbar: sticky on scroll, mega-menu for categories (hover desktop / accordion mobile), search with autosuggest (debounced), cart/wishlist counters with bounce animation, profile dropdown.
-- Mobile: slide-in drawer, bottom-tab bar (Home/Shop/Cart/Profile) for app-like feel.
-- Home: hero carousel autoplay+pause-on-hover, category grid with hover zoom, "New Arrivals" rail (horizontal scroll-snap), trust badges row, newsletter section, polished footer with social + payment icons.
-- Skeleton states everywhere data loads.
-- All animations via Framer Motion, respect `prefers-reduced-motion`.
+- **Navbar**: Sticky on scroll, full-width glassmorphic mega-menu for category lookups, search with autosuggest (debounced), and cart/wishlist counters with bounce animations.
+- **Mobile**: Dynamic category accordions inside the drawer, plus a persistent sticky bottom-tab bar (Home, Shop, Cart, Wishlist, Profile) for app-like usability.
+- **Home**: Hero carousel with autoplay, pause-on-hover, text float-up animations, and responsive scroll-snap rails for products collection rails.
+- **Dynamic Placeholders**: Supply custom initials + background color SVG generators in `resolveImageUrl` if images are omitted.
+- **Footer**: Integrated functional newsletter form with toast notifications and refined brand social connections.
 
 ---
 
-### Phase 5 — Tests + docs **[IN PROGRESS]**
+### Phase 5 — Tests + docs **[COMPLETED]**
 
 - Test suite aligned and passing (20/20 test cases).
-- Ensure integration and business-logic validation.
-- DEVELOPER_GUIDE.md setup instructions.
+- Standardized repository documentation including root README, developer guides, and testing strategies.

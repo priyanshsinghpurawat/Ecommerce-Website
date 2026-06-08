@@ -54,12 +54,11 @@ export const ProductCard = ({ product }) => {
           alt={product.title}
           loading="lazy"
           onError={(e) => {
-            e.target.onerror = null; 
+            e.target.onerror = null;
             e.target.src = '/assets/mens_shirt.png';
           }}
-          className={`h-full w-full object-cover object-top transition-all duration-700 ${
-            isHovered && secondaryImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-          }`}
+          className={`h-full w-full object-cover object-top transition-all duration-700 ${isHovered && secondaryImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+            }`}
         />
 
         {secondaryImage && (
@@ -67,9 +66,8 @@ export const ProductCard = ({ product }) => {
             src={resolveImageUrl(secondaryImage, 600)}
             alt={`${product.title} alternate`}
             loading="lazy"
-            className={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-700 ${
-              isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-            }`}
+            className={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-700 ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+              }`}
           />
         )}
 
@@ -86,7 +84,7 @@ export const ProductCard = ({ product }) => {
             </span>
           )}
           {discountPct > 20 && (
-             <span className="rounded-lg bg-lux-primary px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-black shadow-xl">
+            <span className="rounded-lg bg-lux-primary px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-black shadow-xl">
               -{discountPct}%
             </span>
           )}
@@ -141,7 +139,7 @@ export const ProductCard = ({ product }) => {
             {product.title}
           </h3>
         </Link>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-black italic tracking-tighter text-lux-dark">₹{unitPrice.toLocaleString('en-IN')}</span>

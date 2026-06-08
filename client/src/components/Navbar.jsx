@@ -1,30 +1,66 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2 } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2, ArrowRight } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { useCategories } from '../hooks/useCategories.js';
 import { getSubcategories } from '../services/subcategory.service.js';
 import { getProducts } from '../services/product.service.js';
 import { resolveImageUrl } from '../utils/imageUrl.js';
 import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 
+// Mobile Accordion Component
+const MobileCategoryAccordion = ({ category, onClose }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-white/5 bg-white/5 rounded-2xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-3.5 text-[10px] font-black uppercase tracking-widest text-white"
+      >
+        <span>{category.name}</span>
+        <ChevronDown className={`h-3.5 w-3.5 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-5 pb-4 pt-1 flex flex-col gap-2.5 border-t border-white/5 bg-black/40">
+          <Link
+            to={`/shop?category=${category._id}`}
+            onClick={onClose}
+            className="text-[10px] font-black text-lux-primary uppercase tracking-wider"
+          >
+            Shop All {category.name}
+          </Link>
+          {category.subcategories?.map((sub) => (
+            <Link
+              key={sub._id}
+              to={`/shop?subcategory=${sub._id}`}
+              onClick={onClose}
+              className="text-[10px] font-bold text-white/65 hover:text-white uppercase tracking-wider"
+            >
+              {sub.name}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /**
  * NAVBAR COMPONENT
  * 
- * This is the main navigation bar. It handles:
- * 1. Global Navigation (Shop, Street Drip, Subcategories)
- * 2. Search functionality with debounced autosuggest
- * 3. User Authentication state (Login, Profile, Logout)
- * 4. Theme switching (Dark/Light)
- * 5. Cart & Wishlist counters
+ * Handles sticky top layout, debounced global autosuggest search,
+ * user authentication profile links, and the new Category Mega Menu.
  */
 export const Navbar = () => {
   const { user, isAuthenticated, logoutUser } = useAuth();
   const { cartItemsCount } = useCart();
   const { wishlist } = useWishlist();
   const { theme, toggleTheme } = useTheme();
+  const { categories, fetchCategories } = useCategories();
   const navigate = useNavigate();
 
   // Local State
@@ -32,6 +68,7 @@ export const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
@@ -39,14 +76,15 @@ export const Navbar = () => {
   const menuRef = useRef(null);
   const searchRef = useRef(null);
 
-  // Fetch subcategories once when component loads
+  // Fetch data on mount
   useEffect(() => {
     getSubcategories()
       .then((res) => setSubcategories(res?.data || []))
       .catch(() => setSubcategories([]));
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
 
-  // Handle clicking outside the user profile dropdown or search dropdown to close it
+  // Click outside menus to close
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -84,10 +122,16 @@ export const Navbar = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Filter out the 'Featured' subcategories for the main nav links
-  const navSubs = FEATURED_SUBCATEGORY_NAMES.map((name) =>
-    subcategories.find((s) => s.name === name)
-  ).filter(Boolean);
+  // Group subcategories by parent category ID
+  const categoriesWithSubs = useMemo(() => {
+    return categories.map(cat => {
+      const subs = subcategories.filter(sub => {
+        const parentId = typeof sub.category === 'object' ? sub.category?._id : sub.category;
+        return parentId === cat._id;
+      });
+      return { ...cat, subcategories: subs };
+    });
+  }, [categories, subcategories]);
 
   const handleLogout = () => {
     logoutUser();
@@ -129,8 +173,7 @@ export const Navbar = () => {
           </Link>
 
           {/* 2. MAIN NAVIGATION (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
-            {/* If Search is open, show the bar, but keep it condensed to not hide all links */}
+          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             {searchOpen ? (
               <div ref={searchRef} className="relative flex-1 max-w-sm mx-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <form onSubmit={handleSearchSubmit}>
@@ -145,9 +188,9 @@ export const Navbar = () => {
                     />
                     <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-lux-dark/45" />
                     
-                    {searching ? (
+                    {searching && (
                       <Loader2 className="absolute right-10 top-2 h-3.5 w-3.5 animate-spin text-lux-dark/45" />
-                    ) : null}
+                    )}
 
                     <button
                       type="button"
@@ -176,7 +219,7 @@ export const Navbar = () => {
                         className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-left transition-colors"
                       >
                         <img
-                          src={resolveImageUrl(product.images?.[0] || product.image)}
+                          src={resolveImageUrl(product.images?.[0] || product.image, product.title)}
                           alt=""
                           className="h-8 w-8 rounded-lg object-cover bg-white/10 border border-white/5"
                         />
@@ -209,18 +252,31 @@ export const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-1">
-                <NavLink to="/shop" className={({ isActive }) => `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isActive ? 'text-lux-primary underline underline-offset-4' : 'text-lux-dark/55 hover:text-lux-dark'}`}>
-                  Shop
-                </NavLink>
+                {/* Shop Megamenu Hover Box */}
+                <div
+                  onMouseEnter={() => setShopDropdownOpen(true)}
+                  onMouseLeave={() => setShopDropdownOpen(false)}
+                  className="py-3"
+                >
+                  <NavLink
+                    to="/shop"
+                    className={({ isActive }) =>
+                      `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
+                        isActive ? 'text-lux-primary underline underline-offset-4' : 'text-lux-dark/55 hover:text-lux-dark'
+                      }`
+                    }
+                  >
+                    Shop <ChevronDown className="h-3 w-3 opacity-55" />
+                  </NavLink>
+                </div>
                 
-                {/* NEW OPTION: Street Drip */}
                 <NavLink to="/street-drip" className={({ isActive }) => `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-lux-accent-purple underline underline-offset-4' : 'text-lux-dark/55 hover:text-lux-accent-purple'}`}>
                   <Zap className="h-3 w-3" />
                   Street Drip
                 </NavLink>
 
-                {/* Subcategory Links */}
-                {navSubs.map((sub) => (
+                {/* Flat quicklinks to first 3 subcategories */}
+                {subcategories.slice(0, 3).map((sub) => (
                   <NavLink
                     key={sub._id}
                     to={`/shop?subcategory=${sub._id}`}
@@ -237,7 +293,7 @@ export const Navbar = () => {
             )}
           </nav>
 
-          {/* 3. ACTION ICONS (Search, Cart, Profile) */}
+          {/* 3. ACTION ICONS */}
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
             {!searchOpen && (
               <button
@@ -340,9 +396,60 @@ export const Navbar = () => {
         </div>
       </div>
 
+      {/* Desktop Mega Menu Dropdown */}
+      {shopDropdownOpen && (
+        <div
+          onMouseEnter={() => setShopDropdownOpen(true)}
+          onMouseLeave={() => setShopDropdownOpen(false)}
+          className="absolute top-14 left-0 right-0 w-full bg-black/95 dark:bg-white/95 backdrop-blur-3xl border-b border-white/10 dark:border-lux-200/50 shadow-2xl py-10 px-8 grid grid-cols-5 gap-8 animate-in fade-in slide-in-from-top-2 duration-300 z-40 max-w-7xl mx-auto rounded-b-[2rem] border-x border-white/5"
+        >
+          {categoriesWithSubs.map((cat) => (
+            <div key={cat._id} className="space-y-4">
+              <Link
+                to={`/shop?category=${cat._id}`}
+                onClick={() => setShopDropdownOpen(false)}
+                className="text-[10px] font-black uppercase tracking-[0.2em] text-lux-primary block border-b border-white/5 pb-2"
+              >
+                {cat.name}
+              </Link>
+              <ul className="space-y-2.5">
+                {cat.subcategories?.map((sub) => (
+                  <li key={sub._id}>
+                    <Link
+                      to={`/shop?subcategory=${sub._id}`}
+                      onClick={() => setShopDropdownOpen(false)}
+                      className="text-[10px] font-bold text-white/60 dark:text-lux-dark/65 hover:text-lux-primary dark:hover:text-lux-primary transition-colors uppercase tracking-wider"
+                    >
+                      {sub.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+          {/* Featured Promo in Mega Menu */}
+          <div className="col-span-2 bg-gradient-to-br from-lux-dark to-black rounded-3xl p-6 flex flex-col justify-between border border-white/10 overflow-hidden relative min-h-[160px]">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-lux-primary/10 rounded-full blur-2xl" />
+            <div className="relative z-10">
+              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-lux-primary italic">Featured drop</span>
+              <h4 className="text-lg font-black text-white uppercase tracking-tighter mt-1">JAIPUR DESIGN STUDIO</h4>
+              <p className="text-[10px] text-white/50 font-bold uppercase tracking-tight mt-1">Premium Streetwear & Artisanal Footwear</p>
+            </div>
+            <Link
+              to="/street-drip"
+              onClick={() => setShopDropdownOpen(false)}
+              className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl bg-lux-primary px-4 py-2 text-[9px] font-black uppercase tracking-widest text-black hover:scale-105 transition-transform"
+            >
+              Explore Collection
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="lg:hidden border-b border-lux-100 bg-black/95 backdrop-blur-3xl px-4 py-6 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="lg:hidden border-b border-lux-100 bg-black/95 backdrop-blur-3xl px-4 py-6 flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-wrap gap-2">
             <Link to="/shop" onClick={() => setMobileOpen(false)} className="rounded-xl bg-lux-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
               Catalog
@@ -350,15 +457,17 @@ export const Navbar = () => {
             <Link to="/street-drip" onClick={() => setMobileOpen(false)} className="rounded-xl bg-lux-accent-purple px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white shadow-xl">
               Street Drip
             </Link>
-            {navSubs.map((sub) => (
-              <Link
-                key={sub._id}
-                to={`/shop?subcategory=${sub._id}`}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/80"
-              >
-                {sub.name}
-              </Link>
+          </div>
+
+          {/* Mobile Accordions */}
+          <div className="space-y-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-lux-primary mb-2">Shop Categories</p>
+            {categoriesWithSubs.map((cat) => (
+              <MobileCategoryAccordion 
+                key={cat._id} 
+                category={cat} 
+                onClose={() => setMobileOpen(false)} 
+              />
             ))}
           </div>
           
@@ -367,7 +476,7 @@ export const Navbar = () => {
               Join the Movement
             </Link>
           ) : (
-            <div className="mt-4 pt-6 border-t border-white/10 space-y-3">
+            <div className="mt-2 pt-4 border-t border-white/10 space-y-3">
                <Link
                 to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/seller/dashboard' : '/profile'}
                 onClick={() => setMobileOpen(false)}
