@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Phone, Camera, MessageSquare, Share2, Sparkles } from 'lucide-react';
+import { Mail, MapPin, Phone, Camera, MessageSquare, Share2, Sparkles, Send } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export const Footer = () => {
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    toast.success('Thank you for subscribing! Keep an eye on your inbox.');
+    setNewsletterEmail('');
+  };
+
   return (
     <footer className="border-t border-lux-100 bg-lux-50/50 mt-16">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -21,17 +34,18 @@ export const Footer = () => {
             Quality-obsessed, customer-driven.
           </p>
           <div className="flex items-center gap-4">
-            <a href="#" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
               <Camera className="h-4 w-4" />
             </a>
-            <a href="#" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
               <MessageSquare className="h-4 w-4" />
             </a>
-            <a href="#" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-lux-200 flex items-center justify-center text-lux-dark/40 hover:text-lux-primary hover:border-lux-primary transition-all">
               <Share2 className="h-4 w-4" />
             </a>
           </div>
         </div>
+
         {/* Navigation */}
         <div className="grid grid-cols-2 gap-8 lg:col-span-2">
           <div>
@@ -54,10 +68,29 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Contact & Help */}
+        {/* Newsletter & Contact */}
         <div className="space-y-6">
-          <h4 className="text-[10px] font-bold uppercase tracking-widest text-lux-dark mb-6">Contact Us</h4>
-          <div className="space-y-4">
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-lux-dark mb-4">Newsletter</h4>
+            <p className="text-xs text-lux-dark/60 mb-3">Subscribe to get updates on weekly drops and offers.</p>
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <input
+                type="email"
+                placeholder="Your email address"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-lux-200 bg-white focus:outline-none focus:border-lux-primary transition-colors"
+              />
+              <button
+                type="submit"
+                className="bg-lux-dark hover:bg-lux-primary hover:text-black text-white p-2 rounded-xl transition-all"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-lux-100/50">
             <div className="flex items-start gap-3">
               <MapPin className="h-4 w-4 text-lux-primary shrink-0 mt-0.5" />
               <p className="text-xs text-lux-dark/60 leading-tight">
@@ -68,12 +101,9 @@ export const Footer = () => {
               <Phone className="h-4 w-4 text-lux-primary shrink-0" />
               <p className="text-xs text-lux-dark/60">+91 141 2345678</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-lux-primary shrink-0" />
-              <p className="text-xs text-lux-dark/60">help@mensvibe.in</p>
-            </div>
           </div>
-          <div className="pt-4 border-t border-lux-100/50">
+
+          <div className="pt-3 border-t border-lux-100/50">
             <p className="text-[9px] font-bold uppercase text-emerald-600 mb-1 flex items-center gap-1.5">
               <Sparkles className="h-3 w-3" /> Exclusive Offer
             </p>

@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2 } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { getSubcategories } from '../services/subcategory.service.js';
+import { getProducts } from '../services/product.service.js';
+import { resolveImageUrl } from '../utils/imageUrl.js';
 import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 
 /**
@@ -13,7 +15,7 @@ import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
  * 
  * This is the main navigation bar. It handles:
  * 1. Global Navigation (Shop, Street Drip, Subcategories)
- * 2. Search functionality
+ * 2. Search functionality with debounced autosuggest
  * 3. User Authentication state (Login, Profile, Logout)
  * 4. Theme switching (Dark/Light)
  * 5. Cart & Wishlist counters
@@ -31,8 +33,11 @@ export const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [searching, setSearching] = useState(false);
   
   const menuRef = useRef(null);
+  const searchRef = useRef(null);
 
   // Fetch subcategories once when component loads
   useEffect(() => {
@@ -41,16 +46,43 @@ export const Navbar = () => {
       .catch(() => setSubcategories([]));
   }, []);
 
-  // Handle clicking outside the user profile dropdown to close it
+  // Handle clicking outside the user profile dropdown or search dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setUserMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSuggestions([]);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Debounced Autosuggest Query
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setSearching(true);
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await getProducts({ search: searchQuery.trim(), limit: 5 });
+        if (response?.data?.products) {
+          setSuggestions(response.data.products);
+        }
+      } catch (err) {
+        console.error('Autosuggest failed:', err);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   // Filter out the 'Featured' subcategories for the main nav links
   const navSubs = FEATURED_SUBCATEGORY_NAMES.map((name) =>
@@ -67,11 +99,18 @@ export const Navbar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Redirect to shop page with search query parameter
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
+      setSuggestions([]);
       setSearchQuery('');
     }
+  };
+
+  const handleSuggestionClick = (productId) => {
+    navigate(`/products/${productId}`);
+    setSearchOpen(false);
+    setSuggestions([]);
+    setSearchQuery('');
   };
 
   return (
@@ -93,26 +132,81 @@ export const Navbar = () => {
           <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
             {/* If Search is open, show the bar, but keep it condensed to not hide all links */}
             {searchOpen ? (
-              <form onSubmit={handleSearchSubmit} className="flex-1 max-w-sm mx-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="relative">
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="Find your vibe..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-full border border-lux-200 bg-lux-50 px-4 py-1.5 pl-10 text-xs focus:outline-none focus:border-lux-primary transition-all shadow-inner"
-                  />
-                  <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-lux-dark/45" />
-                  <button
-                    type="button"
-                    onClick={() => setSearchOpen(false)}
-                    className="absolute right-3 top-2 text-lux-dark/30 hover:text-lux-dark"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </form>
+              <div ref={searchRef} className="relative flex-1 max-w-sm mx-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <form onSubmit={handleSearchSubmit}>
+                  <div className="relative">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Find your vibe..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-full border border-lux-200 bg-lux-50 px-4 py-1.5 pl-10 pr-10 text-xs focus:outline-none focus:border-lux-primary transition-all shadow-inner"
+                    />
+                    <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-lux-dark/45" />
+                    
+                    {searching ? (
+                      <Loader2 className="absolute right-10 top-2 h-3.5 w-3.5 animate-spin text-lux-dark/45" />
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSuggestions([]);
+                        setSearchQuery('');
+                      }}
+                      className="absolute right-3 top-2 text-lux-dark/30 hover:text-lux-dark"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </form>
+
+                {/* Suggestions Dropdown */}
+                {suggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 mt-2 rounded-2xl bg-black/90 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden z-50 py-2 divide-y divide-white/5">
+                    <div className="px-4 py-1.5 text-[8px] font-black uppercase tracking-wider text-lux-primary">
+                      Matching Products
+                    </div>
+                    {suggestions.map((product) => (
+                      <button
+                        key={product._id}
+                        onClick={() => handleSuggestionClick(product._id)}
+                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-left transition-colors"
+                      >
+                        <img
+                          src={resolveImageUrl(product.images?.[0] || product.image)}
+                          alt=""
+                          className="h-8 w-8 rounded-lg object-cover bg-white/10 border border-white/5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-white truncate">{product.title}</p>
+                          <p className="text-[8px] font-medium text-white/40 uppercase tracking-wider">
+                            {product.category?.name || 'Category'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black text-lux-primary">
+                            ₹{product.discountedPrice > 0 ? product.discountedPrice : product.price}
+                          </p>
+                          {product.discountedPrice > 0 && (
+                            <p className="text-[8px] font-bold text-white/35 line-through">
+                              ₹{product.price}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={handleSearchSubmit}
+                      className="w-full text-center py-2 text-[9px] font-black uppercase tracking-widest text-lux-primary hover:bg-white/5 transition-colors"
+                    >
+                      View all results
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex items-center gap-1">
                 <NavLink to="/shop" className={({ isActive }) => `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isActive ? 'text-lux-primary underline underline-offset-4' : 'text-lux-dark/55 hover:text-lux-dark'}`}>
@@ -165,7 +259,7 @@ export const Navbar = () => {
             <Link to="/wishlist" className="relative p-2 rounded-lg text-lux-dark/60 hover:bg-lux-50 hidden sm:block">
               <Heart className="h-4 w-4" />
               {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-white">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-white animate-bounce">
                   {wishlist.length}
                 </span>
               )}
@@ -174,7 +268,7 @@ export const Navbar = () => {
             <Link to="/cart" className="relative p-2 rounded-lg text-lux-dark/60 hover:bg-lux-50">
               <ShoppingBag className="h-4 w-4" />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-lux-primary text-[8px] font-bold text-white ring-2 ring-white">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-lux-primary text-[8px] font-bold text-white ring-2 ring-white animate-bounce">
                   {cartItemsCount > 9 ? '9+' : cartItemsCount}
                 </span>
               )}
@@ -289,4 +383,3 @@ export const Navbar = () => {
     </header>
   );
 };
-
