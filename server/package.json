@@ -1,0 +1,43 @@
+{
+  "name": "ecommerce-backend",
+  "version": "1.0.0",
+  "description": "Production-ready MERN E-Commerce Backend",
+  "author": "Priyansh Singh Purawat <priyanshsinghpurawatji@gmail.com>",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "free-port": "powershell -ExecutionPolicy Bypass -File ./scripts/free-port.ps1",
+    "dev:clean": "npm run free-port && nodemon index.js",
+    "seed": "node scripts/seeder.js",
+    "seed:dummy": "node scripts/seed-dummyjson.js",
+    "test": "node --test --test-concurrency=1 tests/**/*.test.js"
+  },
+  "dependencies": {
+    "axios": "^1.17.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.2.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.5.1",
+    "file-type": "^22.0.1",
+    "google-auth-library": "^10.6.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "lru-cache": "^11.5.1",
+    "mongoose": "^8.4.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "razorpay": "^2.9.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4",
+    "nodemon": "^3.1.0",
+    "supertest": "^7.1.0"
+  }
+}

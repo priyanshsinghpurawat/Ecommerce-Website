@@ -1,0 +1,42 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+.wrangler/
+client/dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.env
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Project-specific internal docs
+Gemini.md
+GEMINI.md
+dev.md
+delegation.md
+MEMORY.md
+MEMORY_*.md
+
+# Server specific
+server/public/

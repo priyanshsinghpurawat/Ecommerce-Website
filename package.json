@@ -1,0 +1,10 @@
+{
+  "name": "mensvibe",
+  "private": true,
+  "author": "Priyansh Singh Purawat <priyanshsinghpurawatji@gmail.com>",
+  "type": "module",
+  "scripts": {
+    "test": "npm run test --prefix client && npm run test --prefix server",
+    "test:watch": "node scripts/test-watch.js"
+  }
+}

@@ -1,0 +1,127 @@
+import mongoose from 'mongoose';
+
+const productSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: [true, "Product title is required"],
+      trim: true,
+      maxLength: [120, "Product title cannot exceed 120 characters"]
+    },
+    description: {
+      type: String,
+      required: [true, "Product description is required"],
+      trim: true
+    },
+    price: {
+      type: Number,
+      required: [true, "Product price is required"],
+      min: [0, "Original price cannot be negative"]
+    },
+    discountedPrice: {
+      type: Number,
+      default: null,
+      min: [0, "Discounted price cannot be negative"]
+    },
+    image: {
+      type: String,
+      required: [true, "Product image URL is required"],
+      default: '/assets/mens_shirt.png'
+    },
+    images: {
+      type: [String],
+      default: []
+    },
+    colors: [
+      {
+        name: { type: String, required: true },
+        hex: { type: String, required: true },
+        images: [String]
+      }
+    ],
+    /**
+     * Powerlook/Savana-style variants. Each variant carries its own gallery,
+     * stock and optional price override. Flat `images[]` remains as a
+     * fallback gallery so existing products keep rendering unchanged.
+     */
+    variants: [
+      {
+        color: { type: String, trim: true, default: '' },
+        size: { type: String, trim: true, default: '' },
+        sku: { type: String, trim: true, default: '' },
+        stock: { type: Number, min: 0, default: 0 },
+        price: { type: Number, min: 0, default: null },
+        images: { type: [String], default: [] }
+      }
+    ],
+    badge: {
+      type: String,
+      enum: ['', 'new-arrival', 'sale', 'street-drip'],
+      default: ''
+    },
+    rating: {
+      type: Number,
+      min: [0, 'Rating cannot be negative'],
+      max: [5, 'Rating cannot exceed 5'],
+      default: 0
+    },
+    reviewCount: {
+      type: Number,
+      min: [0, 'Review count cannot be negative'],
+      default: 0
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: [true, "Product category is required"]
+    },
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subcategory",
+      required: [true, "Product subcategory is required"]
+    },
+    gender: {
+      type: String,
+      enum: ['men', 'unisex'],
+      default: 'men'
+    },
+    stock: {
+      type: Number,
+      required: [true, "Stock quantity is required"],
+      min: [0, "Stock cannot be negative"],
+      default: 10
+    },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, "Product seller is required"]
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+
+// Indexing strategy for query performance optimization under high catalog load
+productSchema.index({ category: 1 });
+productSchema.index({ subcategory: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ category: 1, subcategory: 1 });
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ seller: 1 });
+productSchema.index({ title: 'text', description: 'text' });
+
+// Mongoose validation hook for pricing logic
+productSchema.pre("validate", function (next) {
+  // Ensure that discountedPrice is strictly less than price
+  if (this.discountedPrice !== undefined && this.discountedPrice >= this.price) {
+    this.invalidate(
+      "discountedPrice",
+      `Discounted price (${this.discountedPrice}) must be strictly less than the original price (${this.price})`
+    );
+  }
+  next();
+});
+
+export const Product = mongoose.model("Product", productSchema);

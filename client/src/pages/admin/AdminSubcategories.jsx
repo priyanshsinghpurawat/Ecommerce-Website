@@ -1,0 +1,257 @@
+import React, { useEffect, useState } from 'react';
+import { getSubcategories, createSubcategory, updateSubcategory, deleteSubcategory } from '../../services/subcategory.service.js';
+import { useCategories } from '../../hooks/useCategories.js';
+import { Modal } from '../../components/Modal.jsx';
+import { Plus, Edit2, Trash2, Loader2, Search } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+export const AdminSubcategories = () => {
+  const [subcategories, setSubcategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { categories, fetchCategories } = useCategories();
+  
+  // Search & Filter
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modals Controller
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  
+  // Input fields
+  const [name, setName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      await fetchCategories();
+      const res = await getSubcategories();
+      setSubcategories(res?.data || []);
+    } catch (err) {
+      toast.error('Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const filteredSubcategories = subcategories.filter(sub => 
+    sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleOpenCreateModal = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setName('');
+    setSelectedCategory('');
+    setErrorMsg('');
+    setModalOpen(true);
+  };
+
+  const handleOpenEditModal = (sub) => {
+    setIsEditing(true);
+    setEditingId(sub._id);
+    setName(sub.name);
+    setSelectedCategory(sub.category?._id || '');
+    setErrorMsg('');
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setErrorMsg('Subcategory name is required');
+      return;
+    }
+    if (!selectedCategory) {
+      setErrorMsg('Parent category is required');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (isEditing) {
+        await updateSubcategory(editingId, { name: name.trim(), category: selectedCategory });
+        toast.success('Subcategory updated successfully');
+      } else {
+        await createSubcategory({ name: name.trim(), category: selectedCategory });
+        toast.success('Subcategory created successfully');
+      }
+      setModalOpen(false);
+      fetchAllData();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Operation failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (sub) => {
+    if (window.confirm(`Are you sure you want to delete subcategory "${sub.name}"?`)) {
+      setActionLoading(true);
+      try {
+        await deleteSubcategory(sub._id);
+        toast.success('Subcategory deleted successfully');
+        fetchAllData();
+      } catch (err) {
+        toast.error('Failed to delete subcategory');
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl">
+      {/* Action Header */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold uppercase tracking-wider text-lux-dark">Subcategories Registry</h2>
+          <p className="text-xs text-lux-dark/50">Organize your catalog with deeper product groupings.</p>
+        </div>
+
+        <button
+          onClick={handleOpenCreateModal}
+          className="flex items-center gap-2 rounded-2xl bg-lux-dark px-4 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover shadow-md transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Add Subcategory
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <input
+          type="text"
+          placeholder="Filter subcategories..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-full border border-lux-200 bg-white/50 px-4 py-2 pl-10 text-xs focus:outline-none focus:border-lux-primary shadow-soft"
+        />
+        <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-lux-dark/40" />
+      </div>
+
+      {/* Grid Table */}
+      {loading ? (
+        <div className="space-y-4 animate-pulse">
+          <div className="h-10 w-full bg-lux-100 rounded-xl" />
+          <div className="h-40 w-full bg-lux-100/50 rounded-xl" />
+        </div>
+      ) : filteredSubcategories.length > 0 ? (
+        <div className="overflow-hidden rounded-2xl border border-white/60 bg-lux-50/40 shadow-soft backdrop-blur-md">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-lux-100 bg-lux-50/30 text-[10px] font-bold uppercase tracking-wider text-lux-dark/45">
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">Parent Category</th>
+                <th className="px-6 py-4">Slug Identifier</th>
+                <th className="px-6 py-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-lux-100/40 text-xs font-semibold text-lux-dark">
+              {filteredSubcategories.map((sub) => (
+                <tr key={sub._id} className="hover:bg-lux-50/20 transition-colors">
+                  <td className="px-6 py-4">{sub.name}</td>
+                  <td className="px-6 py-4">{sub.category?.name || 'Unknown'}</td>
+                  <td className="px-6 py-4 font-mono text-[11px] text-lux-dark/50">{sub.slug}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleOpenEditModal(sub)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-lux-100 text-lux-dark hover:bg-lux-primary hover:text-black transition-all shadow-sm"
+                        title="Edit Subcategory"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sub)}
+                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm"
+                        title="Delete Subcategory"
+                        disabled={actionLoading}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-lux-200 bg-lux-50/20 p-12 text-center">
+          <p className="font-sans text-xs text-lux-dark/50">No subcategories registered yet.</p>
+        </div>
+      )}
+
+      {/* Modal Form */}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={isEditing ? 'Rename Subcategory' : 'Create Subcategory'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Subcategory Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setErrorMsg('');
+              }}
+              placeholder="e.g. Sneakers, Jackets"
+              className={`w-full rounded-xl border bg-lux-50 px-3.5 py-2.5 font-sans text-xs focus:outline-none ${
+                errorMsg && !name ? 'border-red-400 focus:border-red-500' : 'border-lux-200 focus:border-lux-primary'
+              }`}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Parent Category</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setErrorMsg('');
+              }}
+              className={`w-full rounded-xl border bg-lux-50 px-3.5 py-2.5 font-sans text-xs focus:outline-none ${
+                errorMsg && !selectedCategory ? 'border-red-400 focus:border-red-500' : 'border-lux-200 focus:border-lux-primary'
+              }`}
+            >
+              <option value="">-- Select Category --</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {errorMsg && <p className="text-[10px] font-bold text-red-500">{errorMsg}</p>}
+
+          <button
+            type="submit"
+            disabled={actionLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-lux-dark py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover transition-colors disabled:opacity-50 mt-4"
+          >
+            {actionLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isEditing ? (
+              'Save Subcategory'
+            ) : (
+              'Create Subcategory'
+            )}
+          </button>
+        </form>
+      </Modal>
+    </div>
+  );
+};

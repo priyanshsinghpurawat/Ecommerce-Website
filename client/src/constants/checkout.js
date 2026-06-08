@@ -1,0 +1,16 @@
+/** Default shipping for checkout (Jaipur) — profile fields override when set */
+export const DEFAULT_SHIPPING = {
+  fullName: '',
+  phone: '',
+  street: 'Malviya Nagar, Near GT Bazaar',
+  city: 'Jaipur',
+  state: 'Rajasthan',
+  zipCode: '302017',
+  country: 'India'
+};
+
+/** Tap-to-apply coupons (must exist in DB — run `npm run seed`) */
+export const SUGGESTED_COUPONS = [
+  { code: 'MENSVIBE10', label: '10% off', hint: 'Min ₹499' },
+  { code: 'FIT100', label: '₹100 off', hint: 'Min ₹999' }
+];
