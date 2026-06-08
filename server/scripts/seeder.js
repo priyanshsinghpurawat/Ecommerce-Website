@@ -225,9 +225,3 @@ const seed = async () => {
 };
 
 seed();
-:', error);
-    process.exit(1);
-  }
-};
-
-seed();
