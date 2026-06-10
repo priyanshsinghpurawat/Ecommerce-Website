@@ -312,8 +312,22 @@ const seed = async () => {
   try {
     // 1. Connect to the Database (Local or Production)
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/e-commerce';
+    
+    // SAFETY GUARD: Check if target is a production cluster
+    const isProduction = mongoUri.includes('mongodb+srv') || mongoUri.includes('cluster0');
+    if (isProduction && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+      console.error('------------------------------------------------------------');
+      console.error('⚠️  CRITICAL SAFETY ALERT: PRODUCTION DATABASE DETECTED');
+      console.error('------------------------------------------------------------');
+      console.error('The seeder script is attempting to wipe a production/Atlas database.');
+      console.error('Target URI: ' + mongoUri.split('@')[1] || 'Atlas');
+      console.error('\nTo proceed, you MUST set ALLOW_PRODUCTION_SEED=true in your environment.');
+      console.error('Aborting to prevent data loss.');
+      process.exit(1);
+    }
+
     await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB...');
+    console.log(`Connected to database: ${isProduction ? 'PRODUCTION (Atlas)' : 'DEVELOPMENT (Local)'}`);
 
     // 2. CLEAR THE SLATE
     // We delete EVERYTHING first so we don't get duplicate data errors.
