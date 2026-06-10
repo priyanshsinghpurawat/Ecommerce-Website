@@ -102,9 +102,6 @@ export const addToCart = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Item added to cart"));
 });
-    .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Product added to cart successfully"));
-});
 
 /**
  * @desc    Update specific item quantity in cart

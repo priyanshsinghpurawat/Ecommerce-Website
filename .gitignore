@@ -29,6 +29,9 @@ desktop.ini
 *.log
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
 
 # Project-specific internal docs
 Gemini.md
@@ -37,9 +40,22 @@ dev.md
 delegation.md
 MEMORY.md
 MEMORY_*.md
+finalplaningformv.md
+finalplaningformv_*.md
+
+# Testing and Coverage
+coverage/
+.nyc_output/
+.vitest/
+
+# Database & Cache files
+*.sqlite
+*.db
+.cache/
 
 # Server specific
 server/public/
 
 .gemini/
+.agents/
 gha-creds-*.json

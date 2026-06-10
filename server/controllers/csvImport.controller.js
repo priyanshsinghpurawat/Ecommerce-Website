@@ -3,7 +3,7 @@ import { Product } from '../models/product.model.js';
 import { Category } from '../models/category.model.js';
 import { Subcategory } from '../models/subcategory.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
+import { ApiResponse } from '../utils/apiResponse.js';
 import { ApiError } from '../utils/apiError.js';
 
 export const bulkImportFromCSV = asyncHandler(async (req, res) => {

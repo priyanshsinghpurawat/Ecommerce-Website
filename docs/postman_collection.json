@@ -160,7 +160,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "product_id_here"
+									"value": "{{product_id}}"
 								}
 							]
 						}
@@ -210,7 +210,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productId\": \"664f...\",\n    \"quantity\": 2\n}",
+							"raw": "{\n    \"productId\": \"{{product_id}}\",\n    \"quantity\": 2\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -250,7 +250,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"shippingAddress\": {\n        \"fullName\": \"John Doe\",\n        \"phone\": \"9876543210\",\n        \"street\": \"123 Fashion Ave\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"zipCode\": \"400001\",\n        \"country\": \"India\"\n    },\n    \"paymentMethod\": \"cod\",\n    \"couponCode\": \"WELCOME10\"\n}",
+							"raw": "{\n    \"shippingAddress\": {\n        \"fullName\": \"John Doe\",\n        \"phone\": \"9876543210\",\n        \"street\": \"123 Fashion Ave\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"zipCode\": \"400001\",\n        \"country\": \"India\"\n    },\n    \"paymentMethod\": \"cod\",\n    \"couponCode\": \"MENSVIBE10\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -308,6 +308,11 @@
 		},
 		{
 			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
 			"value": "",
 			"type": "string"
 		}
