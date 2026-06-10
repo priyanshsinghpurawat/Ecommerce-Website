@@ -14,20 +14,20 @@ export const ProductShowcase = ({
 }) => {
   return (
     <section className="space-y-5">
-      <div className="flex items-end justify-between gap-4 border-b border-lux-100 pb-4 px-4 md:px-0">
+      <div className="flex items-end justify-between gap-4 border-b border-surface-100 pb-4 px-4 md:px-0">
         <div>
           {subtitle && (
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-lux-primary">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brand-primary">
               {subtitle}
             </p>
           )}
-          <h2 className="text-2xl font-black text-lux-dark tracking-tight uppercase italic">
+          <h2 className="text-2xl font-black text-app-text tracking-tight uppercase italic">
             {title}
           </h2>
         </div>
         <Link
           to={viewAllLink}
-          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-lux-dark/60 hover:text-lux-primary shrink-0 transition-colors"
+          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-app-text/60 hover:text-brand-primary shrink-0 transition-colors"
         >
           {viewAllLabel}
           <ArrowRight className="h-3.5 w-3.5" />
@@ -51,7 +51,7 @@ export const ProductShowcase = ({
           ))}
         </div>
       ) : (
-        <p className="text-sm text-lux-dark/45 py-8 text-center px-4">No products in this collection yet.</p>
+        <p className="text-sm text-app-text/45 py-8 text-center px-4">No products in this collection yet.</p>
       )}
     </section>
   );

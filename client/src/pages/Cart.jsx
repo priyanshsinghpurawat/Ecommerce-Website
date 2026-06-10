@@ -325,17 +325,17 @@ export const Cart = () => {
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center p-6">
-        <div className="h-16 w-16 bg-lux-50 rounded-full flex items-center justify-center text-lux-dark/45 mb-4 shadow-soft">
+        <div className="h-16 w-16 bg-surface-50 rounded-full flex items-center justify-center text-app-text/45 mb-4 shadow-soft">
           <ShoppingBag className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-lux-dark mb-2">Sign in to see your bag</h2>
-        <p className="text-sm text-lux-dark/55 max-w-sm mb-6 leading-relaxed">
+        <h2 className="text-xl font-bold text-app-text mb-2">Sign in to see your bag</h2>
+        <p className="text-sm text-app-text/55 max-w-sm mb-6 leading-relaxed">
           Your cart is tied to your account so it stays put between visits.
         </p>
         <Link 
           to="/login"
           state={{ from: '/cart' }}
-          className="rounded-2xl bg-lux-dark px-6 py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover shadow-lg shadow-lux-dark/20 transition-all duration-300"
+          className="rounded-2xl bg-app-text px-6 py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover shadow-lg shadow-app-text/20 transition-all duration-300"
         >
           Sign in
         </Link>
@@ -348,12 +348,12 @@ export const Cart = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-lux-dark">Your bag</h1>
-          <p className="text-sm text-lux-dark/55">Review items before checkout.</p>
+          <h1 className="text-2xl font-bold text-app-text">Your bag</h1>
+          <p className="text-sm text-app-text/55">Review items before checkout.</p>
         </div>
         <Link
           to="/shop"
-          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-lux-dark/50 hover:text-lux-dark transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-app-text/50 hover:text-app-text transition-colors self-start sm:self-auto"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Continue Shopping
@@ -362,26 +362,25 @@ export const Cart = () => {
 
       {loading && !cart ? (
         <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-lux-dark/45" />
+          <Loader2 className="h-8 w-8 animate-spin text-app-text/45" />
         </div>
       ) : cartItemsCount === 0 ? (
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-dashed border-lux-200 bg-lux-50/20 py-16 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[380px]"
+          className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-16 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[380px]"
         >
-          <div className="h-16 w-16 bg-lux-50/60 rounded-full flex items-center justify-center text-lux-dark/40 border border-white shadow-sm mb-6 flex-shrink-0">
+          <div className="h-16 w-16 bg-surface-50/60 rounded-full flex items-center justify-center text-app-text/40 border border-white shadow-sm mb-6 flex-shrink-0">
             <ShoppingBag className="h-6 w-6" />
           </div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-lux-dark mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-app-text mb-2">
             Your bag is empty
           </h2>
-          <p className="text-xs text-lux-dark/45 font-sans mb-8 max-w-sm leading-relaxed">
-            Explore our curated luxury collection of sophisticated, handcrafted essentials to bring comfort and elegance into your everyday life.
-          </p>
+          
+          
           <Link
             to="/shop"
-            className="rounded-2xl bg-lux-dark px-8 py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover transition-all duration-300 shadow-lg shadow-lux-dark/20 flex-shrink-0"
+            className="rounded-2xl bg-app-text px-8 py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover transition-all duration-300 shadow-lg shadow-app-text/20 flex-shrink-0"
           >
             Explore Collection
           </Link>
@@ -390,11 +389,11 @@ export const Cart = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Cart Table Container */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="overflow-hidden rounded-3xl border border-white/60 bg-lux-50/40 shadow-soft backdrop-blur-md">
+            <div className="overflow-hidden rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                   <thead>
-                    <tr className="border-b border-lux-100 bg-lux-50/30 text-[10px] font-bold uppercase tracking-wider text-lux-dark/45">
+                    <tr className="border-b border-surface-100 bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-app-text/45">
                       <th className="px-6 py-4">Item Details</th>
                       <th className="px-6 py-4 text-center">Quantity</th>
                       <th className="px-6 py-4 text-right">Unit Price</th>
@@ -402,7 +401,7 @@ export const Cart = () => {
                       <th className="px-6 py-4 text-center">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-lux-100/40 text-xs font-semibold text-lux-dark">
+                  <tbody className="divide-y divide-surface-100/40 text-xs font-semibold text-app-text">
                     <AnimatePresence initial={false}>
                       {cart.items.map((item) => {
                         const prod = item.product;
@@ -419,7 +418,7 @@ export const Cart = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0, x: -100 }}
                             transition={{ duration: 0.3 }}
-                            className="hover:bg-lux-50/20 transition-all align-middle"
+                            className="hover:bg-surface-50/20 transition-all align-middle"
                           >
                             {/* Product Info */}
                             <td className="px-6 py-4">
@@ -429,14 +428,14 @@ export const Cart = () => {
                                     src={resolveImageUrl(prod.image)} 
                                     alt={prod.title} 
                                     style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', objectFit: 'cover' }}
-                                    className="rounded-xl bg-lux-50 border border-white shadow-sm" 
+                                    className="rounded-xl bg-surface-50 border border-white shadow-sm" 
                                   />
                                 </Link>
                                 <div className="truncate max-w-[180px]">
-                                  <Link to={`/product/${prod._id}`} className="font-extrabold uppercase text-[11px] text-lux-dark hover:text-lux-primary transition-colors block truncate">
+                                  <Link to={`/product/${prod._id}`} className="font-extrabold uppercase text-[11px] text-app-text hover:text-brand-primary transition-colors block truncate">
                                     {prod.title}
                                   </Link>
-                                  <span className="text-[9px] font-bold text-lux-dark/40 uppercase block mt-0.5">
+                                  <span className="text-[9px] font-bold text-app-text/40 uppercase block mt-0.5">
                                     {prod.category?.name || 'Unassigned'}
                                   </span>
                                 </div>
@@ -445,11 +444,11 @@ export const Cart = () => {
 
                             {/* Quantity Controls */}
                             <td className="px-6 py-4 text-center">
-                              <div className="inline-flex items-center gap-2.5 rounded-xl border border-lux-100 bg-lux-50/70 px-2.5 py-1.5 shadow-sm">
+                              <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
                                 <button
                                   onClick={() => handleQuantityChange(prod._id, item.quantity, -1)}
                                   disabled={item.quantity <= 1}
-                                  className="text-lux-dark/50 hover:text-lux-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                  className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                   title="Decrease Quantity"
                                 >
                                   <Minus className="h-3 w-3" />
@@ -457,7 +456,7 @@ export const Cart = () => {
                                 <span className="text-xs font-extrabold px-1 font-mono">{item.quantity}</span>
                                 <button
                                   onClick={() => handleQuantityChange(prod._id, item.quantity, 1)}
-                                  className="text-lux-dark/50 hover:text-lux-dark transition-colors"
+                                  className="text-app-text/50 hover:text-app-text transition-colors"
                                   title="Increase Quantity"
                                 >
                                   <Plus className="h-3 w-3" />
@@ -466,12 +465,12 @@ export const Cart = () => {
                             </td>
 
                             {/* Unit Price */}
-                            <td className="px-6 py-4 text-right font-mono font-bold text-lux-dark/75">
+                            <td className="px-6 py-4 text-right font-mono font-bold text-app-text/75">
                               ₹{unitPrice.toFixed(2)}
                             </td>
 
                             {/* Subtotal */}
-                            <td className="px-6 py-4 text-right font-mono font-extrabold text-lux-dark">
+                            <td className="px-6 py-4 text-right font-mono font-extrabold text-app-text">
                               ₹{itemSubtotal.toFixed(2)}
                             </td>
 
@@ -510,23 +509,23 @@ export const Cart = () => {
           </div>
 
           {/* Billing Order Summary Panel */}
-          <div className="rounded-3xl border border-white/60 bg-lux-50/40 p-6 shadow-soft backdrop-blur-md space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-lux-dark pb-2.5 border-b border-lux-100/50">
+          <div className="rounded-3xl border border-white/60 bg-surface-50/40 p-6 shadow-soft backdrop-blur-md space-y-6">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-app-text pb-2.5 border-b border-surface-100/50">
               Order Summary
             </h3>
 
             <div className="space-y-3 font-sans text-xs">
-              <div className="flex justify-between text-lux-dark/60">
+              <div className="flex justify-between text-app-text/60">
                 <span>Subtotal</span>
                 <span className="font-mono font-bold">₹{cartTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lux-dark/60">
+              <div className="flex justify-between text-app-text/60">
                 <span>Shipping</span>
                 <span className="text-emerald-600 font-bold uppercase text-[10px]">Free Shipping</span>
               </div>
-              <div className="flex justify-between text-lux-dark/60">
-                <span>Taxes</span>
-                <span className="font-mono text-lux-dark/40">₹0.00</span>
+              <div className="flex justify-between text-app-text/60">
+                <span>Taxes (GST 18%)</span>
+                <span className="font-mono text-app-text/40">₹{( (appliedCoupon ? appliedCoupon.finalTotal : cartTotal) * 0.18 ).toFixed(2)}</span>
               </div>
 
               {appliedCoupon && (
@@ -539,19 +538,19 @@ export const Cart = () => {
                 </div>
               )}
               
-              <div className="h-px bg-lux-100/50 my-2" />
+              <div className="h-px bg-surface-100/50 my-2" />
 
-              <div className="flex justify-between text-lux-dark font-extrabold pb-1">
-                <span className="uppercase text-[10px] tracking-wider font-extrabold text-lux-dark">Total</span>
-                <span className="font-mono text-sm text-lux-dark">
-                  ₹{(appliedCoupon ? appliedCoupon.finalTotal : cartTotal).toFixed(2)}
+              <div className="flex justify-between text-app-text font-extrabold pb-1">
+                <span className="uppercase text-[10px] tracking-wider font-extrabold text-app-text">Total</span>
+                <span className="font-mono text-sm text-app-text">
+                  ₹{( (appliedCoupon ? appliedCoupon.finalTotal : cartTotal) * 1.18 ).toFixed(2)}
                 </span>
               </div>
             </div>
 
             {/* Suggested promo codes */}
-            <div className="pt-4 border-t border-lux-100/50 space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-lux-dark/65">
+            <div className="pt-4 border-t border-surface-100/50 space-y-2">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-app-text/65">
                 Offers — tap to apply
               </label>
 
@@ -563,19 +562,19 @@ export const Cart = () => {
                       type="button"
                       disabled={applyingCoupon}
                       onClick={() => applySuggestedCoupon(c.code)}
-                      className="flex items-center justify-between rounded-xl border border-lux-100 bg-lux-50/70 px-3.5 py-2.5 text-left hover:border-lux-primary hover:bg-lux-50/50 transition-colors disabled:opacity-50"
+                      className="flex items-center justify-between rounded-xl border border-surface-100 bg-surface-50/70 px-3.5 py-2.5 text-left hover:border-brand-primary hover:bg-surface-50/50 transition-colors disabled:opacity-50"
                     >
                       <span className="flex items-center gap-2">
-                        <Ticket className="h-4 w-4 text-lux-primary" />
+                        <Ticket className="h-4 w-4 text-brand-primary" />
                         <span>
-                          <span className="font-mono text-xs font-bold text-lux-dark">{c.code}</span>
-                          <span className="block text-[9px] text-lux-dark/50">{c.label} · {c.hint}</span>
+                          <span className="font-mono text-xs font-bold text-app-text">{c.code}</span>
+                          <span className="block text-[9px] text-app-text/50">{c.label} · {c.hint}</span>
                         </span>
                       </span>
                       {applyingCoupon ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-lux-dark/40" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-app-text/40" />
                       ) : (
-                        <span className="text-[9px] font-bold uppercase text-lux-primary">Apply</span>
+                        <span className="text-[9px] font-bold uppercase text-brand-primary">Apply</span>
                       )}
                     </button>
                   ))}
@@ -612,13 +611,13 @@ export const Cart = () => {
             </div>
 
             {showCheckout && (
-              <div className="space-y-3 pt-2 border-t border-lux-100/50 animate-in fade-in duration-200">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-lux-dark">
+              <div className="space-y-3 pt-2 border-t border-surface-100/50 animate-in fade-in duration-200">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-app-text">
                   Shipping — default Jaipur
                 </p>
                 {shippingFields.map(({ key, label, type, maxLength }) => (
                   <div key={key}>
-                    <label className="text-[9px] font-bold uppercase text-lux-dark/50">{label}</label>
+                    <label className="text-[9px] font-bold uppercase text-app-text/50">{label}</label>
                     <input
                       type={type}
                       inputMode={key === 'phone' ? 'numeric' : undefined}
@@ -632,8 +631,8 @@ export const Cart = () => {
                         setShipping((s) => ({ ...s, [key]: value }));
                         if (key === 'phone') setPhoneError('');
                       }}
-                      className={`mt-0.5 w-full rounded-xl border bg-lux-50/70 px-3 py-2 text-xs focus:outline-none focus:border-lux-primary ${
-                        key === 'phone' && phoneError ? 'border-red-300' : 'border-lux-100'
+                      className={`mt-0.5 w-full rounded-xl border bg-surface-50/70 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary ${
+                        key === 'phone' && phoneError ? 'border-red-300' : 'border-surface-100'
                       }`}
                     />
                     {key === 'phone' && phoneError && (
@@ -641,18 +640,18 @@ export const Cart = () => {
                     )}
                   </div>
                 ))}
-                <Link to="/profile" className="text-[9px] font-bold text-lux-dark/50 hover:text-lux-dark underline">
+                <Link to="/profile" className="text-[9px] font-bold text-app-text/50 hover:text-app-text underline">
                   Save a different default in profile
                 </Link>
               </div>
             )}
 
             {/* Guarantee / Security info */}
-            <div className="rounded-2xl bg-lux-50/40 border border-white/60 p-3.5 flex items-start gap-3">
-              <Lock className="h-4 w-4 text-lux-dark/45 mt-0.5" />
+            <div className="rounded-2xl bg-surface-50/40 border border-white/60 p-3.5 flex items-start gap-3">
+              <Lock className="h-4 w-4 text-app-text/45 mt-0.5" />
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-lux-dark">Secure Checkout</p>
-                <p className="text-[8px] text-lux-dark/40 font-sans leading-relaxed">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-app-text">Secure Checkout</p>
+                <p className="text-[8px] text-app-text/40 font-sans leading-relaxed">
                   Your transaction is secure. SSL-encrypted checkout details are configured natively.
                 </p>
               </div>
@@ -662,7 +661,7 @@ export const Cart = () => {
               <button
                 onClick={handleProceedCheckout}
                 disabled={checkoutLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-lux-dark py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover disabled:opacity-50 transition-colors shadow-lg shadow-lux-dark/20"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-app-text py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover disabled:opacity-50 transition-colors shadow-lg shadow-app-text/20"
               >
                 {checkoutLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -681,7 +680,7 @@ export const Cart = () => {
                     handleRazorpayCheckout();
                   }}
                   disabled={checkoutLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-lux-200 bg-lux-50/80 py-3 font-sans text-[10px] font-bold uppercase tracking-wider text-lux-dark hover:bg-lux-50 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-200 bg-surface-50/80 py-3 font-sans text-[10px] font-bold uppercase tracking-wider text-app-text hover:bg-surface-50 disabled:opacity-50"
                 >
                   <CreditCard className="h-4 w-4" />
                   Pay online (Razorpay)

@@ -33,6 +33,18 @@ export function resolveImageUrl(url, width = 800) {
     }
   }
 
+  // Cloudinary Optimization
+  if (trimmed.includes('res.cloudinary.com')) {
+    try {
+      if (trimmed.includes('/upload/') && !trimmed.includes('/upload/q_')) {
+        return trimmed.replace('/upload/', `/upload/q_auto,f_auto,w_${width},c_limit/`);
+      }
+      return trimmed;
+    } catch (e) {
+      return trimmed;
+    }
+  }
+
   // If it's a full URL or absolute/relative path that looks valid
   if (
     trimmed.startsWith('http://') ||
@@ -45,7 +57,7 @@ export function resolveImageUrl(url, width = 800) {
   }
 
   // If it's just a filename that exists in assets
-  if (trimmed.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+  if (trimmed.match(/\.(jpg|jpeg|png|webp|avif|gif|svg)$/i)) {
     return `/assets/${trimmed}`;
   }
 

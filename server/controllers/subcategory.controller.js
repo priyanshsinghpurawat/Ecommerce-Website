@@ -1,4 +1,5 @@
 import { Subcategory } from '../models/subcategory.model.js';
+import { Product } from '../models/product.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 import { getCache, setCache } from '../utils/cache.js';
@@ -14,9 +15,29 @@ export const getSubcategories = asyncHandler(async (req, res) => {
   }
 
   const filter = category ? { category } : {};
-  const subcategories = await Subcategory.find(filter)
+  let subcategories = await Subcategory.find(filter)
     .populate('category', 'name slug')
-    .sort({ name: 1 });
+    .sort({ name: 1 })
+    .lean();
+
+  // Attach a product image to each subcategory
+  const subcategoryIds = subcategories.map(s => s._id);
+  
+  const productImages = await Product.aggregate([
+    { $match: { subcategory: { $in: subcategoryIds } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: "$subcategory", image: { $first: "$image" }, images: { $first: "$images" } } }
+  ]);
+
+  const imageMap = {};
+  productImages.forEach(p => {
+    imageMap[p._id.toString()] = p.image || (p.images && p.images[0]) || null;
+  });
+
+  subcategories = subcategories.map(sub => ({
+    ...sub,
+    image: imageMap[sub._id.toString()] || null
+  }));
 
   // Cache subcategories for 1 hour (3600 seconds)
   setCache(cacheKey, subcategories, 3600);

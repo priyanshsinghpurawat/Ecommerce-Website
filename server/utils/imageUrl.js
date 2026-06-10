@@ -23,7 +23,7 @@ export function normalizeImageUrl(image) {
   }
   
   // If it's just a filename that exists in assets
-  if (trimmed.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i)) {
+  if (trimmed.match(/\.(jpg|jpeg|png|webp|avif|gif|svg)$/i)) {
     return `/assets/${trimmed}`;
   }
 

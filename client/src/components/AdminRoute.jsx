@@ -9,8 +9,8 @@ export const AdminRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-lux-50/10">
-        <Loader2 className="h-8 w-8 animate-spin text-lux-dark" />
+      <div className="flex h-screen w-screen items-center justify-center bg-surface-50/10">
+        <Loader2 className="h-8 w-8 animate-spin text-app-text" />
       </div>
     );
   }

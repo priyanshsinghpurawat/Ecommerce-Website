@@ -40,3 +40,6 @@ MEMORY_*.md
 
 # Server specific
 server/public/
+
+.gemini/
+gha-creds-*.json

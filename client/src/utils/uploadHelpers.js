@@ -2,7 +2,7 @@
  * Frontend upload helpers — preview URLs, size guards, FormData assembly.
  */
 const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 
 export const validateImage = (file) => {
   if (!file) return 'No file';

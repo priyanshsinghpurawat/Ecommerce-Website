@@ -125,10 +125,10 @@ export const Register = () => {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-white/80 bg-lux-50/80 p-8 shadow-xl backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-white/80 bg-surface-50/80 p-8 shadow-xl backdrop-blur-sm">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-lux-dark">Create account</h2>
-          <p className="mt-2 text-sm text-lux-dark/60">
+          <h2 className="text-2xl font-bold text-app-text">Create account</h2>
+          <p className="mt-2 text-sm text-app-text/60">
             Takes a minute. Then you can checkout and track orders.
           </p>
         </div>
@@ -156,16 +156,16 @@ export const Register = () => {
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-lux-200"></div>
+            <div className="w-full border-t border-surface-200"></div>
           </div>
           <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
-            <span className="bg-lux-50 px-3 text-lux-dark/30">Or fill details</span>
+            <span className="bg-surface-50 px-3 text-app-text/30">Or fill details</span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-lux-dark">
+            <label htmlFor="name" className="mb-1 block text-sm font-medium text-app-text">
               Name
             </label>
             <input
@@ -174,8 +174,8 @@ export const Register = () => {
               autoComplete="name"
               disabled={isLoading}
               {...register('name')}
-              className={`w-full rounded-lg border bg-lux-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
-                errors.name ? 'border-error focus:border-error' : 'border-lux-200 focus:border-lux-primary'
+              className={`w-full rounded-lg border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
+                errors.name ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
               }`}
               placeholder="Priya Sharma"
             />
@@ -188,7 +188,7 @@ export const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-lux-dark">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-app-text">
               Email
             </label>
             <input
@@ -197,8 +197,8 @@ export const Register = () => {
               autoComplete="email"
               disabled={isLoading}
               {...register('email')}
-              className={`w-full rounded-lg border bg-lux-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
-                errors.email ? 'border-error focus:border-error' : 'border-lux-200 focus:border-lux-primary'
+              className={`w-full rounded-lg border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
+                errors.email ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
               }`}
               placeholder="you@example.com"
             />
@@ -211,7 +211,7 @@ export const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-lux-dark">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-app-text">
               Password
             </label>
             <div className="relative">
@@ -222,15 +222,15 @@ export const Register = () => {
                 disabled={isLoading}
                 onKeyDown={handleKeyDown}
                 {...register('password')}
-                className={`w-full rounded-lg border bg-lux-50 pl-3 pr-10 py-2.5 text-sm focus:outline-none transition-colors ${
-                  errors.password ? 'border-error focus:border-error' : 'border-lux-200 focus:border-lux-primary'
+                className={`w-full rounded-lg border bg-surface-50 pl-3 pr-10 py-2.5 text-sm focus:outline-none transition-colors ${
+                  errors.password ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
                 }`}
                 placeholder="At least 6 characters"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-lux-dark/40 hover:text-lux-dark"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text/40 hover:text-app-text"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -245,10 +245,10 @@ export const Register = () => {
             {/* Password Strength Indicator */}
             {passwordValue && (
               <div className="mt-2 space-y-1">
-                <div className="flex justify-between text-xs font-semibold text-lux-dark/60">
+                <div className="flex justify-between text-xs font-semibold text-app-text/60">
                   <span>Strength: {getStrengthLabel(strengthScore)}</span>
                 </div>
-                <div className="h-1.5 w-full bg-lux-200 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-surface-200 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${getStrengthColor(strengthScore)}`}
                     style={{ width: `${(strengthScore / 4) * 100}%` }}
@@ -268,15 +268,15 @@ export const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-lux-dark py-3 text-sm font-semibold text-black hover:bg-lux-dark-hover disabled:opacity-50 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-app-text py-3 text-sm font-semibold text-black hover:bg-app-text-hover disabled:opacity-50 transition-colors"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-lux-dark/60">
+        <p className="mt-6 text-center text-sm text-app-text/60">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-lux-dark hover:underline">
+          <Link to="/login" className="font-semibold text-app-text hover:underline">
             Sign in
           </Link>
         </p>

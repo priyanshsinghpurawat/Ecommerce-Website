@@ -191,35 +191,35 @@ export default function AddEditProduct() {
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main form */}
         <div className="lg:col-span-2 space-y-6">
-          <section className="bg-lux-card border border-border rounded-xl p-5 space-y-4 shadow-soft">
+          <section className="bg-app-card border border-border rounded-xl p-5 space-y-4 shadow-soft">
             <h2 className="font-semibold">Basics</h2>
             <div>
               <label className="text-sm font-medium">Title</label>
-              <input {...register('title')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary" />
+              <input {...register('title')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary" />
               {errors.title && <p className="text-xs text-error mt-1">{errors.title.message}</p>}
             </div>
             <div>
               <label className="text-sm font-medium">Description</label>
-              <textarea rows={4} {...register('description')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary" />
+              <textarea rows={4} {...register('description')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary" />
               {errors.description && <p className="text-xs text-error mt-1">{errors.description.message}</p>}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-sm font-medium">Price (₹)</label>
-                <input type="number" step="0.01" {...register('price')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary" />
+                <input type="number" step="0.01" {...register('price')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary" />
                 {errors.price && <p className="text-xs text-error mt-1">{errors.price.message}</p>}
               </div>
               <div>
                 <label className="text-sm font-medium">Discounted</label>
-                <input type="number" step="0.01" {...register('discountedPrice')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary" />
+                <input type="number" step="0.01" {...register('discountedPrice')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary" />
               </div>
               <div>
                 <label className="text-sm font-medium">Stock</label>
-                <input type="number" {...register('stock')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary" />
+                <input type="number" {...register('stock')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary" />
               </div>
               <div>
                 <label className="text-sm font-medium">Badge</label>
-                <select {...register('badge')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary">
+                <select {...register('badge')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary">
                   <option value="">None</option>
                   <option value="new-arrival">New arrival</option>
                   <option value="sale">Sale</option>
@@ -230,7 +230,7 @@ export default function AddEditProduct() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-sm font-medium">Category</label>
-                <select {...register('category')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary">
+                <select {...register('category')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary">
                   <option value="">Select category</option>
                   {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
                 </select>
@@ -238,7 +238,7 @@ export default function AddEditProduct() {
               </div>
               <div>
                 <label className="text-sm font-medium">Subcategory</label>
-                <select {...register('subcategory')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary">
+                <select {...register('subcategory')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary">
                   <option value="">Select subcategory</option>
                   {subcategories.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
                 </select>
@@ -246,7 +246,7 @@ export default function AddEditProduct() {
               </div>
               <div>
                 <label className="text-sm font-medium">Gender</label>
-                <select {...register('gender')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-lux-bg text-lux-dark focus:outline-none focus:border-lux-primary">
+                <select {...register('gender')} className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-app-bg text-app-text focus:outline-none focus:border-brand-primary">
                   <option value="men">Men</option>
                   <option value="unisex">Unisex</option>
                 </select>
@@ -254,7 +254,7 @@ export default function AddEditProduct() {
             </div>
           </section>
 
-          <section className="bg-lux-card border border-border rounded-xl p-5 space-y-3 shadow-soft">
+          <section className="bg-app-card border border-border rounded-xl p-5 space-y-3 shadow-soft">
             <div>
               <h2 className="font-semibold">Product gallery</h2>
               <p className="text-xs text-muted-foreground">First image is the cover. Drag thumbnails to reorder.</p>
@@ -262,15 +262,15 @@ export default function AddEditProduct() {
             <ImageDropzone value={gallery} onChange={setGallery} maxFiles={10} />
           </section>
 
-          <section className="bg-lux-card border border-border rounded-xl p-5 shadow-soft">
+          <section className="bg-app-card border border-border rounded-xl p-5 shadow-soft">
             <VariantEditor value={variants} onChange={setVariants} />
           </section>
         </div>
 
         {/* Sticky preview + submit */}
         <aside className="space-y-4 lg:sticky lg:top-20 self-start">
-          <div className="bg-lux-card border border-border rounded-xl overflow-hidden shadow-soft">
-            <div className="aspect-[4/5] bg-lux-panel relative">
+          <div className="bg-app-card border border-border rounded-xl overflow-hidden shadow-soft">
+            <div className="aspect-[4/5] bg-app-panel relative">
               {preview.cover ? (
                 <img src={preview.cover} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -305,7 +305,7 @@ export default function AddEditProduct() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full inline-flex items-center justify-center gap-2 bg-lux-primary text-black py-2.5 rounded-md font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-60 transition-all shadow-md"
+            className="w-full inline-flex items-center justify-center gap-2 bg-brand-primary text-black py-2.5 rounded-md font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-60 transition-all shadow-md"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isEdit ? 'Save changes' : 'Create product'}
@@ -313,7 +313,7 @@ export default function AddEditProduct() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="w-full py-2.5 rounded-md border border-border text-sm font-bold uppercase tracking-wider hover:bg-lux-panel text-lux-dark transition-all"
+            className="w-full py-2.5 rounded-md border border-border text-sm font-bold uppercase tracking-wider hover:bg-app-panel text-app-text transition-all"
           >
             Cancel
           </button>

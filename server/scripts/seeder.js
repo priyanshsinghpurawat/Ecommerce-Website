@@ -13,57 +13,288 @@ dotenv.config();
 const catalog = [
   {
     category: 'Clothing',
-    subcategories: [
-      'T-Shirts',
-      'Shirts',
-      'Pants',
-      'Jeans',
-      'Shorts',
-      'Hoodies',
-      'Sportswear',
-      'Track Pants',
-      'Streetwear'
-    ],
+    subcategories: ['T-Shirts', 'Shirts', 'Pants', 'Jeans', 'Streetwear', 'Linen', 'cargo'],
     products: [
-      { sub: 'Streetwear', title: 'Graffiti Oversized Hoodie', desc: 'Hand-painted effect, ultra-heavy fleece.', price: 3499, sale: 2799, stock: 15, img: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1974&auto=format&fit=crop', badge: 'street-drip' },
-      { sub: 'Streetwear', title: 'Cyberpunk Cargo Joggers', desc: 'Multi-strap utility, tech-wear aesthetic.', price: 2999, sale: 2299, stock: 20, img: 'mens_pants.png', badge: 'street-drip' },
-      { sub: 'Streetwear', title: 'Neon Stitch Utility Vest', desc: 'Reflective details, 4-pocket layout.', price: 1899, sale: 1499, stock: 12, img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=2072&auto=format&fit=crop', badge: 'street-drip' },
-      { sub: 'Streetwear', title: 'Distressed Patchwork Jeans', desc: 'Raw hems, custom distressing.', price: 2499, sale: 1999, stock: 18, img: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1926&auto=format&fit=crop', badge: 'street-drip' },
-      { sub: 'T-Shirts', title: 'Oversized Graphic Tee — Black', desc: '240 GSM cotton, relaxed fit.', price: 599, sale: 449, stock: 40, img: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'T-Shirts', title: 'Striped Polo — Navy', desc: 'Breathable pique knit.', price: 799, sale: 649, stock: 30, img: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=2030&auto=format&fit=crop' },
-      { sub: 'T-Shirts', title: 'Minimal Logo Tee — White', desc: 'Soft combed cotton, regular fit.', price: 499, sale: 399, stock: 55, img: 'mens_shirt.png' },
-      { sub: 'T-Shirts', title: 'Tie-Dye Street Tee — Blue', desc: 'Vibrant wash, dropped shoulders.', price: 699, sale: 549, stock: 28, img: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=1914&auto=format&fit=crop' },
-      { sub: 'T-Shirts', title: 'Vintage Oversized Tee', desc: 'Heavyweight cotton, vintage wash.', price: 1299, sale: 899, stock: 15, img: 'andres-jasso-PqbL_mxmaUE-unsplash.jpg', badge: 'new-arrival' },
-      { sub: 'Shirts', title: 'Cuban Collar Shirt — blue', desc: 'Lightweight linen blend.', price: 999, sale: 0, stock: 25, img: 'blue cuban collar shirt.png', extraImgs: ['blue shirt back.png'] },
-      { sub: 'Shirts', title: 'Oxford Button-Down — Sky', desc: 'Crisp weave, campus-ready.', price: 1899, sale: 1749, stock: 9000, img: 'Pleated suit.jpg' },
-      { sub: 'Shirts', title: 'Linen Resort Shirt — Beige', desc: 'Airflow weave for summer.', price: 1099, sale: 899, stock: 20, img: 'https://images.unsplash.com/photo-1598033129183-c4f50c7176c8?q=80&w=2070&auto=format&fit=crop' },
-      { sub: 'Shirts', title: 'Multicolour Printed Checks Shirt', desc: 'Relaxed drop shoulder plaid flannel checks shirt in olive, rust & cream pattern. Crafted from premium breathable cotton, styled with dual utility chest pockets.', price: 2799, sale: 1199, stock: 28, badge: 'street-drip', rating: 4.7, reviews: 21, img: 'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=1974&auto=format&fit=crop', extraImgs: [
-        'https://images.unsplash.com/photo-1617114919297-3c8ddb01f599?q=80&w=1974&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=1970&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=1976&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1617113930975-f9c7243ae527?q=80&w=1974&auto=format&fit=crop'
-      ] },
-      { sub: 'Shirts', title: 'Charcoal Black Checks Structured Shirt', desc: 'Bold block checks, structured collar. Layer over a white tee.', price: 2199, sale: 1199, stock: 22, badge: 'new-arrival', rating: 4.9, reviews: 15, img: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'Shirts', title: 'Mustard Brushed Checks Shirt', desc: 'Soft brushed flannel in mustard & black grid.', price: 2199, sale: 999, stock: 30, badge: 'sale', rating: 4.9, reviews: 16, img: 'https://images.unsplash.com/photo-1611312449412-6cefac56399c?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'Pants', title: 'Tailored Chino — Tan', desc: 'Slim taper, stretch waist.', price: 1199, sale: 999, stock: 35, img: 'mens_pants.png' },
-      { sub: 'Pants', title: 'Pleated Dress Pant — Charcoal', desc: 'Clean drape, school-formal ready.', price: 1399, sale: 1149, stock: 22, img: 'Pleated Dress Pant.jpg', badge: 'new-arrival', rating: 4.7, reviews: 21 },
-      { sub: 'Jeans', title: 'Slim Stretch Jeans — Indigo', desc: '2% elastane comfort.', price: 1299, sale: 999, stock: 35, img: 'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1926&auto=format&fit=crop' },
-      { sub: 'Shorts', title: 'Cargo Shorts — Khaki', desc: '6-pocket utility fit.', price: 899, sale: 699, stock: 32, img: 'tuananh-blue-xa8hkIGTTf8-unsplash.jpg' },
-      { sub: 'Hoodies', title: 'Zip-Up Hoodie — Charcoal', desc: 'Fleece-lined street essential.', price: 1499, sale: 1199, stock: 28, img: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'Sportswear', title: 'Dry-Fit Training Tee — Red', desc: 'Moisture-wick mesh panels.', price: 649, sale: 499, stock: 45, img: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'Track Pants', title: 'Tapered Track Pant — Navy', desc: 'Zip pockets, rib cuffs.', price: 999, sale: 799, stock: 36, img: 'https://images.unsplash.com/photo-1580902311832-514f07ad33c8?q=80&w=1974&auto=format&fit=crop' }
+      {
+        sub: 'T-Shirts',
+        title: 'Essential White Oversized Tee',
+        desc: 'Premium 240 GSM heavy cotton with a relaxed drop-shoulder fit. The ultimate street-style basic.',
+        price: 1499,
+        sale: 999,
+        stock: 50,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780560349/Screenshot_4-6-2026_133356_in.puma.com_znzchb.jpg',
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780560349/Screenshot_4-6-2026_133410_in.puma.com_h6ffoz.jpg'],
+        badge: 'new-arrival',
+        rating: 4.8,
+        reviews: 120,
+        variants: [{ size: 'S', color: 'White', stock: 15, sku: 'TS-WHT-S' }]
+      },
+      {
+        sub: 'T-Shirts',
+        title: 'Midnight Black Graphic Tee',
+        desc: 'Soft-touch combed cotton with high-density screen print on the back.',
+        price: 1699,
+        sale: 1299,
+        stock: 40,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074036/1713961601_3287348_z7rvi9.avif',
+        rating: 4.5,
+        reviews: 85,
+        variants: [{ size: 'M', color: 'Black', stock: 20, sku: 'TS-BLK-M' }]
+      },
+      {
+        sub: 'Shirts',
+        title: 'Linen Resort Shirt — Sage',
+        desc: 'Breathable linen-cotton blend. Perfect for summer days and vacation vibes.',
+        price: 2499,
+        sale: 1899,
+        stock: 30,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073624/1731995063_3156808_i9pamp.avif',
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073633/1731995063_5853795_lndv5i.avif'],
+        badge: 'sale',
+        rating: 4.2,
+        reviews: 45,
+        variants: [{ size: 'L', color: 'Sage', stock: 10, sku: 'SH-SGE-L' }]
+      },
+      {
+        sub: 'Shirts',
+        title: 'Cotton Linen: Light Mauve',
+        desc: 'Cotton Linen Shirts versatile enough for work or casual settings.',
+        price: 2899,
+        stock: 35,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073624/1731995063_3156808_i9pamp.avif',
+        rating: 4.7,
+        reviews: 60,
+        variants: [{ size: 'M', color: 'Blue', stock: 15, sku: 'SH-OX-BLU' }]
+      },
+      {
+        sub: 'Pants',
+        title: 'Chino Slim Trousers',
+        desc: 'Stretch cotton-twill chinos in a modern slim fit.',
+        price: 2299,
+        sale: 1999,
+        stock: 35,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078161/1776160930_1162861_q03uav.avif',
+        rating: 4.4,
+        reviews: 92,
+        variants: [{ size: '32', color: 'Khaki', stock: 20, sku: 'PN-CH-KH' }]
+      },
+      {
+        sub: 'Pants',
+        title: 'Formal office wear pants',
+        desc: 'formal office wear pants.',
+        price: 3299,
+        sale: 1999,
+        stock: 30,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780299542/Limario_Rio_rgiqom.jpg',
+        img2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780299541/download_l2tlc4.jpg',
+        badge: 'limited-edition',
+        rating: 4.6,
+        reviews: 110,
+        variants: [{ size: '32', color: 'Blue', stock: 15, sku: 'PN-DN-BLU' }]
+      },
+      {
+        sub: 'Jeans',
+        title: 'Black Slim Denim',
+        desc: 'Clean, versatile black denim, essential for any wardrobe.',
+        price: 2999,
+        sale: 0,
+        stock: 40,
+        img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800',
+        rating: 4.5,
+        reviews: 75,
+        variants: [{ size: '34', color: 'Black', stock: 20, sku: 'PN-DN-BLK' }]
+      },
+      {
+        sub: 'Streetwear',
+        title: 'Urban Utility Cargo Pants',
+        desc: 'Multi-pocket design with reinforced stitching.',
+        price: 3499,
+        sale: 2799,
+        stock: 25,
+        img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800',
+        badge: 'street-drip',
+        rating: 4.9,
+        reviews: 150,
+        variants: [{ size: '32', color: 'Black', stock: 10, sku: 'PN-CRG-BLK' }]
+      },
+      {
+        sub: 'Shirts',
+        title: 'Vintage Plaid Overshirt',
+        desc: 'Classic vintage plaid pattern, soft cotton blend, oversized fit.',
+        price: 2499,
+        sale: 1999,
+        stock: 20,
+        img: 'https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800',
+        badge: 'street-drip',
+        rating: 4.6,
+        reviews: 25,
+        variants: [{ size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU' }]
+      },
+      {
+        sub: 'Streetwear',
+        title: 'Neon Stitch Utility Vest',
+        desc: 'Water-resistant tactical vest with neon accents.',
+        price: 2999,
+        sale: 1799,
+        stock: 15,
+        img: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800',
+        badge: 'limited-edition',
+        rating: 4.8,
+        reviews: 40,
+        variants: [{ size: 'M', color: 'Neon Black', stock: 8, sku: 'VT-NST-M' }]
+      },
+      {
+        sub: 'Linen',
+        title: 'Premium Pink Linen Shirt',
+        desc: 'Relaxed fit, pure organic linen shirt. Light, breathable, and styled for effortless summer comfort.',
+        price: 2999,
+        sale: 1999,
+        stock: 30,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074252/lightpink_e3zhzx.avif',
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074253/1779703404_2796734_h243zv.avif'],
+        badge: 'new-arrival',
+        variants: [
+          { size: 'M', color: 'Pink', stock: 15, sku: 'LN-PNK-M' },
+          { size: 'L', color: 'Pink', stock: 15, sku: 'LN-PNK-L' }
+        ]
+      },
+      {
+        sub: 'Streetwear',
+        title: 'Oversized Acid Wash Tee',
+        desc: 'Vintage acid wash finish with drop shoulders and a heavy vintage feel.',
+        price: 1999,
+        sale: 1499,
+        stock: 45,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074257/ac_t3islz.avif',
+        extraImgs: [
+          'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074255/acidgreen_axuirf.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/i_v9qslc.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/acid_ixbr2q.avif',
+        ],
+        badge: 'street-drip',
+        rating: 4.7,
+        reviews: 58,
+        variants: [{ size: 'L', color: 'Grey', stock: 15, sku: 'SW-AW-GRY' }]
+      },
+      {
+        sub: 'Streetwear',
+        title: 'Cyberpunk Tech Jacket',
+        desc: 'Reflective panels and waterproof fabric. Built for the dystopian streets.',
+        price: 5999,
+        sale: 4499,
+        stock: 12,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078662/1772696574_8564664_zzldxf.avif',
+        img2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078679/1772279583_4098767_hezzsd.avif',
+        img3: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078664/1772279583_3693413_i9ome5.avif',
+        img4: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078662/1772696574_8564664_zzldxf.avif',
+        badge: 'street-drip',
+        rating: 4.9,
+        reviews: 24,
+        variants: [{ size: 'M', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB' }]
+      },
+      {
+        sub: 'Linen',
+        title: 'Classic White Linen Shirt',
+        desc: 'Tailored from premium breathable linen. Easy regular fit with classic collar.',
+        price: 2799,
+        sale: 1899,
+        stock: 25,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984919/mensvibe/products/1739601040_8064076.avif',
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984921/mensvibe/products/1739601040_1918057.avif'],
+        badge: 'limited-edition',
+        variants: [
+          { size: 'M', color: 'White', stock: 15, sku: 'LN-WHT-M' },
+          { size: 'L', color: 'White', stock: 10, sku: 'LN-WHT-L' }
+        ]
+      },
+      {
+        _id: '6a27ed6aad7d78cd89ec2266',
+        sub: 'Shirts',
+        title: 'Vintage Plaid Overshirt',
+        desc: 'Classic vintage plaid pattern, soft cotton blend, oversized fit.',
+        price: 999.01,
+        sale: 0,
+        stock: 10,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/v1781001456/mensvibe/products/1764660274_2193914.avif',
+        extraImgs: [
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781001456/mensvibe/products/1764660274_2193914.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781001457/mensvibe/products/1764057049_4505939.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781001455/mensvibe/products/1736491521_4978820.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781001456/mensvibe/products/1736491521_4981170.avif'
+        ],
+        badge: 'street-drip',
+        rating: 4.6,
+        reviews: 25,
+        variants: []
+      },
+      {
+        _id: '6a27ebfaad7d78cd89ec2128',
+        sub: 'T-Shirts',
+        title: 'superman vintage black T-shirt',
+        desc: 'genz t shirt',
+        price: 999,
+        sale: 0,
+        stock: 10,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/v1780995557/mensvibe/products/Supermanvintage.avif',
+        extraImgs: [
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1780995557/mensvibe/products/Supermanvintage.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1780995556/mensvibe/products/1746297227_6892711.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1780995556/mensvibe/products/1762941550_7886104.avif'
+        ],
+        badge: 'street-drip',
+        rating: 4.8,
+        reviews: 120,
+        variants: []
+      },
+      {
+        _id: '6a27e842ad7d78cd89ec1f43',
+        sub: 'cargo',
+        title: 'Dark Grey Men Cargo',
+        desc: 'Pants Material & Care: 98% Cotton 2% Elastane Machine Wash Multi-pocket design with reinforced stitching.',
+        price: 900,
+        sale: 0,
+        stock: 10,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/v1781000255/mensvibe/products/1757075251_6209198.avif',
+        extraImgs: [
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781000255/mensvibe/products/1757075251_6209198.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/v1781000257/mensvibe/products/1757075251_7195043.avif'
+        ],
+        badge: 'street-drip',
+        rating: 4.9,
+        reviews: 150,
+        variants: [
+          {
+            color: 'Grey',
+            size: '32',
+            sku: 'PN-CRG-GRY-32',
+            stock: 10,
+            price: 900,
+            images: [
+              'https://res.cloudinary.com/decppyzuk/image/upload/v1781000255/mensvibe/products/1757075251_6209198.avif'
+            ]
+          }
+        ]
+      }
     ]
   },
   {
     category: 'Footwear',
-    subcategories: ['Sneakers', 'Sports Shoes', 'Casual Shoes', 'Sandals', 'Slippers'],
+    subcategories: ['Sneakers', 'Boots', 'Sports'],
     products: [
-      { sub: 'Sneakers', title: 'Street Runner — White/Red', desc: 'Mesh upper, EVA cushion.', price: 1999, sale: 1599, stock: 22, img: 'mens_sneakers.png' },
-      { sub: 'Sneakers', title: 'High-Top Sneaker — Black', desc: 'Ankle support, vulcanized sole.', price: 2499, sale: 1999, stock: 18, img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop' },
-      { sub: 'Sneakers', title: 'Chunky Dad Sneaker — Grey', desc: 'Bold sole, everyday flex.', price: 2199, sale: 1799, stock: 20, img: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop' },
-      { sub: 'Sports Shoes', title: 'Running Shoe — Volt', desc: 'Lightweight, responsive foam.', price: 2799, sale: 2299, stock: 16, img: 'https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=2071&auto=format&fit=crop' },
-      { sub: 'Slippers', title: 'Home Flip-Flop — Grey', desc: 'Soft rubber, ergonomic strap.', price: 299, sale: 249, stock: 60, img: 'home_flipflop_grey.png' }
-
+      {
+        sub: 'Sneakers',
+        title: 'Retro Court Sneakers',
+        desc: 'Genuine leather upper with a classic silhouette. Timeless appeal.',
+        price: 5499,
+        sale: 4499,
+        stock: 15,
+        img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=2000&auto=format&fit=crop',
+        variants: [
+          { size: '8', color: 'White', stock: 5, sku: 'SK-WHT-8' },
+          { size: '9', color: 'White', stock: 5, sku: 'SK-WHT-9' },
+          { size: '10', color: 'White', stock: 5, sku: 'SK-WHT-10' }
+        ]
+      }
     ]
   }
 ];
@@ -104,7 +335,7 @@ const seed = async () => {
       password: 'adminpassword',
       role: 'admin',
       // ... rest of admin data ...
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1974&auto=format&fit=crop',
+      avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780309000/dp_hero_casual_mpyrys.png',
       addresses: [{
         fullName: 'Vibe Admin',
         phone: '9876543210',
@@ -142,7 +373,7 @@ const seed = async () => {
       email: 'nike@mensvibe.in',
       password: 'sellerpassword',
       role: 'seller',
-      avatar: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
+      avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780309000/dp_hero_casual_mpyrys.png',
       addresses: [{
         fullName: 'Nike Authorized',
         phone: '9876543212',
@@ -160,7 +391,7 @@ const seed = async () => {
       email: 'demo@mensvibe.in',
       password: 'demopassword',
       role: 'user',
-      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1974&auto=format&fit=crop',
+      avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1779082514/samples/people/boy-snow-hoodie.jpg',
       addresses: [{
         fullName: 'Regular Customer',
         phone: '9876543213',
@@ -185,13 +416,15 @@ const seed = async () => {
 
       for (const p of block.products) {
         await Product.create({
+          _id: p._id || undefined,
           title: p.title,
           description: p.desc,
           price: p.price,
           discountedPrice: p.sale > 0 ? p.sale : null,
           stock: p.stock,
-          image: p.img,
+          image: p.img || undefined,
           images: p.extraImgs || [],
+          variants: p.variants || [],
           category: cat._id,
           subcategory: subIds[`${block.category}:${p.sub}`],
           seller: block.category === 'Footwear' ? nikeSeller._id : sellerUser._id,

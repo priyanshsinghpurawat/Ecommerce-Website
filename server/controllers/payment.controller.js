@@ -66,6 +66,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
       user: req.user._id,
       items: built.orderItems,
       subtotal: built.subtotal,
+      taxAmount: built.taxAmount,
       discountAmount: built.discountAmount,
       total: built.total,
       couponCode: built.appliedCouponCode,

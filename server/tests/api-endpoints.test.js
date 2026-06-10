@@ -278,7 +278,7 @@ describe('4. Cart & Checkout (Complex Flows)', () => {
       })
       .expect(201);
 
-    assert.equal(orderRes.body.data.total, 900, 'Price should be 1000 - 100 coupon');
+    assert.equal(orderRes.body.data.total, 1062, 'Price should be (1000 - 100) + 18% tax');
     
     // 3. Verify side effects
     const updatedProduct = await Product.findById(product._id);

@@ -8,8 +8,8 @@ export const SellerRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-lux-50">
-        <Loader2 className="h-10 w-10 animate-spin text-lux-primary" />
+      <div className="flex h-screen items-center justify-center bg-surface-50">
+        <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
       </div>
     );
   }

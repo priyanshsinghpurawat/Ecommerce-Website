@@ -69,11 +69,12 @@ function App() {
                 <Toaster
                   position="top-right"
                   toastOptions={{
-                    className: 'font-sans text-sm border border-lux-200 shadow-xl',
+                    duration: 2000, // Make toast notifications snappy (2s)
+                    className: 'font-sans text-sm border border-surface-200 shadow-xl',
                     style: {
                       borderRadius: '12px',
-                      background: 'var(--color-lux-card)',
-                      color: 'var(--color-lux-dark)',
+                      background: 'var(--color-app-card)',
+                      color: 'var(--color-app-text)',
                     },
                   }}
                 />

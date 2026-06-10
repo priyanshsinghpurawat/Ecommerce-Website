@@ -20,7 +20,7 @@ export const Home = () => {
   const { products, loading, fetchProducts } = useProducts();
   const { categories, fetchCategories } = useCategories();
   const [subcategories, setSubcategories] = useState([]);
-  const [sportswear, setSportswear] = useState([]);
+  const [linen, setLinen] = useState([]);
   const [pants, setPants] = useState([]);
   const [saleProducts, setSaleProducts] = useState([]);
   const [loadingSections, setLoadingSections] = useState(true);
@@ -61,15 +61,15 @@ export const Home = () => {
     const loadSections = async () => {
       setLoadingSections(true);
       try {
-        const sportId = subBySlug.sportswear?._id;
+        const linenId = subBySlug.linen?._id;
         const pantsId = subBySlug.pants?._id;
         const tasks = [];
-        if (sportId) {
+        if (linenId) {
           tasks.push(
             productService
-              .getProducts({ subcategory: sportId, limit: 5 })
-              .then((res) => setSportswear(res?.data?.products || []))
-              .catch(() => setSportswear([]))
+              .getProducts({ subcategory: linenId, limit: 5 })
+              .then((res) => setLinen(res?.data?.products || []))
+              .catch(() => setLinen([]))
           );
         }
         if (pantsId) {
@@ -94,8 +94,8 @@ export const Home = () => {
   ).filter(Boolean);
 
   return (
-    <div className="space-y-12 md:space-y-16 pb-20 -mx-4 md:-mx-0">
-      <div className="px-0 md:px-0">
+    <div className="space-y-12 md:space-y-16 pb-20">
+      <div className="-mx-4 md:mx-0">
         <HeroCarousel />
       </div>
 
@@ -105,38 +105,41 @@ export const Home = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={fadeInUp}
-        className="px-4 md:px-0 space-y-4"
+        className="px-0 space-y-4"
       >
         <div className="flex items-center gap-2">
-          <Flame className="h-4 w-4 text-lux-primary" />
+          <Flame className="h-4 w-4 text-brand-primary" />
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] gradient-primary gradient-text">
             Trending now
           </h2>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           <Link
             to="/shop?sort=latest"
-            className="shrink-0 rounded-full border border-lux-dark bg-lux-dark px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-lux-bg hover:opacity-90 transition-all shadow-lg shadow-lux-dark/10"
+            className="shrink-0 flex items-center gap-2 rounded-2xl border border-app-text bg-app-text px-6 py-3 text-[10px] font-black uppercase tracking-widest text-app-bg hover:opacity-90 transition-all shadow-lg shadow-app-text/10"
           >
+            <Sparkles className="h-3.5 w-3.5 text-brand-primary" />
             New arrivals
           </Link>
           {featuredSubs.map((sub) => (
             <Link
               key={sub._id}
               to={`/shop?subcategory=${sub._id}`}
-              className="shrink-0 rounded-full border border-border-base bg-lux-100 px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-lux-dark hover:border-lux-primary hover:text-lux-primary transition-all shadow-sm"
+              className="shrink-0 flex items-center gap-2 rounded-2xl border border-border-base bg-surface-100 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-app-text hover:border-brand-primary hover:text-brand-primary transition-all shadow-sm"
             >
               {sub.name}
             </Link>
           ))}
           <Link
             to="/shop"
-            className="shrink-0 rounded-full border-2 border-dashed border-border-base px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-muted hover:border-lux-primary hover:text-lux-primary transition-all"
+            className="shrink-0 flex items-center gap-2 rounded-2xl border-2 border-dashed border-border-base px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted hover:border-brand-primary hover:text-brand-primary transition-all"
           >
-            Shop all
+            Explore All
           </Link>
         </div>
       </motion.section>
+
+      <div className="section-divider" />
 
       {/* Promo strip */}
       <motion.div 
@@ -144,7 +147,7 @@ export const Home = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
         variants={fadeInUp}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-4 md:px-0"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0"
       >
         {[
           { icon: Sparkles, label: 'Free shipping', text: 'On all orders across India' },
@@ -153,18 +156,20 @@ export const Home = () => {
         ].map(({ icon: Icon, label, text }) => (
           <div
             key={label}
-            className="flex items-center gap-4 rounded-[2rem] border border-border-base bg-lux-100 p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
+            className="flex items-center gap-4 rounded-[2rem] border border-border-base bg-surface-100 p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lux-dark text-lux-primary shadow-lg transition-transform group-hover:scale-110">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-app-text text-brand-primary shadow-lg transition-transform group-hover:scale-110">
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-lux-dark">{label}</p>
+              <p className="text-[11px] font-black uppercase tracking-widest text-app-text">{label}</p>
               <p className="text-[10px] text-muted font-bold uppercase tracking-tight mt-0.5">{text}</p>
             </div>
           </div>
         ))}
       </motion.div>
+
+      <div className="section-divider" />
 
       {/* Category banners */}
       <motion.section 
@@ -172,10 +177,10 @@ export const Home = () => {
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         variants={fadeInUp}
-        className="px-4 md:px-0 space-y-6"
+        className="px-0 space-y-6"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black uppercase tracking-tighter text-lux-dark">The Collections</h2>
+          <h2 className="text-2xl font-black uppercase tracking-tighter text-app-text">The Collections</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {categories.map((cat) => {
@@ -190,11 +195,11 @@ export const Home = () => {
                   src={banner.image}
                   alt={cat.name}
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                 <div className="absolute bottom-7 left-7">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-lux-primary mb-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary mb-1">
                     {banner.tagline}
                   </p>
                   <span className="text-3xl font-black text-white uppercase italic tracking-tighter">{cat.name}</span>
@@ -205,12 +210,14 @@ export const Home = () => {
         </div>
       </motion.section>
 
+      <div className="section-divider" />
+
       <motion.div 
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         variants={fadeInUp}
-        className="px-4 md:px-0"
+        className="px-0"
       >
         <ProductShowcase
           title="New drops"
@@ -227,7 +234,7 @@ export const Home = () => {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeInUp}
-          className="px-4 md:px-0"
+          className="px-0"
         >
           <ProductShowcase
             title="Flash Sale"
@@ -239,29 +246,67 @@ export const Home = () => {
         </motion.div>
       )}
 
+      {linen.length > 0 && (
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+          className="px-0"
+        >
+          <ProductShowcase
+            title="Linen Collection"
+            subtitle="Breathable, relaxed summer styles"
+            products={linen}
+            loading={loadingSections}
+            viewAllLink={subBySlug.linen?._id ? `/shop?subcategory=${subBySlug.linen._id}` : '/shop'}
+          />
+        </motion.div>
+      )}
+
+      {pants.length > 0 && (
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+          className="px-0"
+        >
+          <ProductShowcase
+            title="Premium Trousers & Pants"
+            subtitle="Tailored & cargo fits"
+            products={pants}
+            loading={loadingSections}
+            viewAllLink={subBySlug.pants?._id ? `/shop?subcategory=${subBySlug.pants._id}` : '/shop'}
+          />
+        </motion.div>
+      )}
+
+      <div className="section-divider" />
+
       {/* Full-width CTA */}
       <motion.section 
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
         variants={fadeInUp}
-        className="mx-4 md:mx-0 rounded-[3rem] bg-lux-dark border border-white/10 px-10 py-16 text-center md:text-left md:flex md:items-center md:justify-between overflow-hidden relative"
+        className="mx-0 rounded-[3rem] glass shadow-soft px-10 py-16 text-center md:text-left md:flex md:items-center md:justify-between overflow-hidden relative"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-lux-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="relative z-10">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-lux-primary italic">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary italic">
             MensVibe · Jaipur Studio
           </p>
-          <h2 className="mt-3 text-3xl md:text-4xl font-black text-lux-primary tracking-[0.4em] uppercase tracking-tighter leading-tight">
-            Redefining the <br />modern silhouette
+          <h2 className="mt-3 text-3xl md:text-4xl font-black text-app-text tracking-tighter uppercase leading-tight">
+            Redefining the <br /><span className="text-brand-primary">modern silhouette</span>
           </h2>
-          <p className="mt-4 text-sm text-lux-primary max-w-sm font-medium">
+          <p className="mt-4 text-sm text-app-text/70 max-w-sm font-medium uppercase tracking-tight">
             From experimental streetwear to artisanal footwear. Crafted for those who move differently.
           </p>
         </div>
         <Link
           to="/shop"
-          className="mt-8 md:mt-0 inline-flex rounded-2xl bg-lux-primary px-10 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-transform shadow-lg shadow-lux-primary/20 relative z-10"
+          className="mt-8 md:mt-0 inline-flex rounded-2xl bg-brand-primary px-10 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-transform shadow-lg shadow-brand-primary/20 relative z-10"
         >
           Enter Shop
         </Link>

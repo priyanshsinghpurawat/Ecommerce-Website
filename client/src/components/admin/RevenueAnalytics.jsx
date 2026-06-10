@@ -18,13 +18,13 @@ import {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-lux-panel border border-border-base p-3 rounded-xl shadow-xl backdrop-blur-md">
+      <div className="bg-app-panel border border-border-base p-3 rounded-xl shadow-xl backdrop-blur-md">
         <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-sm font-black italic text-lux-primary tracking-tighter">
+        <p className="text-sm font-black italic text-brand-primary tracking-tighter">
           ₹{payload[0].value.toLocaleString('en-IN')}
         </p>
         {payload[1] && (
-          <p className="text-[9px] font-bold text-lux-dark/60 mt-1 uppercase tracking-tighter">
+          <p className="text-[9px] font-bold text-app-text/60 mt-1 uppercase tracking-tighter">
             {payload[1].value} Orders
           </p>
         )}
@@ -57,19 +57,19 @@ const RevenueAnalytics = ({ data }) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       
       {/* 1. Main Revenue Trend (Line/Area Chart) */}
-      <div className="bg-lux-card rounded-[2.5rem] p-8 border border-border-base shadow-soft col-span-1 lg:col-span-2">
+      <div className="bg-app-card rounded-[2.5rem] p-8 border border-border-base shadow-soft col-span-1 lg:col-span-2">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest text-lux-dark italic">Revenue <span className="text-lux-primary">Analytics</span></h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-app-text italic">Revenue <span className="text-brand-primary">Analytics</span></h3>
             <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-1">Daily store performance · Last 30 Days</p>
           </div>
           <div className="flex gap-4">
              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-lux-primary shadow-[0_0_8px_rgba(193,255,0,0.5)]" />
+                <div className="w-2 h-2 rounded-full bg-brand-primary shadow-[0_0_8px_rgba(193,255,0,0.5)]" />
                 <span className="text-[9px] font-black uppercase text-muted">Revenue</span>
              </div>
              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-lux-accent-cyan shadow-[0_0_8px_rgba(0,240,255,0.5)]" />
+                <div className="w-2 h-2 rounded-full bg-accent-cyan shadow-[0_0_8px_rgba(0,240,255,0.5)]" />
                 <span className="text-[9px] font-black uppercase text-muted">Orders</span>
              </div>
           </div>
@@ -126,9 +126,9 @@ const RevenueAnalytics = ({ data }) => {
       </div>
 
       {/* 2. Top-Selling Subcategories (Bar Chart) */}
-      <div className="bg-lux-card rounded-[2.5rem] p-8 border border-border-base shadow-soft">
+      <div className="bg-app-card rounded-[2.5rem] p-8 border border-border-base shadow-soft">
         <div className="mb-6">
-          <h3 className="text-xs font-black uppercase tracking-widest text-lux-dark italic">Top <span className="text-lux-primary">Categories</span></h3>
+          <h3 className="text-xs font-black uppercase tracking-widest text-app-text italic">Top <span className="text-brand-primary">Categories</span></h3>
           <p className="text-[9px] text-muted font-bold uppercase tracking-widest mt-1">Best performing sub-niches</p>
         </div>
         <div className="h-[200px] w-full">
@@ -148,7 +148,7 @@ const RevenueAnalytics = ({ data }) => {
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-lux-panel border border-border-base px-2 py-1 rounded-lg text-[9px] font-black uppercase">
+                      <div className="bg-app-panel border border-border-base px-2 py-1 rounded-lg text-[9px] font-black uppercase">
                         ₹{payload[0].value.toLocaleString()}
                       </div>
                     );
@@ -167,9 +167,9 @@ const RevenueAnalytics = ({ data }) => {
       </div>
 
       {/* 3. Peak Ordering Hours */}
-      <div className="bg-lux-card rounded-[2.5rem] p-8 border border-border-base shadow-soft">
+      <div className="bg-app-card rounded-[2.5rem] p-8 border border-border-base shadow-soft">
         <div className="mb-6">
-          <h3 className="text-xs font-black uppercase tracking-widest text-lux-dark italic">Peak <span className="text-lux-primary">Hours</span></h3>
+          <h3 className="text-xs font-black uppercase tracking-widest text-app-text italic">Peak <span className="text-brand-primary">Hours</span></h3>
           <p className="text-[9px] text-muted font-bold uppercase tracking-widest mt-1">Customer activity heatmap</p>
         </div>
         <div className="h-[200px] w-full">
@@ -188,7 +188,7 @@ const RevenueAnalytics = ({ data }) => {
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-lux-panel border border-border-base px-2 py-1 rounded-lg text-[8px] font-black uppercase">
+                      <div className="bg-app-panel border border-border-base px-2 py-1 rounded-lg text-[8px] font-black uppercase">
                         {payload[0].value} Orders
                       </div>
                     );

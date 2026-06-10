@@ -37,14 +37,14 @@ export const createOrder = asyncHandler(async (req, res) => {
   const subtotal = computeCartSubtotal(validItems);
 
   let discountAmount = 0;
-  let total = subtotal;
+  let taxableValue = subtotal;
   let appliedCouponCode;
   let appliedCouponId;
 
   if (couponCode?.trim()) {
     const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, req.user._id);
     discountAmount = couponResult.discountAmount;
-    total = couponResult.finalTotal;
+    taxableValue = couponResult.finalTotal;
     appliedCouponCode = couponResult.code;
     
     // Find the coupon ID to increment usage
@@ -53,6 +53,9 @@ export const createOrder = asyncHandler(async (req, res) => {
       appliedCouponId = couponDoc._id;
     }
   }
+
+  const taxAmount = taxableValue * 0.18; // 18% GST
+  const total = taxableValue + taxAmount;
 
   const orderItems = validItems.map((item) => {
     const product = item.product;
@@ -94,6 +97,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       user: req.user._id,
       items: orderItems,
       subtotal,
+      taxAmount,
       discountAmount,
       total,
       coupon: appliedCouponId,

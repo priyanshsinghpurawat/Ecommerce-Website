@@ -170,7 +170,7 @@ export const createProduct = asyncHandler(async (req, res) => {
  * @access Public
  */
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search = '', category = '', subcategory = '', sort = 'latest', badge = '', seller = '' } = req.query;
+  const { page = 1, limit = 10, search = '', category = '', subcategory = '', sort = 'latest', badge = '', seller = '', minPrice = '', maxPrice = '', color = '' } = req.query;
 
   // SECURITY CHECK: 
   // We must ensure 'search' is a string. If an attacker passes an object (e.g. ?search[$gt]=), 
@@ -182,7 +182,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   // CACHING LOGIC:
   // To make the API faster, we store the result in memory (Map).
   // If the exact same request comes in again, we return the 'cached' result instantly.
-  const cacheKey = `products:page=${page}:limit=${limit}:search=${search}:cat=${category}:sub=${subcategory}:sort=${sort}:badge=${badge}:sel=${seller}`;
+  const cacheKey = `products:page=${page}:limit=${limit}:search=${search}:cat=${category}:sub=${subcategory}:sort=${sort}:badge=${badge}:sel=${seller}:minP=${minPrice}:maxP=${maxPrice}:clr=${color}`;
   const cached = getCache(cacheKey);
   if (cached) {
     return res.status(200).json(new ApiResponse(200, cached, 'Products retrieved successfully (cached)'));
@@ -193,12 +193,43 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.title = { $regex: safe, $options: 'i' };
   }
-  if (category) query.category = category;
-  if (subcategory) query.subcategory = subcategory;
-  if (badge) query.badge = badge;
+  const isValidId = (id) => typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id);
+
+  if (category && isValidId(category)) query.category = category;
+  if (subcategory && isValidId(subcategory)) query.subcategory = subcategory;
+  if (badge && badge !== 'undefined' && badge !== 'null') query.badge = badge;
   if (seller) query.seller = seller;
 
-  const sortMap = { latest: { createdAt: -1 }, oldest: { createdAt: 1 }, priceAsc: { price: 1 }, priceDesc: { price: -1 } };
+  // Price range filter
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
+
+  // Color filter — matches variant colors or product colors (comma-separated)
+  if (color) {
+    const colors = String(color).split(',').map(c => c.trim()).filter(Boolean);
+    if (colors.length > 0) {
+      const regexes = colors.map(c => {
+        const safe = c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`^${safe}$`, 'i');
+      });
+      query.$or = [
+        { 'variants.color': { $in: regexes } },
+        { 'colors.name': { $in: regexes } }
+      ];
+    }
+  }
+
+  const sortMap = { 
+    latest: { createdAt: -1 }, 
+    oldest: { createdAt: 1 }, 
+    priceAsc: { price: 1 }, 
+    priceDesc: { price: -1 },
+    bestSelling: { soldCount: -1 },
+    popularity: { rating: -1, soldCount: -1 }
+  };
   const sortOption = sortMap[sort] || sortMap.latest;
 
   const pageNum = Number(page);

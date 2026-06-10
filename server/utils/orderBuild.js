@@ -47,15 +47,18 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
 
   const subtotal = computeCartSubtotal(validItems);
   let discountAmount = 0;
-  let total = subtotal;
+  let taxableValue = subtotal;
   let appliedCouponCode;
 
   if (couponCode?.trim()) {
     const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId);
     discountAmount = couponResult.discountAmount;
-    total = couponResult.finalTotal;
+    taxableValue = couponResult.finalTotal;
     appliedCouponCode = couponResult.code;
   }
+
+  const taxAmount = taxableValue * 0.18; // 18% GST
+  const total = taxableValue + taxAmount;
 
   const orderItems = validItems.map((item) => {
     const product = item.product;
@@ -77,6 +80,7 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
     validItems,
     orderItems,
     subtotal,
+    taxAmount,
     discountAmount,
     total,
     appliedCouponCode,

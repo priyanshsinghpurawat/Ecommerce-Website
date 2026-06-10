@@ -13,7 +13,7 @@ export default function ImageDropzone({
   onChange,
   label = 'Drop images here or click to browse',
   maxFiles = 10,
-  hint = 'JPG, PNG or WEBP · 5MB each'
+  hint = 'JPG, PNG, WEBP or AVIF · 5MB each'
 }) {
   const onDrop = useCallback(
     (accepted) => {
@@ -36,7 +36,7 @@ export default function ImageDropzone({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/jpeg': [], 'image/png': [], 'image/webp': [] },
+    accept: { 'image/jpeg': [], 'image/png': [], 'image/webp': [], 'image/avif': [] },
     maxFiles,
     multiple: maxFiles > 1
   });
@@ -56,7 +56,7 @@ export default function ImageDropzone({
       <div
         {...getRootProps()}
         className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${
-          isDragActive ? 'border-lux-primary bg-lux-primary/5' : 'border-border hover:border-lux-primary/60 hover:bg-lux-100/30'
+          isDragActive ? 'border-brand-primary bg-brand-primary/5' : 'border-border hover:border-brand-primary/60 hover:bg-surface-100/30'
         }`}
       >
         <input {...getInputProps()} />
@@ -70,7 +70,7 @@ export default function ImageDropzone({
           {value.map((item, i) => (
             <div
               key={item.id}
-              className="relative group aspect-[4/5] rounded-lg overflow-hidden border border-border bg-lux-panel shadow-sm"
+              className="relative group aspect-[4/5] rounded-lg overflow-hidden border border-border bg-app-panel shadow-sm"
               draggable
               onDragStart={(e) => e.dataTransfer.setData('text/plain', String(i))}
               onDragOver={(e) => e.preventDefault()}

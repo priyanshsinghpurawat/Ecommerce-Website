@@ -31,35 +31,44 @@ export const AdminLayout = () => {
   };
 
   const navLinks = [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin/products', label: 'Products', icon: ShoppingBag },
-    { to: '/admin/categories', label: 'Categories', icon: Tags },
-    { to: '/admin/subcategories', label: 'Subcategories', icon: Layers },
-    { to: '/admin/coupons', label: 'Coupons', icon: Ticket },
-    { to: '/admin/orders', label: 'Orders', icon: ClipboardList },
-    { to: '/admin/users', label: 'Users', icon: Users },
-    { to: '/admin/vendors', label: 'Vendors', icon: Store },
+    { to: '/admin/dashboard', label: 'Command Hub', icon: LayoutDashboard },
+    { to: '/admin/products', label: 'Inventory Control', icon: ShoppingBag },
+    { to: '/admin/categories', label: 'Taxonomy', icon: Tags },
+    { to: '/admin/subcategories', label: 'Hierarchy', icon: Layers },
+    { to: '/admin/coupons', label: 'Growth Engines', icon: Ticket },
+    { to: '/admin/orders', label: 'Fulfillment', icon: ClipboardList },
+    { to: '/admin/users', label: 'Access Control', icon: Users },
+    { to: '/admin/vendors', label: 'Market Partners', icon: Store },
   ];
 
   return (
-    <div className="flex h-screen bg-lux-50/30 text-lux-dark font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#0a0a0b] text-white font-sans overflow-hidden">
       
-      {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:w-[260px] flex-col bg-lux-100 text-lux-dark border-r border-border-base shadow-soft">
+      {/* Sidebar - Desktop (The Command Panel) */}
+      <aside className="hidden md:flex md:w-[280px] flex-col bg-[#121214] border-r border-white/5 shadow-2xl relative z-50">
         {/* Brand / Logo */}
-        <div className="h-[72px] flex items-center px-6 border-b border-border-base">
-          <Link to="/" className="flex items-center gap-2 group">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md gradient-primary text-xs font-black text-black group-hover:scale-110 transition-transform">
-              M
-            </span>
-            <span className="text-sm font-black tracking-tight text-lux-dark uppercase">
-              Mens<span className="italic text-lux-primary group-hover:text-lux-accent-cyan transition-colors">Vibe</span>
-            </span>
+        <div className="h-[80px] flex items-center px-8 border-b border-white/5 bg-[#121214]/50 backdrop-blur-xl">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="relative">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary text-xs font-black text-black shadow-[0_0_20px_rgba(193,255,0,0.3)] group-hover:scale-110 transition-transform">
+                MV
+              </span>
+              <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[#121214] animate-pulse" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-black tracking-[0.2em] text-white uppercase leading-none">
+                Command
+              </span>
+              <span className="text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mt-1">
+                Centre
+              </span>
+            </div>
           </Link>
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto scrollbar-hide">
+          <p className="px-4 mb-4 text-[9px] font-black uppercase tracking-[0.4em] text-white/20">System Management</p>
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -67,34 +76,39 @@ export const AdminLayout = () => {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold tracking-tight uppercase transition-all duration-200 ${
+                  `flex items-center gap-4 px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 relative group overflow-hidden ${
                     isActive
-                      ? 'bg-lux-primary text-black shadow-md'
-                      : 'text-muted hover:bg-lux-200 hover:text-lux-dark'
+                      ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20 shadow-[inset_0_0_20px_rgba(193,255,0,0.05)]'
+                      : 'text-white/40 hover:text-white hover:bg-white/5 border border-transparent'
                   }`
                 }
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className={`h-[18px] w-[18px] transition-transform duration-300 group-hover:scale-110`} />
                 {link.label}
+                {({ isActive }) => isActive && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-brand-primary rounded-l-full shadow-[0_0_10px_rgba(193,255,0,0.5)]" />
+                )}
               </NavLink>
             );
           })}
         </nav>
 
         {/* User Info & Logout (Bottom) */}
-        <div className="p-4 border-t border-border-base bg-lux-dark/5">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lux-200 border border-border-base">
-              <User className="h-5 w-5 text-muted" />
+        <div className="p-6 border-t border-white/5 bg-black/20">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-3">
+            <div className="relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10 border border-brand-primary/20">
+                <User className="h-5 w-5 text-brand-primary" />
+              </div>
             </div>
             <div className="truncate flex-1">
-              <p className="text-sm font-black italic text-lux-dark truncate uppercase tracking-tighter">{user?.name || 'Admin User'}</p>
-              <p className="text-[10px] text-muted truncate font-bold">{user?.email}</p>
+              <p className="text-[11px] font-black italic text-white truncate uppercase tracking-tight">Root Admin</p>
+              <p className="text-[9px] text-white/30 truncate font-black tracking-widest uppercase">System Auth OK</p>
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-muted hover:text-error transition-colors"
-              title="Logout"
+              className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+              title="Terminate Session"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -103,75 +117,90 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-lux-bg">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* Header */}
-        <header className="h-[72px] flex items-center justify-between px-8 bg-lux-bg border-b border-border-base z-10">
-          <div className="flex items-center gap-4">
+        {/* Header (The Terminal Header) */}
+        <header className="h-[80px] flex items-center justify-between px-10 bg-[#121214]/50 backdrop-blur-xl border-b border-white/5 z-40">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-xl text-lux-dark/60 hover:bg-lux-100 transition-colors"
+              className="md:hidden p-2 rounded-xl text-white/60 hover:bg-white/5 transition-colors"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-xl font-black uppercase tracking-tighter text-lux-dark hidden md:block italic">
-              Admin <span className="text-lux-primary">Control</span>
-            </h1>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
+                <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white italic">
+                  Operational <span className="text-brand-primary">Status</span>
+                </h1>
+              </div>
+              <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest mt-1">Global Terminal V.4.0.2</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-muted">
-              <button className="hover:text-lux-primary transition-colors">
+          <div className="flex items-center gap-8">
+            {/* Real-time Stats Mockup */}
+            <div className="hidden lg:flex items-center gap-6 border-r border-white/5 pr-8">
+              <div className="text-right">
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Server Load</p>
+                <p className="text-xs font-black text-brand-primary tracking-tighter">12.4% <span className="text-[9px] text-white/20 italic">NOMINAL</span></p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Active Fulfilment</p>
+                <p className="text-xs font-black text-white tracking-tighter">182 <span className="text-[9px] text-emerald-500">LIVE</span></p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5">
+              <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-brand-primary transition-colors border border-white/5">
                 <Search className="h-4 w-4" />
               </button>
-              <button className="relative hover:text-lux-primary transition-colors">
+              <button className="relative h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-brand-primary transition-colors border border-white/5">
                 <Bell className="h-4 w-4" />
-                <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-lux-primary ring-2 ring-lux-bg"></span>
+                <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-brand-primary ring-4 ring-[#121214]"></span>
               </button>
+              
+              <Link
+                to="/admin/products"
+                className="hidden sm:flex items-center gap-3 px-6 py-2.5 bg-brand-primary text-black rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-90 hover:scale-105 transition-all shadow-[0_10px_30px_rgba(193,255,0,0.15)]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Launch Resource
+              </Link>
             </div>
-            
-            <Link
-              to="/admin/products"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-lux-dark text-lux-bg rounded-xl font-black text-[10px] uppercase tracking-wider hover:opacity-90 transition-all shadow-lg shadow-lux-dark/10"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Inventory
-            </Link>
           </div>
         </header>
 
-        {/* Nested Route Pages Content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          <div className="max-w-7xl mx-auto animate-in fade-in duration-300">
+        {/* Main Dashboard Space */}
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 custom-scrollbar">
+          <div className="max-w-[1400px] mx-auto animate-in fade-in zoom-in-95 duration-500">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Sidebar - Mobile Drawer */}
+      {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[100] md:hidden">
           <div 
-            className="fixed inset-0 bg-lux-bg/40 backdrop-blur-md transition-opacity duration-300"
+            className="fixed inset-0 bg-black/80 backdrop-blur-xl transition-opacity duration-300"
             onClick={() => setMobileMenuOpen(false)}
           />
-          
-          {/* Drawer Panel */}
-          <aside className="relative flex flex-col w-72 max-w-xs h-full bg-lux-100 shadow-2xl transition-all duration-300 animate-in slide-in-from-left">
-            <div className="h-[72px] flex items-center justify-between px-6 border-b border-border-base">
-              <span className="text-sm font-black uppercase tracking-widest text-lux-dark">
-                Mens<span className="italic text-lux-primary">Vibe</span> Admin
+          <aside className="relative flex flex-col w-80 h-full bg-[#121214] border-r border-white/5 shadow-2xl transition-all duration-300 animate-in slide-in-from-left">
+            <div className="h-[80px] flex items-center justify-between px-8 border-b border-white/5">
+              <span className="text-xs font-black uppercase tracking-[0.3em] text-white">
+                Mens<span className="italic text-brand-primary">Vibe</span> Admin
               </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-lux-200 text-muted hover:text-lux-dark transition-all"
+                className="p-2 rounded-xl hover:bg-white/5 text-white/40 transition-all"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </button>
             </div>
 
-            <nav className="flex-1 px-4 py-6 space-y-1.5">
+            <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 return (
@@ -180,38 +209,19 @@ export const AdminLayout = () => {
                     to={link.to}
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                      `flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${
                         isActive
-                          ? 'bg-lux-primary text-black shadow-md'
-                          : 'text-muted hover:bg-lux-200 hover:text-lux-dark'
+                          ? 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20'
+                          : 'text-white/40 hover:text-white hover:bg-white/5'
                       }`
                     }
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-5 w-5" />
                     {link.label}
                   </NavLink>
                 );
               })}
             </nav>
-
-            <div className="p-4 border-t border-border-base bg-lux-dark/5">
-              <div className="flex items-center gap-3 px-2 py-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lux-200 text-lux-dark">
-                  <User className="h-4 w-4" />
-                </div>
-                <div className="truncate flex-1">
-                  <p className="text-xs font-black italic text-lux-dark">{user?.name || 'Admin User'}</p>
-                  <p className="text-[10px] text-muted truncate">{user?.email || 'admin@mensvibe.in'}</p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-error/20 bg-error/10 py-3 text-xs font-black uppercase tracking-widest text-error hover:bg-error hover:text-black transition-all"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Logout
-              </button>
-            </div>
           </aside>
         </div>
       )}

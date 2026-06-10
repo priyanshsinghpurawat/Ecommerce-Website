@@ -45,7 +45,7 @@ MensVibe is a classic MERN stack application:
 
 ### Acid & Obsidian Gen-Z Theme
 - Defined in `client/src/index.css` using Tailwind CSS 4 `@theme` block.
-- Primary colors: `lux-primary` (#c1ff00) and `lux-50` (#121212).
+- Primary colors: `brand-primary` (#c1ff00) and `app-bg` (#121212).
 - Font: 'League Spartan'.
 
 ## Development Workflows
@@ -60,3 +60,23 @@ Run `npm run seed` to populate the DB. The seeder now creates multiple distinct 
 
 ### Backend Testing
 Run `npm test` in the `server` directory. Tests use `supertest` and an in-memory MongoDB server.
+
+## Maintenance & Cleanup
+
+To keep the codebase clean and efficient, follow these guidelines for removing unwanted files and folders:
+
+### Unused Assets
+- Check `client/public/assets/` for images or fonts that are no longer referenced in the code.
+- Periodically audit the `client/src/assets` folder for unused local components or styles.
+
+### Build Artifacts
+- The `client/dist` and `server/node_modules` folders are generated and should not be committed.
+- If you encounter build issues, safely delete `node_modules` and the lock file (`package-lock.json` or `bun.lock`), then run `npm install`.
+
+### Temporary Files
+- Remove any `.tmp`, `.log`, or `.env.local` files that are not part of the standard configuration.
+- Clean up any manual database backups or CSV export files stored outside the `docs/` folder.
+
+### Database Cleanup
+- Use `npm run seed` to reset the database to a clean state with sample data.
+- To wipe everything, use the `server/scripts/test_db.js` utility or manually clear collections via MongoDB Atlas/Compass.

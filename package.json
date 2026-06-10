@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test --prefix client && npm run test --prefix server",
-    "test:watch": "node scripts/test-watch.js"
+    "test:watch": "node scripts/test-watch.js",
+    "seed": "npm run seed --prefix server"
   }
 }

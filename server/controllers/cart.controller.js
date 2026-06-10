@@ -60,7 +60,7 @@ export const getCart = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const addToCart = asyncHandler(async (req, res) => {
-  const { productId, quantity = 1 } = req.body;
+  const { productId, quantity = 1, size } = req.body;
 
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
@@ -77,7 +77,8 @@ export const addToCart = asyncHandler(async (req, res) => {
     cart = await Cart.create({ user: req.user._id, items: [] });
   }
 
-  const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+  // Check if item with SAME productId AND size already exists
+  const itemIndex = cart.items.findIndex(item => item.product.toString() === productId && item.size === size);
   const newQty = itemIndex > -1
     ? cart.items[itemIndex].quantity + Number(quantity)
     : Number(quantity);
@@ -89,8 +90,8 @@ export const addToCart = asyncHandler(async (req, res) => {
   if (itemIndex > -1) {
     cart.items[itemIndex].quantity = newQty;
   } else {
-    // Add new item
-    cart.items.push({ product: productId, quantity: Number(quantity) });
+    // Add new item with specific size
+    cart.items.push({ product: productId, quantity: Number(quantity), size });
   }
 
   await cart.save();
@@ -98,6 +99,9 @@ export const addToCart = asyncHandler(async (req, res) => {
   const populatedCart = await getPopulatedCart(req.user._id);
 
   return res
+    .status(200)
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Item added to cart"));
+});
     .status(200)
     .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Product added to cart successfully"));
 });

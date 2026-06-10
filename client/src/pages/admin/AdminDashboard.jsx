@@ -76,23 +76,23 @@ export const AdminDashboard = () => {
       
       {/* 1. Primary Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-lux-card p-8 rounded-[2.5rem] border border-border-base shadow-soft group relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-lux-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="bg-app-card p-8 rounded-[2.5rem] border border-border-base shadow-soft group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted mb-2 italic">Total Revenue</p>
           <div className="flex items-end justify-between relative z-10">
-            <h3 className="text-4xl font-black text-lux-dark tracking-tighter italic">{formatCurrency(stats.orderRevenue)}</h3>
+            <h3 className="text-4xl font-black text-app-text tracking-tighter italic">{formatCurrency(stats.orderRevenue)}</h3>
             <span className="text-[11px] font-black text-success flex items-center bg-success/10 px-4 py-1.5 rounded-full border border-success/20">
               <TrendingUp className="h-4 w-4 mr-2" /> +14.5%
             </span>
           </div>
         </div>
 
-        <div className="bg-lux-card p-8 rounded-[2.5rem] border border-border-base shadow-soft group relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-lux-accent-cyan/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="bg-app-card p-8 rounded-[2.5rem] border border-border-base shadow-soft group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent-cyan/5 rounded-full blur-3xl -mr-16 -mt-16" />
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted mb-2 italic">Processed Sales</p>
           <div className="flex items-end justify-between relative z-10">
-            <h3 className="text-4xl font-black text-lux-dark tracking-tighter italic">{stats.totalOrders}</h3>
-            <span className="text-[11px] font-black text-lux-primary flex items-center bg-lux-primary/10 px-4 py-1.5 rounded-full border border-lux-primary/20">
+            <h3 className="text-4xl font-black text-app-text tracking-tighter italic">{stats.totalOrders}</h3>
+            <span className="text-[11px] font-black text-brand-primary flex items-center bg-brand-primary/10 px-4 py-1.5 rounded-full border border-brand-primary/20">
               <Package className="h-4 w-4 mr-2" /> Live Now
             </span>
           </div>
@@ -112,8 +112,8 @@ export const AdminDashboard = () => {
 
         {/* Right: Valuation & Inventory Status */}
         <div className="space-y-8">
-          <div className="bg-[#121212] p-8 rounded-[3rem] text-lux-primary shadow-soft relative overflow-hidden group border border-border-base">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-lux-primary/10 rounded-full blur-[60px] -mr-24 -mt-24 transition-all group-hover:scale-110" />
+          <div className="bg-[#121212] p-8 rounded-[3rem] text-brand-primary shadow-soft relative overflow-hidden group border border-border-base">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-brand-primary/10 rounded-full blur-[60px] -mr-24 -mt-24 transition-all group-hover:scale-110" />
             <div className="relative z-10">
               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] mb-8 italic opacity-70">Inventory Valuation</h4>
               <div className="space-y-6">
@@ -121,7 +121,7 @@ export const AdminDashboard = () => {
                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-50 mb-1">Total Market Value</p>
                   <p className="text-4xl font-black italic tracking-tighter">{formatCurrency(stats.totalValue)}</p>
                 </div>
-                <div className="pt-6 border-t border-lux-primary/10">
+                <div className="pt-6 border-t border-brand-primary/10">
                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-50 mb-1">Avg. SKU Performance</p>
                   <p className="text-2xl font-black italic tracking-tighter">{formatCurrency(stats.avgPrice)}</p>
                 </div>
@@ -129,24 +129,24 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-lux-card p-8 rounded-[3rem] border border-border-base shadow-soft">
+          <div className="bg-app-card p-8 rounded-[3rem] border border-border-base shadow-soft">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-black uppercase tracking-widest text-lux-dark italic">Top Clusters</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-app-text italic">Top Clusters</h3>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-lux-dark/70">Clothing</span>
-                <span className="text-[10px] font-black italic text-lux-dark">65%</span>
+                <span className="text-[10px] font-bold text-app-text/70">Clothing</span>
+                <span className="text-[10px] font-black italic text-app-text">65%</span>
               </div>
-              <div className="w-full bg-lux-panel h-1 rounded-full overflow-hidden">
-                <div className="bg-lux-primary h-full rounded-full w-[65%]" />
+              <div className="w-full bg-app-panel h-1 rounded-full overflow-hidden">
+                <div className="bg-brand-primary h-full rounded-full w-[65%]" />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-lux-dark/70">Footwear</span>
-                <span className="text-[10px] font-black italic text-lux-dark">25%</span>
+                <span className="text-[10px] font-bold text-app-text/70">Footwear</span>
+                <span className="text-[10px] font-black italic text-app-text">25%</span>
               </div>
-              <div className="w-full bg-lux-panel h-1 rounded-full overflow-hidden">
-                <div className="bg-lux-accent-cyan h-full rounded-full w-[25%]" />
+              <div className="w-full bg-app-panel h-1 rounded-full overflow-hidden">
+                <div className="bg-accent-cyan h-full rounded-full w-[25%]" />
               </div>
             </div>
           </div>
@@ -155,22 +155,22 @@ export const AdminDashboard = () => {
 
       {/* 4. Critical Alerts Row (Moved Down) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-lux-card p-6 rounded-[2rem] border border-border-base shadow-soft flex items-center justify-between px-8">
+        <div className="bg-app-card p-6 rounded-[2rem] border border-border-base shadow-soft flex items-center justify-between px-8">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-warning mb-1">Low Stock Warning</p>
-            <h4 className="text-2xl font-black italic tracking-tighter text-lux-dark">{stats.lowStock} <span className="text-[10px] not-italic text-muted ml-2">SKUs remaining</span></h4>
+            <h4 className="text-2xl font-black italic tracking-tighter text-app-text">{stats.lowStock} <span className="text-[10px] not-italic text-muted ml-2">SKUs remaining</span></h4>
           </div>
-          <div className="h-12 w-32 bg-lux-panel rounded-full overflow-hidden">
+          <div className="h-12 w-32 bg-app-panel rounded-full overflow-hidden">
             <div className="bg-warning h-full transition-all duration-1000" style={{ width: `${Math.min((stats.lowStock/50)*100, 100)}%` }} />
           </div>
         </div>
 
-        <div className="bg-lux-card p-6 rounded-[2rem] border border-border-base shadow-soft flex items-center justify-between px-8">
+        <div className="bg-app-card p-6 rounded-[2rem] border border-border-base shadow-soft flex items-center justify-between px-8">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-error mb-1">Out of Stock Critical</p>
-            <h4 className="text-2xl font-black italic tracking-tighter text-lux-dark">{stats.outOfStock} <span className="text-[10px] not-italic text-muted ml-2">Items unavailable</span></h4>
+            <h4 className="text-2xl font-black italic tracking-tighter text-app-text">{stats.outOfStock} <span className="text-[10px] not-italic text-muted ml-2">Items unavailable</span></h4>
           </div>
-          <div className="h-12 w-32 bg-lux-panel rounded-full overflow-hidden">
+          <div className="h-12 w-32 bg-app-panel rounded-full overflow-hidden">
             <div className="bg-error h-full transition-all duration-1000" style={{ width: `${Math.min((stats.outOfStock/20)*100, 100)}%` }} />
           </div>
         </div>

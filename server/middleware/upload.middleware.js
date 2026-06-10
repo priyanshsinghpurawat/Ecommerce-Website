@@ -8,7 +8,7 @@ import multer from 'multer';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import { ApiError } from '../utils/apiError.js';
 
-const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const MAX_FILES = 30; // gallery + per-variant headroom
 
@@ -16,7 +16,7 @@ const memoryStorage = multer.memoryStorage();
 
 const fileFilter = (_req, file, cb) => {
   if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);
-  cb(new ApiError(400, `Unsupported image type: ${file.mimetype}. Use JPG, PNG or WEBP.`));
+  cb(new ApiError(400, `Unsupported image type: ${file.mimetype}. Use JPG, PNG, WEBP or AVIF.`));
 };
 
 export const upload = multer({

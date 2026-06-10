@@ -6,10 +6,14 @@ export const HERO_SLIDES = [
     title: 'Casual Flex',
     subtitle: 'COLLECTION',
     description: 'Shirts & tees built for school-to-street — breathable fits, bold colours.',
-    image: '/assets/casualwear.png',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781001456/mensvibe/products/1764660274_2193914.avif',
+    image2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781001455/mensvibe/products/1736491521_4978820.avif',
+    image3: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781001457/mensvibe/products/1764057049_4505939.avif',
     cta: 'Shop shirts',
-    link: '/shop',
-    gradient: 'from-emerald-950/90 via-emerald-900/40 to-transparent'
+    link: '/shop?subcategory=Shirts',
+    link1: '/shop?subcategory=Shirts',
+    link2: '/shop?subcategory=T-Shirts',
+    link3: '/shop?subcategory=Shirts',
   },
   {
     id: 'sport',
@@ -19,7 +23,7 @@ export const HERO_SLIDES = [
     description: 'Training tees, track pants & sports shoes — move light, look sharp.',
     image: '/assets/hero_sport.png',
     cta: 'Shop sportswear',
-    link: '/shop',
+    link: '/shop?subcategory=Sportswear',
     gradient: 'from-zinc-950/90 via-zinc-900/45 to-transparent'
   },
   {
@@ -30,7 +34,7 @@ export const HERO_SLIDES = [
     description: 'Sneakers & runners — cushion, grip, and everyday drip.',
     image: '/assets/hero_street.png',
     cta: 'Shop footwear',
-    link: '/shop',
+    link: '/shop?category=Footwear',
     gradient: 'from-slate-950/90 via-slate-900/45 to-transparent'
   },
   {
@@ -41,26 +45,31 @@ export const HERO_SLIDES = [
     description: 'Oversized fits, funky graphics, and bold streetwear aesthetic.',
     image: '/assets/hero_casual.png',
     cta: 'Shop collection',
-    link: '/street-drip',
+    link: '/shop?badge=street-drip',
     gradient: 'from-stone-950/90 via-stone-900/45 to-transparent'
   },
   {
     id: 'accessories',
     eyebrow: 'Finish the look',
-    title: 'Essential',
-    subtitle: 'STYLE',
-    description: 'Clean lines, premium fabrics, and timeless pieces for the modern man.',
-    image: '/assets/andres-jasso-PqbL_mxmaUE-unsplash.jpg',
-    cta: 'Explore more',
-    link: '/shop',
-    gradient: 'from-amber-950/90 via-amber-900/45 to-transparent'
+    title: 'Linen & Formals',
+    subtitle: 'PREMIUM STYLE',
+    description: 'Breathable linen shirts, premium structured trousers, and timeless formal wear for the modern man.',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984919/mensvibe/products/1739601040_8064076.avif',
+    image2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781077001/1739774935_1647535_jmoydf.avif',
+    image3: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984921/mensvibe/products/1739601040_1918057.avif',
+    cta: 'Explore linen',
+    link: '/shop?subcategory=Linen',
+    link1: '/shop?subcategory=Shirts',
+    link2: '/shop?subcategory=Pants',
+    link3: '/shop?subcategory=Shirts',
+    gradient: 'from-stone-950/90 via-stone-900/40 to-transparent'
   }
 ];
 
 export const CATEGORY_BANNERS = {
   Clothing: {
     image: '/assets/mens_shirt.png',
-    tagline: 'Tees · Pants · Hoodies'
+    tagline: 'Tees · Pants · Linen'
   },
   Footwear: {
     image: '/assets/mens_sneakers.png',
@@ -72,6 +81,7 @@ export const CATEGORY_BANNERS = {
 export const FEATURED_SUBCATEGORY_NAMES = [
   'T-Shirts',
   'Shirts',
+  'Linen',
   'Streetwear',
   'Pants',
   'Jeans',

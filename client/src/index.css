@@ -2,13 +2,18 @@
 @import "tailwindcss";
 
 :root {
-  --color-lux-bg: #121212; /* TRUE DARK */
-  --color-lux-card: #1a1a1a;
-  --color-lux-panel: #242424;
-  --color-lux-dark: #faffeb; /* CREAM TEXT */
-  --color-lux-dark-hover: #ffffff;
-  --color-lux-primary: #c1ff00; /* ACID GREEN */
-  --color-lux-600: #a3a3a3;
+  --color-app-bg: #121212; /* TRUE DARK */
+  --color-app-card: #1a1a1a;
+  --color-app-panel: #242424;
+  --color-app-text: #faffeb; /* CREAM TEXT */
+  --color-app-text-hover: #ffffff;
+  --color-brand-primary: #c1ff00; /* ACID GREEN */
+  --color-app-muted: #a3a3a3;
+
+  /* Surface shades */
+  --color-surface-50: rgba(255, 255, 255, 0.02);
+  --color-surface-100: rgba(255, 255, 255, 0.05);
+  --color-surface-200: rgba(255, 255, 255, 0.1);
 
   /* Semantic status colors for Dark Mode */
   --color-success: #c1ff00;
@@ -22,22 +27,31 @@
 }
 
 .theme-light {
-  --color-lux-bg: #faffeb; /* TRUE LIGHT */
-  --color-lux-card: #ffffff;
-  --color-lux-panel: #f4f6e5;
-  --color-lux-dark: #121212; /* BLACK TEXT */
-  --color-lux-dark-hover: #000000;
-  --color-lux-primary: #c1ff00; /* ACID GREEN */
+  --color-app-bg: #faffeb; /* TRUE LIGHT */
+  --color-app-card: #ffffff;
+  --color-app-panel: #f4f6e5;
+  --color-app-text: #121212; /* BLACK TEXT */
+  --color-app-text-hover: #000000;
+  --color-brand-primary: #c1ff00; /* ACID GREEN */
+
+  /* Surface shades for light mode */
+  --color-surface-50: rgba(0, 0, 0, 0.02);
+  --color-surface-100: rgba(0, 0, 0, 0.05);
+  --color-surface-200: rgba(0, 0, 0, 0.1);
 }
 
 @theme {
-  --color-lux-bg: var(--color-lux-bg);
-  --color-lux-card: var(--color-lux-card);
-  --color-lux-panel: var(--color-lux-panel);
-  --color-lux-dark: var(--color-lux-dark);
-  --color-lux-dark-hover: var(--color-lux-dark-hover);
-  --color-lux-primary: var(--color-lux-primary);
-  --color-lux-600: var(--color-lux-600);
+  --color-app-bg: var(--color-app-bg);
+  --color-app-card: var(--color-app-card);
+  --color-app-panel: var(--color-app-panel);
+  --color-app-text: var(--color-app-text);
+  --color-app-text-hover: var(--color-app-text-hover);
+  --color-brand-primary: var(--color-brand-primary);
+  --color-app-muted: var(--color-app-muted);
+
+  --color-surface-50: var(--color-surface-50);
+  --color-surface-100: var(--color-surface-100);
+  --color-surface-200: var(--color-surface-200);
 
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
@@ -47,11 +61,13 @@
 
   --shadow-soft: var(--shadow-soft);
   --shadow-nav: var(--shadow-nav);
+
+  --font-sans: 'League Spartan', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-lux-bg text-lux-dark selection:bg-lux-primary selection:text-black min-h-screen antialiased;
+    @apply bg-app-bg text-app-text selection:bg-brand-primary selection:text-black min-h-screen antialiased;
     font-family: var(--font-sans);
   }
 }
@@ -72,7 +88,7 @@
   }
   
   .glass {
-    background-color: var(--color-lux-bg);
+    background-color: var(--color-app-bg);
     backdrop-filter: blur(12px);
     border: 1px solid var(--color-border);
   }
@@ -101,25 +117,36 @@
     box-shadow: 0 0 30px rgba(193, 255, 0, 0.15);
   }
 
-  .lux-scrollbar::-webkit-scrollbar {
+  .app-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
-  .lux-scrollbar::-webkit-scrollbar-track {
+  .app-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  .lux-scrollbar::-webkit-scrollbar-thumb {
+  .app-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.1);
     border-radius: 20px;
   }
-  .theme-light .lux-scrollbar::-webkit-scrollbar-thumb {
+  .theme-light .app-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.1);
   }
-  :root:not(.theme-light) .lux-scrollbar::-webkit-scrollbar-thumb {
+  :root:not(.theme-light) .app-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1);
   }
-  .lux-scrollbar {
+  .app-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(128, 128, 128, 0.2) transparent;
+  }
+
+  .section-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.08), transparent);
+    margin: 2rem 0;
+  }
+
+  .theme-light .section-divider {
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
   }
 }
 

@@ -13,7 +13,7 @@ export const HeroCarousel = () => {
 
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % HERO_SLIDES.length);
-    }, 6000);
+    }, 4000); // Snappy 4-second scroll
     return () => clearInterval(timer);
   }, [isPaused]);
 
@@ -33,26 +33,74 @@ export const HeroCarousel = () => {
     <section
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative w-full overflow-hidden rounded-[2rem] md:rounded-[3.5rem] bg-lux-bg min-h-[600px] md:min-h-[750px] lg:min-h-[85vh] shadow-soft mx-auto max-w-full group"
+      className="relative w-full overflow-hidden rounded-none bg-app-bg min-h-[600px] md:min-h-[750px] lg:min-h-[85vh] shadow-soft mx-auto max-w-full group"
     >
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0"
+          initial={{ opacity: 0, scale: 1.03 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.35, ease: "easeInOut" }}
+          className="absolute inset-0 overflow-hidden"
         >
-          <img
-            src={slide.image}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center md:object-top"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = '/assets/hero_street.png';
-            }}
-          />
+          {slide.image3 ? (
+            // 3-column split vertical panels (Triptych)
+            <div className="absolute inset-0 w-full h-full grid grid-cols-3 gap-[2px] md:gap-[4px] bg-black/10">
+              <Link to={slide.link1 || slide.link} className="relative h-full w-full overflow-hidden block">
+                <img
+                  src={slide.image}
+                  alt=""
+                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                />
+              </Link>
+              <Link to={slide.link2 || slide.link} className="relative h-full w-full overflow-hidden block">
+                <img
+                  src={slide.image2}
+                  alt=""
+                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                />
+              </Link>
+              <Link to={slide.link3 || slide.link} className="relative h-full w-full overflow-hidden block">
+                <img
+                  src={slide.image3}
+                  alt=""
+                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                />
+              </Link>
+            </div>
+          ) : slide.image2 ? (
+            // 2-column split vertical panels
+            <div className="absolute inset-0 w-full h-full grid grid-cols-2 gap-[2px] md:gap-[4px] bg-black/10">
+              <Link to={slide.link1 || slide.link} className="relative h-full w-full overflow-hidden block">
+                <img
+                  src={slide.image}
+                  alt=""
+                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                />
+              </Link>
+              <Link to={slide.link2 || slide.link} className="relative h-full w-full overflow-hidden block">
+                <img
+                  src={slide.image2}
+                  alt=""
+                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
+                />
+              </Link>
+            </div>
+          ) : (
+            // Standard single image background
+            <img
+              src={slide.image}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-top"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/assets/hero_street.png';
+              }}
+            />
+          )}
+
+          {/* Ambient gradient to overlay text cleanly */}
           <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
         </motion.div>
       </AnimatePresence>
@@ -61,10 +109,10 @@ export const HeroCarousel = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 mb-4 block italic">
               {slide.eyebrow}
@@ -72,7 +120,7 @@ export const HeroCarousel = () => {
             <h1 className="font-sans text-5xl md:text-8xl font-black text-white leading-[0.9] italic tracking-tighter uppercase">
               {slide.title}
             </h1>
-            <p className="mt-4 text-[11px] font-black uppercase tracking-[0.5em] text-lux-primary">
+            <p className="mt-4 text-[11px] font-black uppercase tracking-[0.5em] text-brand-primary">
               {slide.subtitle}
             </p>
             <p className="mt-8 max-w-md text-sm text-white/70 leading-relaxed font-bold uppercase tracking-tight">
@@ -80,7 +128,7 @@ export const HeroCarousel = () => {
             </p>
             <Link
               to={slide.link}
-              className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-lux-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-lux-primary/20"
+              className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
             >
               {slide.cta}
               <ArrowRight className="h-4 w-4" />
@@ -112,11 +160,24 @@ export const HeroCarousel = () => {
             key={s.id}
             type="button"
             onClick={() => setIndex(i)}
-            className={`h-1.5 rounded-full transition-all duration-500 ${
-              i === index ? 'w-10 bg-lux-primary shadow-lg shadow-lux-primary/50' : 'w-3 bg-white/20 hover:bg-white/40'
+            className={`h-1.5 rounded-full relative overflow-hidden transition-all duration-500 ${
+              i === index ? 'w-10 bg-white/25 shadow-lg shadow-brand-primary/5' : 'w-3 bg-white/20 hover:bg-white/40'
             }`}
             aria-label={`Go to slide ${i + 1}`}
-          />
+          >
+            {i === index && (
+              <motion.div
+                key={`${index}-${isPaused}`}
+                initial={{ width: '0%' }}
+                animate={{ width: isPaused ? '0%' : '100%' }}
+                transition={{
+                  duration: isPaused ? 0 : 4,
+                  ease: 'linear',
+                }}
+                className="absolute inset-y-0 left-0 bg-brand-primary"
+              />
+            )}
+          </button>
         ))}
       </div>
     </section>

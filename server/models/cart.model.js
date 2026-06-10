@@ -12,6 +12,10 @@ const cartItemSchema = new mongoose.Schema(
       required: [true, 'Quantity is required'],
       min: [1, 'Quantity must be at least 1'],
       default: 1
+    },
+    size: {
+      type: String,
+      trim: true
     }
   },
   { _id: false } // We don't need a separate ObjectId for each cart item

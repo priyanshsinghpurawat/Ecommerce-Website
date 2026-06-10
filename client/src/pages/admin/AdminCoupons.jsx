@@ -208,13 +208,13 @@ export const AdminCoupons = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold uppercase tracking-wider text-lux-dark">Coupons Registry</h2>
-          <p className="text-xs text-lux-dark/50">Create, edit, or remove storefront promotional discount codes.</p>
+          <h2 className="text-xl font-bold uppercase tracking-wider text-app-text">Coupons Registry</h2>
+          <p className="text-xs text-app-text/50">Create, edit, or remove storefront promotional discount codes.</p>
         </div>
         
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-2 rounded-2xl bg-lux-dark px-4 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover shadow-md transition-all duration-300"
+          className="flex items-center gap-2 rounded-2xl bg-app-text px-4 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover shadow-md transition-all duration-300"
         >
           <Plus className="h-4 w-4" />
           Add Coupon
@@ -222,7 +222,7 @@ export const AdminCoupons = () => {
       </div>
 
       {/* Filters bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center rounded-2xl border border-white/60 bg-lux-50/40 p-4 shadow-soft">
+      <div className="flex flex-col sm:flex-row gap-4 items-center rounded-2xl border border-white/60 bg-surface-50/40 p-4 shadow-soft">
         
         {/* Search */}
         <div className="relative flex-1 w-full">
@@ -234,9 +234,9 @@ export const AdminCoupons = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-full border border-lux-200 bg-lux-50 px-4 py-2 pl-10 font-sans text-xs text-lux-dark focus:outline-none"
+            className="w-full rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pl-10 font-sans text-xs text-app-text focus:outline-none"
           />
-          <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-lux-dark/45" />
+          <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-app-text/45" />
         </div>
 
         {/* Status Filter */}
@@ -247,28 +247,28 @@ export const AdminCoupons = () => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className="w-full appearance-none rounded-full border border-lux-200 bg-lux-50 px-4 py-2 pr-10 font-sans text-xs text-lux-dark focus:outline-none"
+            className="w-full appearance-none rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pr-10 font-sans text-xs text-app-text focus:outline-none"
           >
             <option value="all">Status: All</option>
             <option value="active">Status: Active</option>
             <option value="inactive">Status: Inactive</option>
           </select>
-          <ArrowUpDown className="pointer-events-none absolute right-4 top-2.5 h-3.5 w-3.5 text-lux-dark/40" />
+          <ArrowUpDown className="pointer-events-none absolute right-4 top-2.5 h-3.5 w-3.5 text-app-text/40" />
         </div>
       </div>
 
       {/* Coupons Table */}
       {loading ? (
         <div className="space-y-4 animate-pulse">
-          <div className="h-10 w-full bg-lux-100 rounded-xl" />
-          <div className="h-40 w-full bg-lux-100/50 rounded-xl" />
+          <div className="h-10 w-full bg-surface-100 rounded-xl" />
+          <div className="h-40 w-full bg-surface-100/50 rounded-xl" />
         </div>
       ) : coupons.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-white/60 bg-lux-50/40 shadow-soft backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-lux-100 bg-lux-50/30 text-[10px] font-bold uppercase tracking-wider text-lux-dark/45">
+                <tr className="border-b border-surface-100 bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-app-text/45">
                   <th className="px-6 py-4">Coupon Code</th>
                   <th className="px-6 py-4">Type</th>
                   <th className="px-6 py-4">Discount Value</th>
@@ -279,16 +279,16 @@ export const AdminCoupons = () => {
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-lux-100/40 text-xs font-semibold text-lux-dark">
+              <tbody className="divide-y divide-surface-100/40 text-xs font-semibold text-app-text">
                 {coupons.map((coupon) => (
-                  <tr key={coupon._id} className="hover:bg-lux-50/20 transition-all">
-                    <td className="px-6 py-4 font-mono font-bold tracking-wider text-lux-primary">
+                  <tr key={coupon._id} className="hover:bg-surface-50/20 transition-all">
+                    <td className="px-6 py-4 font-mono font-bold tracking-wider text-brand-primary">
                       <div className="flex items-center gap-2">
                         <Tag className="h-3.5 w-3.5" />
                         {coupon.code}
                       </div>
                     </td>
-                    <td className="px-6 py-4 uppercase text-[10px] tracking-wider text-lux-dark/65">
+                    <td className="px-6 py-4 uppercase text-[10px] tracking-wider text-app-text/65">
                       {coupon.discountType}
                     </td>
                     <td className="px-6 py-4 font-mono font-bold">
@@ -300,20 +300,20 @@ export const AdminCoupons = () => {
                     <td className="px-6 py-4 font-mono">
                       ₹{coupon.minCartAmount.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-lux-dark/60 font-sans">
+                    <td className="px-6 py-4 text-app-text/60 font-sans">
                       {coupon.expiryDate ? (
                         <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-lux-dark/35" />
+                          <Calendar className="h-3.5 w-3.5 text-app-text/35" />
                           {new Date(coupon.expiryDate).toLocaleDateString()}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/30">Never Expires</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-app-text/30">Never Expires</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
                        <div className="flex flex-col items-center">
-                          <span className="font-mono text-lux-primary">{coupon.usageCount} / {coupon.usageLimit ?? '∞'}</span>
-                          <span className="text-[8px] uppercase text-lux-dark/30 tracking-tighter">Uses Applied</span>
+                          <span className="font-mono text-brand-primary">{coupon.usageCount} / {coupon.usageLimit ?? '∞'}</span>
+                          <span className="text-[8px] uppercase text-app-text/30 tracking-tighter">Uses Applied</span>
                        </div>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -333,7 +333,7 @@ export const AdminCoupons = () => {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenEditModal(coupon)}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-lux-100 text-lux-dark hover:bg-lux-primary hover:text-black transition-all shadow-sm"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-100 text-app-text hover:bg-brand-primary hover:text-black transition-all shadow-sm"
                           title="Edit Coupon"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
@@ -355,22 +355,22 @@ export const AdminCoupons = () => {
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-lux-100 bg-lux-50/20 px-6 py-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/50">
+            <div className="flex items-center justify-between border-t border-surface-100 bg-surface-50/20 px-6 py-4">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-app-text/50">
                 Page {pagination.currentPage} of {pagination.totalPages}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={pagination.currentPage === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-lux-200 bg-lux-50 text-lux-dark disabled:opacity-40 disabled:cursor-not-allowed hover:bg-lux-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-200 bg-surface-50 text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-50"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
                   disabled={pagination.currentPage === pagination.totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-lux-200 bg-lux-50 text-lux-dark disabled:opacity-40 disabled:cursor-not-allowed hover:bg-lux-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-200 bg-surface-50 text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-50"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -379,8 +379,8 @@ export const AdminCoupons = () => {
           )}
         </div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-lux-200 bg-lux-50/20 p-12 text-center">
-          <p className="font-sans text-xs text-lux-dark/50">No coupon codes registered in database yet.</p>
+        <div className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 p-12 text-center">
+          <p className="font-sans text-xs text-app-text/50">No coupon codes registered in database yet.</p>
         </div>
       )}
 
@@ -394,7 +394,7 @@ export const AdminCoupons = () => {
           
           {/* Coupon Code */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Coupon Code</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Coupon Code</label>
             <input
               type="text"
               name="code"
@@ -402,8 +402,8 @@ export const AdminCoupons = () => {
               onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
               placeholder="e.g. WELCOME10"
               disabled={isEditing} // Prevent code modification on update
-              className={`w-full rounded-xl border bg-lux-50 px-3.5 py-2.5 font-mono text-xs focus:outline-none uppercase ${
-                formErrors.code ? 'border-red-400 focus:border-red-500' : 'border-lux-200 focus:border-lux-primary'
+              className={`w-full rounded-xl border bg-surface-50 px-3.5 py-2.5 font-mono text-xs focus:outline-none uppercase ${
+                formErrors.code ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
               }`}
             />
             {formErrors.code && <span className="text-[10px] font-bold text-red-500">{formErrors.code}</span>}
@@ -412,12 +412,12 @@ export const AdminCoupons = () => {
           {/* Discount Configuration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Discount Type</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Discount Type</label>
               <select
                 name="discountType"
                 value={formData.discountType}
                 onChange={(e) => setFormData({ ...formData, discountType: e.target.value, discountValue: '' })}
-                className="w-full rounded-xl border border-lux-200 bg-lux-50 px-3 py-2.5 font-sans text-xs focus:outline-none focus:border-lux-primary"
+                className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none focus:border-brand-primary"
               >
                 <option value="percentage">Percentage (%)</option>
                 <option value="flat">Flat Amount (₹)</option>
@@ -425,7 +425,7 @@ export const AdminCoupons = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">
                 {formData.discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount (₹)'}
               </label>
               <input
@@ -434,8 +434,8 @@ export const AdminCoupons = () => {
                 value={formData.discountValue}
                 onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                 placeholder={formData.discountType === 'percentage' ? 'e.g. 10' : 'e.g. 250'}
-                className={`w-full rounded-xl border bg-lux-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
-                  formErrors.discountValue ? 'border-red-400 focus:border-red-500' : 'border-lux-200 focus:border-lux-primary'
+                className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
+                  formErrors.discountValue ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
                 }`}
               />
               {formErrors.discountValue && <span className="text-[10px] font-bold text-red-500">{formErrors.discountValue}</span>}
@@ -445,55 +445,55 @@ export const AdminCoupons = () => {
           {/* Rules / Min Order & Expiry */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Min. Spend Limit (₹)</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Min. Spend Limit (₹)</label>
               <input
                 type="number"
                 name="minCartAmount"
                 value={formData.minCartAmount}
                 onChange={(e) => setFormData({ ...formData, minCartAmount: e.target.value })}
                 placeholder="e.g. 1000"
-                className={`w-full rounded-xl border bg-lux-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
-                  formErrors.minCartAmount ? 'border-red-400 focus:border-red-500' : 'border-lux-200 focus:border-lux-primary'
+                className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
+                  formErrors.minCartAmount ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
                 }`}
               />
               {formErrors.minCartAmount && <span className="text-[10px] font-bold text-red-500">{formErrors.minCartAmount}</span>}
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Expiry Date</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Expiry Date</label>
               <input
                 type="date"
                 name="expiryDate"
                 value={formData.expiryDate}
                 onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                className="w-full rounded-xl border border-lux-200 bg-lux-50 px-3 py-2.5 font-sans text-xs focus:outline-none focus:border-lux-primary"
+                className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none focus:border-brand-primary"
               />
             </div>
           </div>
 
           {/* Usage Safeguards */}
-          <div className="p-4 rounded-2xl bg-lux-bg border border-lux-200/50 space-y-4">
-            <h4 className="text-[9px] font-black uppercase tracking-widest text-lux-primary flex items-center gap-2">
+          <div className="p-4 rounded-2xl bg-app-bg border border-surface-200/50 space-y-4">
+            <h4 className="text-[9px] font-black uppercase tracking-widest text-brand-primary flex items-center gap-2">
               <AlertCircle className="h-3 w-3" /> Commercial Safeguards
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/40">Total Usage Limit</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/40">Total Usage Limit</label>
                 <input
                   type="number"
                   placeholder="Infinite"
                   value={formData.usageLimit}
                   onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
-                  className="w-full rounded-xl border border-border-base bg-lux-50 px-3 py-2 text-xs focus:outline-none focus:border-lux-primary"
+                  className="w-full rounded-xl border border-border-base bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/40">Uses Per Customer</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/40">Uses Per Customer</label>
                 <input
                   type="number"
                   value={formData.perUserLimit}
                   onChange={(e) => setFormData({ ...formData, perUserLimit: e.target.value })}
-                  className="w-full rounded-xl border border-border-base bg-lux-50 px-3 py-2 text-xs focus:outline-none focus:border-lux-primary"
+                  className="w-full rounded-xl border border-border-base bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -501,16 +501,16 @@ export const AdminCoupons = () => {
 
           {/* Product Specific */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-lux-dark/60">Applied Products (IDs, comma separated)</label>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Applied Products (IDs, comma separated)</label>
             <textarea
               name="appliedProducts"
               value={formData.appliedProducts}
               onChange={(e) => setFormData({ ...formData, appliedProducts: e.target.value })}
               placeholder="e.g. 64abc..., 64def..."
               rows="2"
-              className="w-full rounded-xl border border-lux-200 bg-lux-50 px-3.5 py-2.5 font-mono text-[10px] focus:outline-none focus:border-lux-primary"
+              className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3.5 py-2.5 font-mono text-[10px] focus:outline-none focus:border-brand-primary"
             />
-            <p className="text-[9px] text-lux-dark/40 italic">Leave empty to apply to all products in cart.</p>
+            <p className="text-[9px] text-app-text/40 italic">Leave empty to apply to all products in cart.</p>
           </div>
 
           {/* Active / Inactive Status */}
@@ -520,9 +520,9 @@ export const AdminCoupons = () => {
               id="isActive"
               checked={formData.isActive}
               onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="h-4 w-4 rounded border-lux-200 text-lux-dark focus:ring-lux-primary"
+              className="h-4 w-4 rounded border-surface-200 text-app-text focus:ring-brand-primary"
             />
-            <label htmlFor="isActive" className="text-[11px] font-bold uppercase tracking-wider text-lux-dark/70 cursor-pointer">
+            <label htmlFor="isActive" className="text-[11px] font-bold uppercase tracking-wider text-app-text/70 cursor-pointer">
               Active (Make this coupon ready for customer checkouts)
             </label>
           </div>
@@ -531,7 +531,7 @@ export const AdminCoupons = () => {
           <button
             type="submit"
             disabled={submitLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-lux-dark py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-lux-dark-hover transition-colors disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-app-text py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover transition-colors disabled:opacity-50"
           >
             {submitLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

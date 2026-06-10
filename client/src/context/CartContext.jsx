@@ -61,13 +61,13 @@ export const CartProvider = ({ children }) => {
     }
   }, [isAuthenticated, fetchCart]);
 
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, metadata = {}) => {
     if (!isAuthenticated) {
       return { success: false, error: 'Please log in to add items to your cart.' };
     }
     setError(null);
     try {
-      const response = await cartService.addToCart(productId, quantity);
+      const response = await cartService.addToCart(productId, quantity, metadata);
       if (response && response.success) {
         setCart(response.data);
         computeAggregates(response.data.items);

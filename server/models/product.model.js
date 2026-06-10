@@ -30,13 +30,14 @@ const productSchema = new mongoose.Schema(
     },
     images: {
       type: [String],
-      default: []
+      default: [],
+      validate: [v => v.length <= 10, 'Cannot exceed 10 images']
     },
     colors: [
       {
         name: { type: String, required: true },
-        hex: { type: String, required: true },
-        images: [String]
+        hex: { type: String, required: true, match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color format'] },
+        images: { type: [String], validate: [v => v.length <= 5, 'Cannot exceed 5 images per color'] }
       }
     ],
     /**
@@ -56,7 +57,7 @@ const productSchema = new mongoose.Schema(
     ],
     badge: {
       type: String,
-      enum: ['', 'new-arrival', 'sale', 'street-drip'],
+      enum: ['', 'new-arrival', 'sale', 'street-drip', 'limited-edition'],
       default: ''
     },
     rating: {
@@ -68,6 +69,10 @@ const productSchema = new mongoose.Schema(
     reviewCount: {
       type: Number,
       min: [0, 'Review count cannot be negative'],
+      default: 0
+    },
+    soldCount: {
+      type: Number,
       default: 0
     },
     category: {
@@ -109,8 +114,11 @@ productSchema.index({ price: 1 });
 productSchema.index({ createdAt: -1 });
 productSchema.index({ category: 1, subcategory: 1 });
 productSchema.index({ category: 1, createdAt: -1 });
-productSchema.index({ seller: 1 });
 productSchema.index({ title: 'text', description: 'text' });
+productSchema.index({ price: 1, category: 1 });           // Price range + category filter
+productSchema.index({ 'variants.color': 1 });             // Color filter
+productSchema.index({ badge: 1, createdAt: -1 });         // Badge + sort
+productSchema.index({ rating: -1, soldCount: -1 });       // Popularity sort
 
 // Mongoose validation hook for pricing logic
 productSchema.pre("validate", function (next) {
