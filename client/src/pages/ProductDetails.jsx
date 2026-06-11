@@ -347,7 +347,7 @@ export const ProductDetails = () => {
                     }}
                     className={`h-11 px-4 text-xs font-bold rounded-lg border-2 transition-all ${
                       selectedColor === color
-                        ? 'border-app-text bg-app-text text-[#c1ff00]'
+                        ? 'border-brand-primary bg-brand-primary text-black'
                         : 'border-border bg-app-panel hover:border-app-text text-app-text'
                     }`}
                   >
