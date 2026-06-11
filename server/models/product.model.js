@@ -73,6 +73,7 @@ const productSchema = new mongoose.Schema(
     },
     soldCount: {
       type: Number,
+      min: [0, 'Sold count cannot be negative'],
       default: 0
     },
     category: {

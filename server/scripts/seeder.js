@@ -320,7 +320,7 @@ const seed = async () => {
       console.error('⚠️  CRITICAL SAFETY ALERT: PRODUCTION DATABASE DETECTED');
       console.error('------------------------------------------------------------');
       console.error('The seeder script is attempting to wipe a production/Atlas database.');
-      console.error('Target URI: ' + mongoUri.split('@')[1] || 'Atlas');
+      console.error('Target URI: ' + (mongoUri.includes('@') ? mongoUri.split('@')[1] : 'Atlas'));
       console.error('\nTo proceed, you MUST set ALLOW_PRODUCTION_SEED=true in your environment.');
       console.error('Aborting to prevent data loss.');
       process.exit(1);
@@ -437,7 +437,7 @@ const seed = async () => {
           discountedPrice: p.sale > 0 ? p.sale : null,
           stock: p.stock,
           image: p.img || undefined,
-          images: p.extraImgs || [],
+          images: p.extraImgs || [p.img2, p.img3, p.img4].filter(Boolean),
           variants: p.variants || [],
           category: cat._id,
           subcategory: subIds[`${block.category}:${p.sub}`],

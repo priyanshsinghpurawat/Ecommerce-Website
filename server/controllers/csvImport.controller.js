@@ -51,7 +51,7 @@ export const bulkImportFromCSV = asyncHandler(async (req, res) => {
       // Resolve Category
       let catId = catCache.get(category.trim().toLowerCase());
       if (!catId) {
-        const catDoc = await Category.findOne({ name: new RegExp(`^${category.trim()}$`, 'i') });
+        const catDoc = await Category.findOne({ name: new RegExp(`^${category.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
         if (!catDoc) {
           errors.push(`Row ${index + 2}: Category '${category}' not found`);
           continue;
@@ -64,7 +64,7 @@ export const bulkImportFromCSV = asyncHandler(async (req, res) => {
       let subId = subCache.get(`${catId}_${subcategory.trim().toLowerCase()}`);
       if (!subId) {
         const subDoc = await Subcategory.findOne({ 
-          name: new RegExp(`^${subcategory.trim()}$`, 'i'),
+          name: new RegExp(`^${subcategory.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'),
           category: catId 
         });
         if (!subDoc) {
