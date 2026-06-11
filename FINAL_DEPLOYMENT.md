@@ -96,9 +96,3 @@ Before deploying the server to Render, seed your remote database with profession
 - **Frontend Check:** Visit the frontend URL. Ensure products render properly (proving connection to MongoDB Atlas and image resolution via Cloudinary), and verify that login, register, and shopping cart operations execute successfully.
 
 ---
-
-## 🌟 Features Deployed & Verified
-1. **High-Visibility Navbar:** Separate, quick-access "Admin Console" button for administrators.
-2. **Rich Seeder Catalog:** Real streetwear studio photography catalog including full variant options (Sizes and Colors).
-3. **Hardened API Gateways:** Configured with global request sanitization (NoSQL injection prevention) and rate limiters for auth endpoints.
-4. **Clean CORS Policies:** Custom origin verification matching production frontend client endpoints.

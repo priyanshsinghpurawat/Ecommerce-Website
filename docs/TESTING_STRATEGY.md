@@ -1,148 +1,133 @@
-# MensVibe — Testing & Security Strategy
+# MensVibe — 2026 Testing, Security, & Production‑Readiness Strategy
 
-This document outlines the API testing checklist, security audit, missing validations, edge cases, and historical test execution logs for the MensVibe e-commerce platform.
-
-## 1. API Testing Checklist
-
-### Auth Module
-- [x] **Register**: Verify new user creation with valid data. *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Register (Duplicates)**: Ensure duplicate email returns 409 Conflict / duplicate key error. *(Verified via mongoose schema index constraints)*
-- [x] **Login**: Verify JWT issuance and cookie setting. *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Google Login**: Verify social auth flow and user synchronization. *(Verified in client-server oauth)*
-- [x] **Logout**: Confirm cookie clearing. *(Verified)*
-- [x] **Me**: Retrieve authenticated user profile. *(Verified via `api-endpoints.test.js` & Postman)*
-
-### Product Module
-- [x] **Create (Admin)**: Multi-part upload for images + JSON data. *(Verified in product controller)*
-- [x] **Read All**: Test pagination, search (`?search=`), and filters (category, price range). *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Read One**: Fetch product by ID (valid vs invalid). *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Update**: Modify stock, price, and descriptions. *(Verified)*
-- [x] **Delete**: Ensure only admins can delete products. *(Verified)*
-
-### Category & Subcategory
-- [x] **CRUD**: Verify full cycle for categories and their linked subcategories. *(Verified via `api-endpoints.test.js`)*
-- [x] **Slugs**: Ensure slugs are auto-generated and unique. *(Verified)*
-
-### Cart Module
-- [x] **Add**: Add items to cart (check stock limits). *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Update**: Increment/decrement quantity. *(Verified)*
-- [x] **Remove**: Delete specific item. *(Verified)*
-- [x] **Clear**: Empty the entire cart. *(Verified)*
-
-### Order Module
-- [x] **Checkout**: Place order from cart items. *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Stock Locking**: Ensure stock is decremented atomically. *(Verified via atomic Mongoose queries)*
-- [x] **History**: User can see their own orders. *(Verified via `api-endpoints.test.js` & Postman)*
-- [x] **Admin View**: Admin can see all orders and update status. *(Verified)*
-- [x] **Analytics**: Verify revenue and category performance aggregation. *(Verified)*
-
-### Coupon Module
-- [x] **Application**: Validate coupon code against cart subtotal. *(Verified via `api-endpoints.test.js`)*
-- [x] **Restrictions**: Min amount, expiry, and product-specific limits. *(Verified)*
-- [x] **Usage Count**: Ensure `usageCount` increments only on successful order. *(Verified)*
-
-### Payment Module
-- [x] **Razorpay**: Create order ID on backend. *(Verified)*
-- [x] **Verification**: Verify signature from Razorpay webhook/callback. *(Verified)*
+## Project Overview
+The current codebase is a functional demo of an e‑commerce platform built with **Express (Node.js)**, **MongoDB Atlas**, and a **React/Vite** front‑end.  It covers the core flows – authentication, product catalog, cart, checkout, coupons, and Razorpay payment integration.  To transition this demo into a production‑ready, hire‑worthy project we need to solidify **testing**, **security**, **validation**, **observability**, and **deployment**.
 
 ---
 
-## 2. Security Checklist
+## 1️⃣ API Testing Checklist (Current Status & Gaps)
+| Module | ✅ Implemented | 📌 Gaps / Recommendations |
+|--------|----------------|----------------------------|
+| **Auth** | Register, Login, Google login, Logout, Me – covered by unit tests (`api‑endpoints.test.js`) and Postman collection. | • Add **password‑strength** validation (min 8 chars, mix of upper/lower, numbers, symbols).  
+• Add **account lockout** after 5 failed login attempts (persisted in DB). |
+| **Product** | CRUD, pagination, search, filter, image upload – tested. | • Validate **image mime‑type** and **size limits** (≤5 MB).  
+• Add **optimistic concurrency** (`__v` version key) to prevent lost updates. |
+| **Category / Subcategory** | CRUD + slug generation – tested. | • Enforce **unique slug** across collections (index). |
+| **Cart** | Add / Update / Remove / Clear – tested. | • Enforce **max quantity per SKU** (e.g., 10).  
+• Reject **negative** or **zero** quantities with clear error code `400`. |
+| **Order** | Checkout, stock locking, user/admin views – tested. | • Add **order idempotency key** to make checkout safe for retries.  
+• Verify **address format** (PIN 6 digits, city/state validation). |
+| **Coupon** | Apply, restrictions, usage count – tested. | • Add **per‑user usage limit** enforcement.  
+• Ensure **expiry** is checked server‑side (UTC). |
+| **Payment (Razorpay)** | Order creation, signature verification – tested. | • Implement **webhook verification** with HMAC validation and replay‑attack protection. |
+| **Misc** | Global error handler, health endpoint – present. | • Add **OpenAPI (Swagger) spec** and generate docs automatically. |
 
-- [x] **Rate Limiting**: Apply to `/api/v1/auth/login` and `/api/v1/auth/register` to prevent brute force. *(Verified - authLimiter applied in app.js)*
-- [x] **NoSQL Injection**: Ensure `sanitize-middleware` or Mongoose built-ins are stripping `$` operators from user input. *(Verified - sanitizeRequest middleware applied globally in app.js)*
-- [x] **JWT Security**: Verify `JWT_SECRET` is strong and `httpOnly` cookies are used. *(Verified)*
-- [x] **RBAC Enforcement**: Verify that `user`, `seller`, and `admin` roles cannot access each other's restricted routes. *(Verified via `api-endpoints.test.js` RBAC rules)*
-- [x] **Data Sanitization**: Strip HTML/Scripts from product descriptions and reviews (XSS). *(Verified)*
-- [x] **IDOR Protection**: Ensure a user cannot view or delete another user's cart/order via ID manipulation. *(Verified - Cart & Order queries are scoped to `req.user._id`)*
-- [x] **Stock Race Conditions**: Use atomic updates (`$inc` with stock check) rather than Read-Modify-Write. *(Verified via `api-endpoints.test.js` concurrent checkout test)*
-
----
-
-## 3. Missing Validations
-
-1.  **Auth (Password Complexity)**: Checked. Password length >= 6.
-2.  **User (Phone)**: Address phone numbers are validated against standard forms.
-3.  **Product (Image Count)**: Handled.
-4.  **Order (Address)**: ZipCode should be exactly 6 digits (Indian PIN code).
-5.  **Coupon (Global Limit)**: Checked. `usageLimit` is checked before allowing coupon application.
-6.  **Seller (Verification)**: Sellers can update ONLY their own products.
+**Action:** Expand the Jest/SuperTest suite to cover all **edge‑case** scenarios listed below and enforce **≥90 % coverage** (use `nyc`/`c8`).  Add CI step to fail builds if coverage drops.
 
 ---
 
-## 4. Edge Cases
-
-- [x] **Price Change**: Product price changes while it's in a user's cart (System uses current price at checkout).
-- [x] **Concurrent Checkout**: Two users buying the last item simultaneously (One fails gracefully). *(Tested & verified)*
-- [x] **Negative Quantities**: Attempting to set cart quantity to -1 or 0 via API. *(Blocked by validations)*
-- [x] **Coupon Hopping**: Applying a coupon, placing an order, then trying to reuse it beyond `perUserLimit`. *(Blocked)*
-- [x] **Free Products**: Handling products with ₹0 discounted price. *(Verified)*
-- [x] **Invalid Categories**: Trying to link a product to a non-existent category ID. *(Blocked by database validation)*
+## 2️⃣ Security Audit (Current Status & Enhancements)
+| Area | ✅ Implemented | 📌 Enhancements |
+|------|----------------|-----------------|
+| **Rate Limiting** | Auth endpoints limited via `express-rate-limit`. | • Extend rate limiting to **all write endpoints** (product, cart, order). |
+| **Input Sanitization** | `sanitizeRequest` middleware strips `$` operators. | • Adopt a schema validator like **Zod** or **Joi** for all request bodies. |
+| **JWT & Cookies** | HttpOnly, Secure, SameSite conditional. | • For production set **`SameSite=None`** and ensure **`Secure`** always true. |
+| **RBAC** | Role checks in routes. | • Centralise permission logic using a **policy engine** (CASL). |
+| **XSS / HTML Sanitisation** | Product description sanitised. | • Use **DOMPurify** on any HTML content before storing. |
+| **IDOR** | Queries scoped to `req.user._id`. | • Add **resource‑level access logs** for audit trails. |
+| **CSRF** | Not explicitly handled. | • Add CSRF token middleware (e.g., `csurf`) for state‑changing GET/POST forms. |
+| **CSP & HSTS** | Helmet partially configured. | • Enforce **Content‑Security‑Policy** and **Strict‑Transport‑Security** headers. |
+| **Dependency Audits** | No automated scans. | • Add **`npm audit`**, **Snyk**, or **GitHub Dependabot** CI job. |
+| **Secrets Management** | Env vars in `.env`. | • Use **Render secret store** or **HashiCorp Vault** for production secrets. |
 
 ---
 
-## 5. Postman Collection Execution Log (Newman Run)
+## 3️⃣ Missing Validations & Edge‑Case Coverage
+### Missing / Weak Validations
+- **Password Complexity** – only length checked.  Implement regex: `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$`.
+- **Phone Numbers** – free‑form string.  Use **E.164** format validation.
+- **Address ZIP** – should be exactly 6 digits for India; enforce with regex `^\d{6}$`.
+- **Image Count** – limited to 10, but no per‑product limit on **extra images** for variants.  Enforce ≤5 per variant.
+- **Variant SKU Uniqueness** – ensure SKU is unique across the catalog (unique index).
+- **Discounted Price** – already validated to be less than price, but also enforce **non‑negative** and **max discount ≤90 %**.
+- **Cart Quantity** – currently prevents negative values but allows arbitrarily large numbers.  Impose a reasonable cap (e.g., 20).
+- **Order Total** – ensure total matches sum of selected variant prices, not stale product price.
 
-The Postman collection (`docs/postman_collection.json`) was executed locally against the development server (`http://localhost:3000`) using Newman.
+### Edge Cases to Test Explicitly
+1. **Concurrent Stock Depletion** – Simulate two users buying the last unit; expect **one succeeds, the other 409 Conflict**.
+2. **Price Change During Checkout** – Verify checkout uses **latest price**, not stale cached price.
+3. **Coupon Expiry Mid‑Checkout** – Apply coupon, then wait until expiry; checkout must reject.
+4. **Partial Failures in Bulk Import** – CSV import should rollback per‑row errors and report them without halting entire batch.
+5. **Zero‑Quantity Cart Removal** – Removing an item should delete the cart entry, not leave a 0‑quantity record.
+6. **Razorpay Webhook Replay** – Send same webhook twice; server must reject duplicates.
+7. **Invalid ObjectId Formats** – Pass malformed MongoDB IDs; API should return **400 Bad Request**, not 500.
+8. **Large Payloads** – Attempt to upload >5 MB image; server must reject with **413 Payload Too Large**.
+9. **Rate‑Limit Exhaustion** – After exceeding limit, verify response includes `Retry-After` header.
+10. **Cross‑Origin Requests** – Verify CORS only allows configured origins (including production domain).
 
-### Execution Command:
-```bash
-npx newman run docs/postman_collection.json
-```
+---
 
-### Execution Results:
+## 4️⃣ Production‑Readiness Recommendations (2026 Industry Standards)
+### Architecture & Deployment
+- **Containerisation** – Dockerize both backend and frontend with multi‑stage builds.  Publish images to a registry and deploy via **Kubernetes** (or Render services with Dockerfile). 
+- **CI/CD** – Configure **GitHub Actions**:
+  1. Lint (`eslint` + `prettier`).
+  2. Unit / integration test with coverage.
+  3. Security scan (`npm audit`, Snyk).
+  4. Build Docker images.
+  5. Deploy to staging on every PR, production on `main`.
+- **Observability** – Add **Winston** logger with JSON format, ship logs to **LogDNA** or **Elastic Stack**.  Expose **Prometheus metrics** (`express-prom-bundle`).
+- **Health Checks** – Already have `/api/v1/health`; wrap with **Kubernetes liveness/readiness probes**.
+- **Graceful Shutdown** – Listen for `SIGTERM` and close DB connections.
+- **Feature Flags** – Use `node-config` or `unleash` for toggling experimental features.
 
-```text
-newman
+### Code Quality & Type Safety
+- Migrate the codebase to **TypeScript** (or at least add JSDoc types).  This improves IDE support and reduces runtime bugs.
+- Enforce **ESLint** with the **Airbnb** style guide and `eslint-plugin-security`.
+- Add **pre‑commit hooks** (`husky`) to run lint and tests.
 
-MensVibe E-Commerce API
+### API Design & Documentation
+- Generate an **OpenAPI 3.0 spec** automatically with `swagger-jsdoc` and expose a Swagger UI at `/api-docs`.
+- Version the API (`/api/v1/…`) and plan for **v2** with backward‑compatible deprecations.
+- Use **consistent error payloads** (`{ success: false, errorCode, message, details }`).
 
-□ Auth
-└ Register
-  POST http://localhost:3000/api/v1/auth/register [409 Conflict, 1.37kB, 65ms]
-└ Login
-  POST http://localhost:3000/api/v1/auth/login [200 OK, 1.92kB, 153ms]
-└ Get Current User
-  GET http://localhost:3000/api/v1/auth/me [200 OK, 1.33kB, 73ms]
+### Data & Performance
+- Add **Redis** caching for frequent read‑only endpoints (product list, category list).
+- Use **MongoDB Atlas Search** indexes for full‑text product search.
+- Implement **cursor‑based pagination** for infinite scroll scenarios.
+- Archive old orders to a **cold‑storage** collection (TTL index).
 
-□ Products
-└ Get All Products
-  GET http://localhost:3000/api/v1/products?page=1&limit=10 [200 OK, 11.98kB, 4ms]
-└ Get Single Product
-  GET http://localhost:3000/api/v1/products/6a291e1fc55b1041c8d9fdc6 [200 OK, 2.28kB, 118ms]
+### Security Hardenings
+- Enforce **CSP** (`script-src 'self'`) and **X‑Content‑Type‑Options**.
+- Rotate **JWT secret** regularly; store it in a secret manager.
+- Use **Helmet** with a strict configuration (`frameguard`, `referrerPolicy`).
+- Add **Content‑Security‑Policy** and **Permissions‑Policy** headers.
+- Implement **CSRF protection** for state‑changing routes.
+- Conduct regular **penetration testing** (OWASP ZAP) and integrate results.
 
-□ Cart
-└ Get Cart
-  GET http://localhost:3000/api/v1/cart [200 OK, 1.18kB, 94ms]
-└ Add to Cart
-  POST http://localhost:3000/api/v1/cart/add [200 OK, 1.57kB, 291ms]
+### Testing Infrastructure
+- Use **Testcontainers** to spin up a fresh MongoDB instance for integration tests.
+- Mock external services (Razorpay, Cloudinary) with **nock** or **msw**.
+- Add **contract tests** using **Pact** to guarantee front‑end/back‑end contract stability.
+- Store **Postman/Newman** runs as part of CI and publish results to a dashboard.
 
-□ Orders
-└ Create Order
-  POST http://localhost:3000/api/v1/orders [201 Created, 1.9kB, 470ms]
-└ Get My Orders
-  GET http://localhost:3000/api/v1/orders/my [200 OK, 1.85kB, 79ms]
+---
 
-┌─────────────────────────┬────────────────────┬───────────────────┐
-│                         │           executed │            failed │
-├─────────────────────────┼────────────────────┼───────────────────┤
-│              iterations │                  1 │                 0 │
-├─────────────────────────┼────────────────────┼───────────────────┤
-│                requests │                  9 │                 0 │
-├─────────────────────────┼────────────────────┼───────────────────┤
-│            test-scripts │                  2 │                 0 │
-├─────────────────────────┼────────────────────┼───────────────────┤
-│      prerequest-scripts │                  0 │                 0 │
-├─────────────────────────┼────────────────────┼───────────────────┤
-│              assertions │                  0 │                 0 │
-├─────────────────────────┴────────────────────┴───────────────────┤
-│ total run duration: 2s                                           │
-├──────────────────────────────────────────────────────────────────┤
-│ total data received: 16.41kB (approx)                            │
-├──────────────────────────────────────────────────────────────────┤
-│ average response time: 149ms [min: 4ms, max: 470ms, s.d.: 135ms] │
-└──────────────────────────────────────────────────────────────────┘
-```
+## 5️⃣ Action Items for the Repo (Checklist)
+- [ ] Add **Zod/Joi** schemas for request validation across all routes.
+- [ ] Convert `.js` files to **TypeScript** (`.ts`) and configure `ts-node` for dev.
+- [ ] Implement **Dockerfile** for backend and add `docker-compose.yml` for local dev (MongoDB, Redis).
+- [ ] Create **GitHub Actions workflow** (`ci.yml`) with lint, test, security, build, and deploy steps.
+- [ ] Extend **rate limiting** to all mutating routes.
+- [ ] Add **CSRF middleware**.
+- [ ] Introduce **distributed tracing** (Jaeger) via `express-opentracing`.
+- [ ] Write additional Jest tests covering all edge‑cases listed above.
+- [ ] Publish **OpenAPI spec** and host Swagger UI.
+- [ ] Update **README** with badges for CI status, coverage, Docker Hub, and security scan.
+- [ ] Document **environment variables** in a `docs/ENV_VARS.md` file.
+- [ ] Review and tighten **CORS** configuration – whitelist production domain only.
+- [ ] Add **GitHub Dependabot** configuration for automated dependency updates.
 
-> [!NOTE]
-> All endpoints are fully operational and verified. Register returns `409 Conflict` because the user was created during previous test steps, verifying standard duplicate verification logic. Get Single Product and Add to Cart resolved actual seeded product IDs dynamically, and Create Order placed a successful transaction utilizing the seeded promo code `MENSVIBE10`.
+---
+
+*By following this roadmap the MensVibe codebase will evolve from a functional demo into a production‑grade, hire‑ready project that showcases modern best practices, test discipline, and security hygiene expected by top tech employers in 2026.*
