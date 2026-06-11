@@ -79,11 +79,11 @@ export const Footer = () => {
                 placeholder="Your email address"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-surface-200 bg-white focus:outline-none focus:border-brand-primary transition-colors"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-surface-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-brand-primary transition-colors"
               />
               <button
                 type="submit"
-                className="bg-app-text hover:bg-brand-primary hover:text-black text-white p-2 rounded-xl transition-all"
+                className="bg-brand-primary hover:opacity-80 text-black p-2 rounded-xl transition-all"
               >
                 <Send className="h-4 w-4" />
               </button>
