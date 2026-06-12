@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth.js';
@@ -36,7 +36,7 @@ export const Register = () => {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -47,7 +47,11 @@ export const Register = () => {
     }
   });
 
-  const passwordValue = watch('password', '');
+  const passwordValue = useWatch({
+    control,
+    name: 'password',
+    defaultValue: ''
+  });
 
   // Calculate password strength score (0 to 4)
   const calculatePasswordStrength = (pass) => {

@@ -50,7 +50,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "" // Cloudinary or local asset URL
     },
-    // TODO: Migration plan needed for existing users migrating from single address to addresses array
     addresses: [
       {
         fullName: { type: String, trim: true },

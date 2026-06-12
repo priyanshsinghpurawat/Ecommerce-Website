@@ -2,6 +2,7 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from '../components/ErrorBoundary.jsx';
 
 // Context Providers
 import { AuthProvider } from '../context/AuthContext.jsx';
@@ -64,91 +65,93 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              {/* Global Toast Alert Notifications */}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 1500,
-                  className: 'font-sans text-xs font-bold uppercase tracking-wider shadow-2xl backdrop-blur-md',
-                  style: {
-                    borderRadius: '12px',
-                    background: 'rgba(10, 10, 10, 0.85)',
-                    color: '#fff',
-                    border: '1px solid var(--color-brand-primary)',
-                    padding: '12px 20px',
-                  },
-                  success: {
-                    iconTheme: { primary: 'var(--color-brand-primary)', secondary: '#000' }
-                  }
-                }}
-              />
-
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    <Route path="shop" element={<Shop />} />
-                    <Route path="street-drip" element={<StreetDrip />} />
-                    <Route path="product/:id" element={<ProductDetails />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="register" element={<Register />} />
-                    <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                    <Route path="wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-                    <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-                    <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
-                    <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminLayout />
-                      </AdminRoute>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ScrollToTop />
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                {/* Global Toast Alert Notifications */}
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    duration: 1500,
+                    className: 'font-sans text-xs font-bold uppercase tracking-wider shadow-2xl backdrop-blur-md',
+                    style: {
+                      borderRadius: '12px',
+                      background: 'rgba(10, 10, 10, 0.85)',
+                      color: '#fff',
+                      border: '1px solid var(--color-brand-primary)',
+                      padding: '12px 20px',
+                    },
+                    success: {
+                      iconTheme: { primary: 'var(--color-brand-primary)', secondary: '#000' }
                     }
-                  >
-                    <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="products" element={<AdminProducts />} />
-                    <Route path="products/new" element={<AddEditProduct />} />
-                    <Route path="products/:id/edit" element={<AddEditProduct />} />
-                    <Route path="categories" element={<AdminCategories />} />
-                    <Route path="subcategories" element={<AdminSubcategories />} />
-                    <Route path="coupons" element={<AdminCoupons />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    <Route path="vendors" element={<AdminVendors />} />
-                    <Route path="vendors/:id" element={<AdminVendorProfile />} />
-                  </Route>
+                  }}
+                />
 
-                  <Route
-                    path="/seller"
-                    element={
-                      <SellerRoute>
-                        <SellerLayout />
-                      </SellerRoute>
-                    }
-                  >
-                    <Route path="dashboard" element={<SellerDashboard />} />
-                    <Route path="products" element={<SellerProducts />} />
-                    <Route path="products/new" element={<AddEditProduct />} />
-                    <Route path="products/:id/edit" element={<AddEditProduct />} />
-                    <Route path="coupons" element={<AdminCoupons />} />
-                    <Route path="orders" element={<SellerOrders />} />
-                  </Route>
-                </Routes>
-              </Suspense>
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Home />} />
+                      <Route path="shop" element={<Shop />} />
+                      <Route path="street-drip" element={<StreetDrip />} />
+                      <Route path="product/:id" element={<ProductDetails />} />
+                      <Route path="login" element={<Login />} />
+                      <Route path="register" element={<Register />} />
+                      <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                      <Route path="wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+                      <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                      <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+                      <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminLayout />
+                        </AdminRoute>
+                      }
+                    >
+                      <Route path="dashboard" element={<AdminDashboard />} />
+                      <Route path="products" element={<AdminProducts />} />
+                      <Route path="products/new" element={<AddEditProduct />} />
+                      <Route path="products/:id/edit" element={<AddEditProduct />} />
+                      <Route path="categories" element={<AdminCategories />} />
+                      <Route path="subcategories" element={<AdminSubcategories />} />
+                      <Route path="coupons" element={<AdminCoupons />} />
+                      <Route path="orders" element={<AdminOrders />} />
+                      <Route path="users" element={<AdminUsers />} />
+                      <Route path="vendors" element={<AdminVendors />} />
+                      <Route path="vendors/:id" element={<AdminVendorProfile />} />
+                    </Route>
+
+                    <Route
+                      path="/seller"
+                      element={
+                        <SellerRoute>
+                          <SellerLayout />
+                        </SellerRoute>
+                      }
+                    >
+                      <Route path="dashboard" element={<SellerDashboard />} />
+                      <Route path="products" element={<SellerProducts />} />
+                      <Route path="products/new" element={<AddEditProduct />} />
+                      <Route path="products/:id/edit" element={<AddEditProduct />} />
+                      <Route path="coupons" element={<AdminCoupons />} />
+                      <Route path="orders" element={<SellerOrders />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

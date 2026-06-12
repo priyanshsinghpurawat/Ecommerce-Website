@@ -11,8 +11,13 @@ import { resolveImageUrl } from '../utils/helpers.js';
 import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 import { motion } from 'framer-motion';
 
-// Mobile Accordion Component
-const MobileCategoryAccordion = ({ category, onClose }) => {
+// Hoisted motion variants for better performance
+const HEART_ANIMATION = { scale: [1, 1.3, 0.9, 1] };
+const CART_ANIMATION = { scale: [1, 1.25, 0.95, 1] };
+const SPRING_TRANSITION = { duration: 0.35, ease: 'easeOut' };
+
+// Mobile Accordion Component - Memoized to prevent unnecessary re-renders
+const MobileCategoryAccordion = React.memo(({ category, onClose }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="border border-white/5 bg-white/5 rounded-2xl overflow-hidden">
@@ -24,7 +29,7 @@ const MobileCategoryAccordion = ({ category, onClose }) => {
         <span>{category.name}</span>
         <ChevronDown className={`h-3.5 w-3.5 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
+      {open ? (
         <div className="px-5 pb-4 pt-1 flex flex-col gap-2.5 border-t border-white/5 bg-black/40">
           <Link
             to={`/shop?category=${category._id}`}
@@ -44,10 +49,12 @@ const MobileCategoryAccordion = ({ category, onClose }) => {
             </Link>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
-};
+});
+
+MobileCategoryAccordion.displayName = 'MobileCategoryAccordion';
 
 /**
  * NAVBAR COMPONENT
@@ -195,9 +202,9 @@ export const Navbar = () => {
                     />
                     <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-app-text/45" />
                     
-                    {searching && (
+                    {searching ? (
                       <Loader2 className="absolute right-10 top-2 h-3.5 w-3.5 animate-spin text-app-text/45" />
-                    )}
+                    ) : null}
 
                     <button
                       type="button"
@@ -214,7 +221,7 @@ export const Navbar = () => {
                 </form>
 
                 {/* Suggestions Dropdown */}
-                {suggestions.length > 0 && (
+                {suggestions.length > 0 ? (
                   <div className="absolute left-0 right-0 mt-2 rounded-2xl bg-black/90 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden z-50 py-2 divide-y divide-white/5">
                     <div className="px-4 py-1.5 text-[8px] font-black uppercase tracking-wider text-brand-primary">
                       Matching Products
@@ -240,11 +247,11 @@ export const Navbar = () => {
                           <p className="text-[10px] font-black text-brand-primary">
                             ₹{product.discountedPrice > 0 ? product.discountedPrice : product.price}
                           </p>
-                          {product.discountedPrice > 0 && (
+                          {product.discountedPrice > 0 ? (
                             <p className="text-[8px] font-bold text-white/35 line-through">
                               ₹{product.price}
                             </p>
-                          )}
+                          ) : null}
                         </div>
                       </button>
                     ))}
@@ -255,7 +262,7 @@ export const Navbar = () => {
                       View all results
                     </button>
                   </div>
-                )}
+                ) : null}
               </div>
             ) : (
               <div className="flex items-center gap-1">
@@ -302,7 +309,7 @@ export const Navbar = () => {
 
           {/* 3. ACTION ICONS */}
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
-            {!searchOpen && (
+            {!searchOpen ? (
               <button
                 onClick={() => setSearchOpen(true)}
                 className="p-2 rounded-lg text-app-text/60 hover:bg-surface-50 hover:text-app-text transition-all"
@@ -310,7 +317,7 @@ export const Navbar = () => {
               >
                 <Search className="h-4 w-4" />
               </button>
-            )}
+            ) : null}
             
             <button
               onClick={toggleTheme}
@@ -322,38 +329,38 @@ export const Navbar = () => {
             <Link to="/wishlist" className="relative p-2 rounded-lg text-app-text/60 hover:bg-surface-50 hidden sm:block">
               <motion.div
                 key={wishlist.length}
-                animate={{ scale: [1, 1.3, 0.9, 1] }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
+                animate={HEART_ANIMATION}
+                transition={SPRING_TRANSITION}
               >
                 <Heart className="h-4 w-4" />
               </motion.div>
-              {wishlist.length > 0 && (
+              {wishlist.length > 0 ? (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-white">
                   {wishlist.length}
                 </span>
-              )}
+              ) : null}
             </Link>
 
             <Link to="/cart" className="relative p-2 rounded-lg text-app-text/60 hover:bg-surface-50">
               <motion.div
                 key={cartItemsCount}
-                animate={{ scale: [1, 1.25, 0.95, 1] }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
+                animate={CART_ANIMATION}
+                transition={SPRING_TRANSITION}
               >
                 <ShoppingBag className="h-4 w-4" />
               </motion.div>
-              {cartItemsCount > 0 && (
+              {cartItemsCount > 0 ? (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[8px] font-bold text-white ring-2 ring-white">
                   {cartItemsCount > 9 ? '9+' : cartItemsCount}
                 </span>
-              )}
+              ) : null}
             </Link>
 
             {/* AUTH SECTION */}
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 {/* Admin/Seller Quick Access Button */}
-                {(user?.role === 'admin' || user?.role === 'seller') && (
+                {(user?.role === 'admin' || user?.role === 'seller') ? (
                   <Link
                     to={user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard'}
                     className="hidden md:flex items-center gap-2   px-4 py-1.5 rounded-xl bg-brand-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-brand-primary/20"
@@ -361,7 +368,7 @@ export const Navbar = () => {
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     {user.role === 'admin' ? 'Admin Console' : 'Vendor Station'}
                   </Link>
-                )}
+                ) : null}
 
                 <div className="relative" ref={menuRef}>
                   <button
@@ -375,7 +382,7 @@ export const Navbar = () => {
                   </button>
 
                   {/* Dropdown Menu */}
-                  {userMenuOpen && (
+                  {userMenuOpen ? (
                     <div className="absolute right-0 mt-3 w-56 origin-top-right rounded-3xl bg-black/90 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                       <div className="px-5 py-4 border-b border-white/5">
                         <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Signed in as</p>
@@ -397,7 +404,7 @@ export const Navbar = () => {
                         </button>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ) : (
@@ -417,7 +424,7 @@ export const Navbar = () => {
 
 
       {/* MOBILE MENU */}
-      {mobileOpen && (
+      {mobileOpen ? (
         <div className="lg:hidden border-b border-surface-100 bg-black/95 backdrop-blur-3xl px-4 py-6 flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex flex-wrap gap-2">
             <Link to="/shop" onClick={() => setMobileOpen(false)} className="rounded-xl bg-brand-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
@@ -457,7 +464,7 @@ export const Navbar = () => {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </header>
   );
 };

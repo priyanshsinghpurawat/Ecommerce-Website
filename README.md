@@ -14,7 +14,6 @@ A high-performance, production-ready MERN stack men's clothing & footwear boutiq
 ## 📖 Complete Documentation
 
 *   **[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)** — Architectural tour, project structures, and schema designs.
-*   **[docs/DEPLOY_v1.md](docs/DEPLOY_v1.md)** — Comprehensive Render + Cloudinary production deployment walkthrough.
 
 ---
 

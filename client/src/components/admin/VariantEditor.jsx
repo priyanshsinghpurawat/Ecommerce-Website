@@ -43,6 +43,9 @@ const getSizeGroups = (categoryName = '') => {
 
 const ALL_SIZES = SIZE_GROUPS.flatMap(g => g.sizes);
 
+/** Impure logic moved outside to satisfy React Compiler purity rules */
+const generateRandomSkuSuffix = () => Math.floor(1000 + Math.random() * 9000);
+
 export default function VariantEditor({ value = [], onChange, categoryName = '' }) {
   const [collapsed, setCollapsed] = useState({});
   const sizeGroups = getSizeGroups(categoryName);
@@ -67,7 +70,7 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
   const autoSku = (v, i) => {
     const colorCode = v.color ? v.color.substring(0, 3).toUpperCase() : 'CLR';
     const sizeCode  = v.size  ? v.size.replace(/\s+/g, '').toUpperCase() : 'SZ';
-    const rand = Math.floor(1000 + Math.random() * 9000);
+    const rand = generateRandomSkuSuffix();
     updateAt(i, { sku: `${colorCode}-${sizeCode}-${rand}` });
   };
 

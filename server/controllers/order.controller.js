@@ -239,11 +239,30 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Order not found');
   }
 
-  // Handle stock and soldCount reversal on cancellation
-  if (status === 'cancelled' && order.status !== 'cancelled') {
+  const oldStatus = order.status;
+
+  // 1. Transitioning TO cancelled: Restore stock & decrement soldCount
+  if (status === 'cancelled' && oldStatus !== 'cancelled') {
     for (const item of order.items) {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: item.quantity, soldCount: -item.quantity }
+      });
+    }
+  }
+
+  // 2. Transitioning FROM cancelled back to active: Re-deduct stock & increment soldCount
+  if (oldStatus === 'cancelled' && status !== 'cancelled') {
+    // Atomic check for all items first
+    for (const item of order.items) {
+      const p = await Product.findById(item.product);
+      if (!p || p.stock < item.quantity) {
+        throw new ApiError(400, `Cannot reinstate order. Product "${item.title}" is out of stock.`);
+      }
+    }
+    // Now decrement
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: -item.quantity, soldCount: item.quantity }
       });
     }
   }

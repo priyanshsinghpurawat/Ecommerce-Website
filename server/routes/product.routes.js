@@ -3,6 +3,7 @@ import {
   createProduct,
   getAllProducts,
   getProductById,
+  getFrequentlyBoughtTogether,
   updateProduct,
   deleteProduct
 } from '../controllers/product.controller.js';
@@ -16,6 +17,7 @@ const router = Router();
 // Public reads
 router.get('/', getAllProducts);
 router.get('/:id', validate({ params: productIdParamSchema }), getProductById);
+router.get('/:id/frequently-bought-together', validate({ params: productIdParamSchema }), getFrequentlyBoughtTogether);
 
 // Auth-protected writes. Order matters:
 // 1) auth → 2) cloudinary precheck → 3) multer parse → 4) zod validate → 5) handler

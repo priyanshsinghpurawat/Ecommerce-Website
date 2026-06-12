@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -17,6 +17,7 @@ import {
   Ticket,
   X
 } from 'lucide-react';
+import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether.jsx';
 import { toast } from 'react-hot-toast';
 import { 
   applyCoupon,
@@ -28,6 +29,13 @@ import {
 } from '../services/api.js';
 import { resolveImageUrl, validateIndianPhone, getErrorMessage } from '../utils/helpers.js';
 import { DEFAULT_SHIPPING, SUGGESTED_COUPONS } from '../constants/checkout.js';
+
+// Hoisted motion variants
+const EMPTY_CART_ANIMATION = { opacity: 1, y: 0 };
+const EMPTY_CART_INITIAL = { opacity: 0, y: 15 };
+const ITEM_EXIT = { opacity: 0, x: -100 };
+const SHIPPING_ANIMATION = { opacity: 1, y: 0 };
+const SHIPPING_INITIAL = { opacity: 0, y: 16 };
 
 export const Cart = () => {
   const { 
@@ -51,24 +59,28 @@ export const Cart = () => {
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
   const [shipping, setShipping] = useState({ ...DEFAULT_SHIPPING });
 
-  const shippingFields = [
+  const shippingFields = useMemo(() => [
     { key: 'fullName', label: 'Full name', type: 'text' },
     { key: 'phone', label: 'Phone (10 digits)', type: 'tel', maxLength: 10 },
     { key: 'street', label: 'Street address', type: 'text' },
     { key: 'city', label: 'City', type: 'text' },
     { key: 'state', label: 'State', type: 'text' },
     { key: 'zipCode', label: 'PIN code', type: 'text', maxLength: 6 }
-  ];
+  ], []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const loadProfile = async () => {
+    
+    const initCart = async () => {
       try {
-        const res = await getProfile();
-        if (res?.success) {
-          const u = res.data;
+        const [profileRes, configRes] = await Promise.all([
+          getProfile(),
+          getPaymentConfig()
+        ]);
+        
+        if (profileRes?.success) {
+          const u = profileRes.data;
           const defaultAddr = u.addresses?.find(a => a.isDefault) || u.addresses?.[0];
-          
           setShipping((prev) => ({
             ...prev,
             fullName: u.name?.trim() || prev.fullName,
@@ -80,20 +92,14 @@ export const Cart = () => {
             country: defaultAddr?.country?.trim() || prev.country
           }));
         }
-      } catch {
-        // Profile optional — Jaipur defaults remain
+        
+        setRazorpayEnabled(Boolean(configRes?.data?.razorpayEnabled));
+      } catch (err) {
+        console.error('Cart initialization failed:', err);
       }
     };
-    const loadPaymentConfig = async () => {
-      try {
-        const res = await getPaymentConfig();
-        setRazorpayEnabled(Boolean(res?.data?.razorpayEnabled));
-      } catch {
-        setRazorpayEnabled(false);
-      }
-    };
-    loadProfile();
-    loadPaymentConfig();
+    
+    initCart();
   }, [isAuthenticated]);
 
   const handleQuantityChange = async (itemId, currentQty, amount) => {
@@ -324,6 +330,13 @@ export const Cart = () => {
     }
   }, [cartTotal, cartItemsCount]);
 
+  const billData = useMemo(() => {
+    const baseAmount = appliedCoupon ? appliedCoupon.finalTotal : cartTotal;
+    const gstAmount = baseAmount * 0.18;
+    const grandTotal = baseAmount + gstAmount;
+    return { baseAmount, gstAmount, grandTotal };
+  }, [cartTotal, appliedCoupon]);
+
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center p-6">
@@ -368,8 +381,8 @@ export const Cart = () => {
         </div>
       ) : cartItemsCount === 0 ? (
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={EMPTY_CART_INITIAL}
+          animate={EMPTY_CART_ANIMATION}
           className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-20 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[420px] gap-5"
         >
           <div className="h-20 w-20 bg-surface-50/60 rounded-full flex items-center justify-center text-app-text/30 border border-white shadow-md">
@@ -418,10 +431,10 @@ export const Cart = () => {
 
                         return (
                           <motion.tr 
-                            key={prod._id}
+                            key={item._id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            exit={{ opacity: 0, x: -100 }}
+                            exit={ITEM_EXIT}
                             transition={{ duration: 0.3 }}
                             className="hover:bg-surface-50/20 transition-all align-middle"
                           >
@@ -443,11 +456,11 @@ export const Cart = () => {
                                   <span className="text-[9px] font-bold text-app-text/40 uppercase block mt-0.5">
                                     {prod.category?.name || 'Unassigned'}
                                   </span>
-                                  {(item.color || item.size) && (
+                                  {(item.color || item.size) ? (
                                     <span className="text-[9px] font-bold text-brand-primary/80 uppercase block mt-0.5">
                                       {[item.color, item.size].filter(Boolean).join(' / ')}
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                               </div>
                             </td>
@@ -530,10 +543,10 @@ export const Cart = () => {
               </div>
               <div className="flex justify-between text-app-text/60">
                 <span>Taxes (GST 18%)</span>
-                <span className="font-mono text-app-text/40">₹{( (appliedCoupon ? appliedCoupon.finalTotal : cartTotal) * 0.18 ).toFixed(2)}</span>
+                <span className="font-mono text-app-text/40">₹{billData.gstAmount.toFixed(2)}</span>
               </div>
 
-              {appliedCoupon && (
+              {appliedCoupon ? (
                 <div className="flex justify-between items-center text-emerald-600 font-semibold animate-in fade-in duration-200">
                   <span className="flex items-center gap-1">
                     <Tag className="h-3 w-3" />
@@ -541,14 +554,14 @@ export const Cart = () => {
                   </span>
                   <span className="font-mono font-bold">- ₹{appliedCoupon.discountAmount.toFixed(2)}</span>
                 </div>
-              )}
+              ) : null}
               
               <div className="h-px bg-surface-100/50 my-2" />
 
               <div className="flex justify-between text-app-text font-extrabold pb-1">
                 <span className="uppercase text-[10px] tracking-wider font-extrabold text-app-text">Total</span>
                 <span className="font-mono text-sm text-app-text">
-                  ₹{( (appliedCoupon ? appliedCoupon.finalTotal : cartTotal) * 1.18 ).toFixed(2)}
+                  ₹{billData.grandTotal.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -624,11 +637,11 @@ export const Cart = () => {
                   </button>
                 </div>
               )}
-              {couponError && (
+              {couponError ? (
                 <p className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 duration-200">
                   {couponError}
                 </p>
-              )}
+              ) : null}
             </div>
 
 
@@ -659,7 +672,7 @@ export const Cart = () => {
                   </>
                 )}
               </button>
-              {showCheckout && razorpayEnabled && (
+              {showCheckout && razorpayEnabled ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -672,16 +685,16 @@ export const Cart = () => {
                   <CreditCard className="h-4 w-4" />
                   Pay online (Razorpay)
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
 
         {/* ── Step 2: Shipping Address (decoupled, full-width) ── */}
-        {showCheckout && (
+        {showCheckout ? (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={SHIPPING_INITIAL}
+            animate={SHIPPING_ANIMATION}
             className="rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md p-6 space-y-5"
           >
             <div className="flex items-center gap-3 pb-2 border-b border-surface-100/50">
@@ -709,14 +722,25 @@ export const Cart = () => {
                       key === 'phone' && phoneError ? 'border-red-300' : 'border-surface-100'
                     }`}
                   />
-                  {key === 'phone' && phoneError && (
+                  {key === 'phone' && phoneError ? (
                     <p className="mt-1 text-[9px] font-bold text-red-500">{phoneError}</p>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>
           </motion.div>
-        )}
+        ) : null}
+
+        {/* Upsell: Frequently Bought Together */}
+        {!showCheckout && cart?.items?.length > 0 ? (
+          <div className="pt-8 border-t border-surface-100/50">
+            <FrequentlyBoughtTogether 
+              productId={cart.items[0].product?._id} 
+              title="Add to your bag?"
+              subtitle="Customers who bought items in your bag also loved these."
+            />
+          </div>
+        ) : null}
         </>
       )}
     </div>

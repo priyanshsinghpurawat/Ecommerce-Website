@@ -56,48 +56,7 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
   );
 };
 
-/* ── Category Image Tile ── */
-const CategoryTile = ({ label, image, isActive, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`flex flex-col items-center gap-2 group transition-all ${isActive ? 'scale-105' : ''}`}
-  >
-    <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 transition-all ${isActive ? 'border-brand-primary shadow-lg shadow-brand-primary/20' : 'border-transparent hover:border-app-text/20'
-      }`}>
-      <img
-        src={image}
-        alt={label}
-        loading="lazy"
-        onError={(e) => { e.target.onerror = null; e.target.src = '/assets/mens_shirt.png'; }}
-        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
-      />
-    </div>
-    <span className={`text-[9px] font-black uppercase tracking-wider text-center leading-tight ${isActive ? 'text-brand-primary' : 'text-app-text/60'
-      }`}>
-      {label}
-    </span>
-  </button>
-);
-const getCategoryFallbackImage = (catName) => {
-  const name = catName.toLowerCase();
-  if (name.includes('clothing')) return 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=200';
-  if (name.includes('footwear')) return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=200';
-  if (name.includes('sportswear')) return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200';
-  return 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=200';
-};
 
-const getSubcategoryFallbackImage = (subName) => {
-  const name = subName.toLowerCase();
-  if (name.includes('boot')) return 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?q=80&w=200';
-  if (name.includes('sport')) return 'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?q=80&w=200';
-  if (name.includes('sneaker')) return 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=200';
-  if (name.includes('shirt')) return 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073624/1731995063_3156808_i9pamp.avif';
-  if (name.includes('pant') || name.includes('jean') || name.includes('cargo')) return 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=200';
-  if (name.includes('linen')) return 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984919/mensvibe/products/1739601040_8064076.avif';
-  if (name.includes('streetwear')) return 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=200';
-  return 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=200';
-};
 
 export const Shop = () => {
   const { products, pagination, loading, error, fetchProducts } = useProducts();
@@ -138,13 +97,7 @@ export const Shop = () => {
     loadSubs();
   }, [category]);
 
-  // Load ALL subcategories for the image grid (ungrouped)
-  const [allSubcategories, setAllSubcategories] = useState([]);
-  useEffect(() => {
-    getSubcategories()
-      .then((res) => setAllSubcategories(res?.data || []))
-      .catch(() => setAllSubcategories([]));
-  }, []);
+
 
   // Fetch all unique variant colours available in the catalogue
   const [availableColors, setAvailableColors] = useState([]);
@@ -203,16 +156,7 @@ export const Shop = () => {
 
   const hasActiveFilters = category || subcategory || badge || minPrice || maxPrice || color || search;
 
-  // Group subcategories by parent category
-  const categoriesWithSubs = useMemo(() => {
-    return categories.map(cat => ({
-      ...cat,
-      subs: allSubcategories.filter(s => {
-        const pid = typeof s.category === 'object' ? s.category?._id : s.category;
-        return pid === cat._id;
-      })
-    }));
-  }, [categories, allSubcategories]);
+
 
   /* ── Filter Sidebar Content (shared between desktop & mobile) ── */
   const renderFilterContent = () => (
@@ -331,27 +275,7 @@ export const Shop = () => {
 
 
 
-      {/* ── CATEGORY IMAGE GRID (Souled Store style) ── */}
-      {categoriesWithSubs.map((cat) => (
-        cat.subs.length > 0 && (
-          <CollapsibleSection key={cat._id} title={cat.name} defaultOpen={!category || category === cat._id}>
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4">
-              {cat.subs.map((sub) => (
-                <CategoryTile
-                  key={sub._id}
-                  label={sub.name}
-                  image={sub.image ? resolveImageUrl(sub.image, 200) : getSubcategoryFallbackImage(sub.name)}
-                  isActive={subcategory === sub._id}
-                  onClick={() => updateFilters({ category: cat._id, subcategory: sub._id, badge: '' })}
-                />
-              ))}
-            </div>
-          </CollapsibleSection>
-        )
-      ))}
 
-      {/* Transparent gradient divider */}
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-brand-primary/20 to-transparent" />
 
       {/* ── MAIN LAYOUT: Sidebar + Grid ── */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">

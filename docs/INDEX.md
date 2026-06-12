@@ -6,9 +6,7 @@ Welcome to the MensVibe documentation. This index serves as a central hub for al
 
 1.  **[Architecture Overview](../README.md)**
     *   High-level architecture, tech stack, and local setup instructions.
-2.  **[Testing Strategy](./TESTING_STRATEGY.md)**
-    *   Comprehensive guide on API testing, security audits, and edge-case coverage.
-3.  **[Developer Guide](./DEVELOPER_GUIDE.md)**
+2.  **[Developer Guide](./DEVELOPER_GUIDE.md)**
     *   Conventions, API standards, and coding guidelines for contributing to the project.
 
 ## 🚀 Deployment & Operations

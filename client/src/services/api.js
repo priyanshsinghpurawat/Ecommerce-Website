@@ -73,6 +73,11 @@ export const getProductById = async (id) => {
   return data;
 };
 
+export const getFrequentlyBoughtTogether = async (id) => {
+  const { data } = await api.get(`/products/${id}/frequently-bought-together`);
+  return data;
+};
+
 export const createProduct = async (productData) => {
   const config = productData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
   const { data } = await api.post('/products', productData, config);

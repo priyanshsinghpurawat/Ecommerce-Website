@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+import { Order } from '../models/order.model.js';
 import { ProductRepository } from '../repositories/product.repository.js';
 import { ProductService } from '../services/product.service.js';
 import { asyncHandler, ApiError, ApiResponse, mapProductForResponse } from '../utils/helpers.js';
@@ -172,6 +174,85 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   await setCache(cacheKey, responseData, 600);
   return res.status(200).json(new ApiResponse(200, responseData, 'Product details retrieved successfully'));
+});
+
+/**
+ * @desc   Get frequently bought together products
+ * @route  GET /api/v1/products/:id/frequently-bought-together
+ * @access Public
+ */
+export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const cacheKey = `product:fbt:id=${id}`;
+  const cached = await getCache(cacheKey);
+  if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Frequently bought together products retrieved (cached)'));
+
+  // 1. Find orders containing this product
+  const frequentCompanions = await Order.aggregate([
+    { $match: { 'items.product': new mongoose.Types.ObjectId(id) } },
+    { $unwind: '$items' },
+    { $match: { 'items.product': { $ne: new mongoose.Types.ObjectId(id) } } },
+    {
+      $group: {
+        _id: '$items.product',
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: 4 }
+  ]);
+
+  let companionIds = frequentCompanions.map((c) => c._id);
+  let products = [];
+
+  if (companionIds.length > 0) {
+    products = await ProductRepository.find(
+      {
+        _id: { $in: companionIds }
+      },
+      {
+        populate: [
+          { path: 'category', select: 'name slug' },
+          { path: 'subcategory', select: 'name slug' }
+        ],
+        lean: true
+      }
+    );
+
+    // Maintain the order from aggregation
+    products.sort((a, b) => {
+      return companionIds.findIndex(cid => cid.equals(a._id)) - companionIds.findIndex(cid => cid.equals(b._id));
+    });
+  }
+
+  // Fallback: If no frequent companions, get some from same subcategory but different from current product
+  if (products.length < 4) {
+    const currentProduct = await ProductRepository.findById(id);
+    const existingIds = [id, ...products.map((p) => p._id.toString())];
+
+    const fallback = await ProductRepository.find(
+      {
+        subcategory: currentProduct?.subcategory,
+        _id: { $nin: existingIds }
+      },
+      {
+        limit: 4 - products.length,
+        populate: [
+          { path: 'category', select: 'name slug' },
+          { path: 'subcategory', select: 'name slug' }
+        ],
+        lean: true
+      }
+    );
+
+    products = [...products, ...fallback];
+  }
+
+  const payload = products.map((p) => mapProductForResponse(p, req));
+  await setCache(cacheKey, payload, 3600); // Cache for 1 hour
+
+  return res.status(200).json(new ApiResponse(200, payload, 'Frequently bought together products retrieved'));
 });
 
 /**
