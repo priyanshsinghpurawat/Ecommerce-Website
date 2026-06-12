@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+const variantSchema = z.object({
+  color: z.string().trim().optional(),
+  size: z.string().trim().optional(),
+  sku: z.string().trim().optional(),
+  stock: z.coerce.number().int().nonnegative().default(0),
+  price: z.coerce.number().nonnegative().nullable().optional(),
+  images: z.array(z.string()).default([])
+});
+
 export const productBodySchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(5000),
@@ -15,7 +24,7 @@ export const productBodySchema = z.object({
   badge: z.enum(['', 'new-arrival', 'sale', 'street-drip', 'limited-edition']).optional(),
   rating: z.coerce.number().min(0).max(5).optional(),
   reviewCount: z.coerce.number().int().nonnegative().optional(),
-  variantsMeta: z.string().optional(),
+  variants: z.array(variantSchema).default([]),
   existingImages: z.string().optional(),
   relatedProducts: z.union([z.string(), z.array(z.string())]).optional()
 });
