@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
+import { useShopFilters } from '../hooks/useShopFilters.js';
 import { getSubcategories, getProducts } from '../services/api.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
-import { resolveImageUrl } from '../utils/helpers.js';
 import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } from 'lucide-react';
 
 /* ── Inline SVG category icons ── */
@@ -51,56 +51,40 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
         {title}
         {open ? <ChevronUp className="h-4 w-4 text-app-text/40" /> : <ChevronDown className="h-4 w-4 text-app-text/40" />}
       </button>
-      {open && <div className="pb-4">{children}</div>}
+      {open ? <div className="pb-4">{children}</div> : null}
     </div>
   );
 };
 
-
-
 export const Shop = () => {
-  const { products, pagination, loading, error, fetchProducts } = useProducts();
+  const { products, pagination, loading, error } = useProducts();
   const { categories, fetchCategories } = useCategories();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { 
+    filters, selectedColors, hasActiveFilters,
+    priceMin, setPriceMin, priceMax, setPriceMax,
+    updateFilters, toggleColor, applyPriceFilter, clearAllFilters, fetchProducts 
+  } = useShopFilters();
+
   const [subcategories, setSubcategories] = useState([]);
-  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(filters.search || '');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [availableColors, setAvailableColors] = useState([]);
 
-  // Read all filter params from URL
-  const search = searchParams.get('search') || '';
-  const category = searchParams.get('category') || '';
-  const subcategory = searchParams.get('subcategory') || '';
-  const badge = searchParams.get('badge') || '';
-  const sort = searchParams.get('sort') || 'latest';
-  const page = Number(searchParams.get('page')) || 1;
-  const minPrice = searchParams.get('minPrice') || '';
-  const maxPrice = searchParams.get('maxPrice') || '';
-  const color = searchParams.get('color') || '';
-
-  const [priceMin, setPriceMin] = useState(minPrice || '');
-  const [priceMax, setPriceMax] = useState(maxPrice || '');
-
-  const selectedColors = useMemo(() => color ? color.split(',').filter(Boolean) : [], [color]);
-
-  const activeSub = subcategories.find((s) => s._id === subcategory);
-  const activeCat = categories.find((c) => c._id === category);
+  const activeSub = subcategories.find((s) => s._id === filters.subcategory);
+  const activeCat = categories.find((c) => c._id === filters.category);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   useEffect(() => {
     const loadSubs = async () => {
       try {
-        const res = await getSubcategories(category || undefined);
+        const res = await getSubcategories(filters.category || undefined);
         setSubcategories(res?.data || []);
       } catch { setSubcategories([]); }
     };
     loadSubs();
-  }, [category]);
+  }, [filters.category]);
 
-
-
-  // Fetch all unique variant colours available in the catalogue
-  const [availableColors, setAvailableColors] = useState([]);
   useEffect(() => {
     getProducts({ limit: 200, fields: 'variants' })
       .then((res) => {
@@ -113,50 +97,21 @@ export const Shop = () => {
       .catch(() => setAvailableColors([]));
   }, []);
 
-
-
-  useEffect(() => { setSearchInput(search); }, [search]);
+  useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
 
   useEffect(() => {
-    fetchProducts({ page, limit: 15, search, category, subcategory, sort, badge, minPrice, maxPrice, color });
-  }, [fetchProducts, page, search, category, subcategory, sort, badge, minPrice, maxPrice, color]);
-
-  const updateFilters = useCallback((newParams) => {
-    const updated = new URLSearchParams(searchParams);
-    Object.entries(newParams).forEach(([key, val]) => {
-      if (val) updated.set(key, val);
-      else updated.delete(key);
+    fetchProducts({ 
+      page: filters.page, limit: 15, search: filters.search, 
+      category: filters.category, subcategory: filters.subcategory, 
+      sort: filters.sort, badge: filters.badge, 
+      minPrice: filters.minPrice, maxPrice: filters.maxPrice, color: filters.color 
     });
-    if (!('page' in newParams)) updated.set('page', '1');
-    if (newParams.category !== undefined && !newParams.subcategory) updated.delete('subcategory');
-    setSearchParams(updated);
-  }, [searchParams, setSearchParams]);
+  }, [fetchProducts, filters]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     updateFilters({ search: searchInput.trim() });
   };
-
-  const toggleColor = (colorName) => {
-    const current = new Set(selectedColors);
-    if (current.has(colorName)) current.delete(colorName);
-    else current.add(colorName);
-    updateFilters({ color: [...current].join(',') || '' });
-  };
-
-  const applyPriceFilter = () => {
-    updateFilters({ minPrice: priceMin || '', maxPrice: priceMax || '' });
-  };
-
-  const clearAllFilters = () => {
-    setPriceMin('');
-    setPriceMax('');
-    updateFilters({ search: '', category: '', subcategory: '', badge: '', sort: 'latest', minPrice: '', maxPrice: '', color: '' });
-  };
-
-  const hasActiveFilters = category || subcategory || badge || minPrice || maxPrice || color || search;
-
-
 
   /* ── Filter Sidebar Content (shared between desktop & mobile) ── */
   const renderFilterContent = () => (
@@ -165,7 +120,7 @@ export const Shop = () => {
       <CollapsibleSection title="Categories">
         <div className="space-y-1">
           <button type="button" onClick={() => updateFilters({ category: '', subcategory: '', badge: '' })}
-            className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${!category && !badge ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
+            className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${!filters.category && !filters.badge ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
           >
             <ShoppingBag className="h-4 w-4 shrink-0" />
             All Products
@@ -174,9 +129,9 @@ export const Shop = () => {
             const IconComp = CATEGORY_ICONS[cat.name.toLowerCase()];
             return (
               <button key={cat._id} type="button" onClick={() => updateFilters({ category: cat._id, subcategory: '', badge: '' })}
-                className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${category === cat._id ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
+                className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${filters.category === cat._id ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
               >
-                {IconComp && <IconComp className="h-4 w-4 shrink-0" />}
+                {IconComp ? <IconComp className="h-4 w-4 shrink-0" /> : null}
                 {cat.name}
               </button>
             );
@@ -185,20 +140,20 @@ export const Shop = () => {
       </CollapsibleSection>
 
       {/* Subcategories when a category is selected */}
-      {subcategories.length > 0 && (
+      {subcategories.length > 0 ? (
         <CollapsibleSection title="Sub-Categories">
           <div className="space-y-1">
             <button type="button" onClick={() => updateFilters({ subcategory: '' })}
-              className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${!subcategory ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
+              className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${!filters.subcategory ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
             >All</button>
             {subcategories.map((sub) => (
               <button key={sub._id} type="button" onClick={() => updateFilters({ subcategory: sub._id })}
-                className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${subcategory === sub._id ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
+                className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${filters.subcategory === sub._id ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
               >{sub.name}</button>
             ))}
           </div>
         </CollapsibleSection>
-      )}
+      ) : null}
 
       {/* Price Range */}
       <CollapsibleSection title="Price Range">
@@ -219,7 +174,7 @@ export const Shop = () => {
       </CollapsibleSection>
 
       {/* Colour Filter — dynamic from actual product variants */}
-      {availableColors.length > 0 && (
+      {availableColors.length > 0 ? (
         <CollapsibleSection title="Colour" defaultOpen={false}>
           <div className="flex flex-wrap gap-2">
             {availableColors.map((col) => {
@@ -247,36 +202,20 @@ export const Shop = () => {
             })}
           </div>
         </CollapsibleSection>
-      )}
+      ) : null}
 
-      {/* Sort */}
-      <CollapsibleSection title="Sort By">
-        <select value={sort} onChange={(e) => updateFilters({ sort: e.target.value })}
-          className="w-full appearance-none rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-brand-primary text-app-text cursor-pointer"
-        >
-          <option value="latest">Newest first</option>
-          <option value="priceAsc">Price: low → high</option>
-          <option value="priceDesc">Price: high → low</option>
-          <option value="bestSelling">Best Selling</option>
-          <option value="popularity">Most Popular</option>
-        </select>
-      </CollapsibleSection>
 
-      {hasActiveFilters && (
+
+      {hasActiveFilters ? (
         <button type="button" onClick={clearAllFilters}
           className="w-full mt-2 rounded-xl border border-red-200 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors"
         >Clear All Filters</button>
-      )}
+      ) : null}
     </div>
   );
 
   return (
     <div className="space-y-8 pb-16">
-
-
-
-
-
       {/* ── MAIN LAYOUT: Sidebar + Grid ── */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
@@ -291,7 +230,7 @@ export const Shop = () => {
             className="flex items-center gap-2 rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-app-text"
           >
             <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
-            {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-brand-primary" />}
+            {hasActiveFilters ? <span className="h-2 w-2 rounded-full bg-brand-primary" /> : null}
           </button>
           <form onSubmit={handleSearchSubmit} className="relative flex-1">
             <input type="text" placeholder="Search..." value={searchInput}
@@ -303,7 +242,7 @@ export const Shop = () => {
         </div>
 
         {/* Mobile Filter Drawer (Bottom Sheet) */}
-        {mobileFilterOpen && (
+        {mobileFilterOpen ? (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFilterOpen(false)} />
             <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] overflow-y-auto bg-app-bg rounded-t-3xl border-t border-surface-100 p-6 animate-in slide-in-from-bottom duration-300">
@@ -319,7 +258,7 @@ export const Shop = () => {
               >Show Results</button>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* ── MAIN CONTENT ── */}
         <div className="flex-1 min-w-0 space-y-6">
@@ -327,51 +266,69 @@ export const Shop = () => {
           <div className="flex items-end justify-between border-b border-surface-100 pb-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-primary">
-                {badge === 'sale' ? 'Exclusive Offers' : activeSub?.name || activeCat?.name || 'Full catalog'}
+                {filters.badge === 'sale' ? 'Exclusive Offers' : activeSub?.name || activeCat?.name || 'Full catalog'}
               </p>
               <h1 className="text-2xl md:text-3xl font-bold text-app-text mt-1">
-                {badge === 'sale' ? 'Flash Sale' : activeSub ? activeSub.name : activeCat ? activeCat.name : 'Shop Everything'}
+                {filters.badge === 'sale' ? 'Flash Sale' : activeSub ? activeSub.name : activeCat ? activeCat.name : 'Shop Everything'}
               </h1>
               <p className="text-sm text-app-text/50 mt-1">
                 {pagination.totalProducts != null ? `${pagination.totalProducts} products` : 'Browse our collection'}
               </p>
             </div>
-            {/* Desktop search */}
-            <form onSubmit={handleSearchSubmit} className="hidden lg:block relative w-64">
-              <input type="text" placeholder="Search..." value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 pl-10 text-xs focus:outline-none focus:border-brand-primary"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-app-text/35" />
-            </form>
+            <div className="flex items-center gap-3">
+              {/* Sort By Dropdown */}
+              <div className="relative">
+                <select 
+                  value={filters.sort} 
+                  onChange={(e) => updateFilters({ sort: e.target.value })}
+                  className="appearance-none rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 pr-8 text-xs font-bold focus:outline-none focus:border-brand-primary text-app-text cursor-pointer"
+                >
+                  <option value="latest">Newest first</option>
+                  <option value="priceAsc">Price: low → high</option>
+                  <option value="priceDesc">Price: high → low</option>
+                  <option value="bestSelling">Best Selling</option>
+                  <option value="popularity">Most Popular</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-3.5 h-3.5 w-3.5 text-app-text/40 pointer-events-none" />
+              </div>
+
+              {/* Desktop search */}
+              <form onSubmit={handleSearchSubmit} className="hidden lg:block relative w-64">
+                <input type="text" placeholder="Search..." value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 pl-10 text-xs focus:outline-none focus:border-brand-primary"
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-app-text/35" />
+              </form>
+            </div>
           </div>
 
           {/* Active filter pills */}
-          {hasActiveFilters && (
+          {hasActiveFilters ? (
             <div className="flex flex-wrap gap-2">
-              {activeCat && (
+              {activeCat ? (
                 <span className="flex items-center gap-1 rounded-full bg-app-text/10 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-app-text">
                   {activeCat.name}
                   <button type="button" onClick={() => updateFilters({ category: '', subcategory: '' })}><X className="h-3 w-3" /></button>
                 </span>
-              )}
-              {activeSub && (
+              ) : null}
+              {activeSub ? (
                 <span className="flex items-center gap-1 rounded-full bg-brand-primary/15 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-brand-primary">
                   {activeSub.name}
                   <button type="button" onClick={() => updateFilters({ subcategory: '' })}><X className="h-3 w-3" /></button>
                 </span>
-              )}
-              {(minPrice || maxPrice) && (
+              ) : null}
+              {(filters.minPrice || filters.maxPrice) ? (
                 <span className="flex items-center gap-1 rounded-full bg-app-text/10 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-app-text">
-                  ₹{minPrice || '0'} – ₹{maxPrice || '∞'}
+                  ₹{filters.minPrice || '0'} – ₹{filters.maxPrice || '∞'}
                   <button type="button" onClick={() => { setPriceMin(''); setPriceMax(''); updateFilters({ minPrice: '', maxPrice: '' }); }}><X className="h-3 w-3" /></button>
                 </span>
-              )}
+              ) : null}
 
             </div>
-          )}
+          ) : null}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           {/* Product Grid */}
           {loading ? (
@@ -383,7 +340,7 @@ export const Shop = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 {products.map((prod) => <ProductCard key={prod._id} product={prod} activeColor={selectedColors[0]} />)}
               </div>
-              {pagination.totalPages > 1 && (
+              {pagination.totalPages > 1 ? (
                 <div className="flex justify-center gap-2 pt-4">
                   {[...Array(pagination.totalPages)].map((_, i) => (
                     <button key={i} type="button" onClick={() => updateFilters({ page: String(i + 1) })}
@@ -392,7 +349,7 @@ export const Shop = () => {
                     >{i + 1}</button>
                   ))}
                 </div>
-              )}
+              ) : null}
             </>
           ) : (
             <div className="rounded-[3rem] border border-dashed border-surface-200 py-24 px-8 text-center bg-surface-50/30">
