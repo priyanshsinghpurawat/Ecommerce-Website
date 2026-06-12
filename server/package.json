@@ -12,7 +12,6 @@
     "free-port": "powershell -ExecutionPolicy Bypass -File ./scripts/free-port.ps1",
     "dev:clean": "npm run free-port && nodemon index.js",
     "seed": "node scripts/seeder.js",
-    "seed:dummy": "node scripts/seed-dummyjson.js",
     "test": "node --test --test-concurrency=1 tests/**/*.test.js"
   },
   "dependencies": {
@@ -32,8 +31,10 @@
     "mongoose": "^8.4.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "node-cron": "^4.2.1",
     "papaparse": "^5.5.3",
     "razorpay": "^2.9.6",
+    "redis": "^6.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

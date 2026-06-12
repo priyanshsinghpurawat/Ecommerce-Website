@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
-import * as wishlistService from '../services/wishlist.service.js';
+import * as wishlistService from '../services/api.js';
 
 export const WishlistContext = createContext();
 
@@ -16,7 +16,11 @@ export const WishlistProvider = ({ children }) => {
       const res = await wishlistService.getWishlist();
       setWishlist(res?.data || []);
     } catch (err) {
-      console.error('Failed to fetch wishlist', err);
+      if (err?.response?.status === 401) {
+        setWishlist([]);
+      } else {
+        console.error('Failed to fetch wishlist', err);
+      }
     } finally {
       setLoading(false);
     }

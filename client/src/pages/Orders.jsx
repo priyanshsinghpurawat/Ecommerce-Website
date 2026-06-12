@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getMyOrders } from '../services/order.service.js';
+import { getMyOrders } from '../services/api.js';
 import { Loader2, Package, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

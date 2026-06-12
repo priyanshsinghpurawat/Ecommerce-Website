@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getVendors, toggleVendorStatus } from '../../services/user.service.js';
+import { getVendors, toggleVendorStatus } from '../../services/api.js';
 import { Loader2, Store, User, Mail, ShieldCheck, ShieldAlert, ExternalLink, Hash, Tag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

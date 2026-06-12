@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ V3 ]
+  pull_request:
+    branches: [ V3 ]
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: npm install
+        working-directory: server
+
+      - name: Run Backend Tests
+        run: npm test
+        working-directory: server
+        env:
+          MONGODB_URI: mongodb://localhost:27017/test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test_secret_key' }}
+          PORT: 3001
+
+  frontend-build:
+    name: Frontend Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm install
+        working-directory: client
+
+      - name: Run Lint
+        run: npm run lint
+        working-directory: client
+
+      - name: Run Frontend Tests
+        run: npm test
+        working-directory: client
+
+      - name: Build Frontend
+        run: npm run build
+        working-directory: client

@@ -1,6 +1,7 @@
+/** WHY: Global state for the shopping cart (adding items, clearing, subtotal). */
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
-import * as cartService from '../services/cart.service.js';
+import * as cartService from '../services/api.js';
 
 export const CartContext = createContext();
 
@@ -44,7 +45,13 @@ export const CartProvider = ({ children }) => {
         setCartTotal(0);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch cart.');
+      if (err?.response?.status === 401) {
+        setCart(null);
+        setCartItemsCount(0);
+        setCartTotal(0);
+      } else {
+        setError(err.response?.data?.message || 'Failed to fetch cart.');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,11 +87,11 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (itemId, quantity) => {
     if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     setError(null);
     try {
-      const response = await cartService.updateCartItemQuantity(productId, quantity);
+      const response = await cartService.updateCartItemQuantity(itemId, quantity);
       if (response && response.success) {
         setCart(response.data);
         computeAggregates(response.data.items);
@@ -97,11 +104,11 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (itemId) => {
     if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     setError(null);
     try {
-      const response = await cartService.removeFromCart(productId);
+      const response = await cartService.removeFromCart(itemId);
       if (response && response.success) {
         setCart(response.data);
         computeAggregates(response.data.items);

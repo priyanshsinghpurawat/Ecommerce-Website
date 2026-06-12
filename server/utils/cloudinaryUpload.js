@@ -9,7 +9,7 @@
  */
 import { Readable } from 'stream';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
-import { ApiError } from './apiError.js';
+import { ApiError } from './helpers.js';
 
 const DEFAULT_FOLDER = 'mensvibe/products';
 

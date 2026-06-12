@@ -16,9 +16,12 @@ const cartItemSchema = new mongoose.Schema(
     size: {
       type: String,
       trim: true
+    },
+    color: {
+      type: String,
+      trim: true
     }
-  },
-  { _id: false } // We don't need a separate ObjectId for each cart item
+  }
 );
 
 const cartSchema = new mongoose.Schema(

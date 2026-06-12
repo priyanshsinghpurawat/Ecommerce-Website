@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories } from '../services/subcategory.service.js';
-import * as productService from '../services/product.service.js';
+import { getSubcategories, getProducts } from '../services/api.js';
+import * as productService from '../services/api.js';
 import { HeroCarousel } from '../components/HeroCarousel.jsx';
 import { ProductShowcase } from '../components/ProductShowcase.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
@@ -40,11 +40,10 @@ export const Home = () => {
       .then((res) => setSubcategories(res?.data || []))
       .catch(() => setSubcategories([]));
     
-    // Fetch sale products specifically
-    productService.getProducts({ limit: 5, sort: 'latest' }) // Ideally we'd have a badge filter in the API
+    // Fetch sale products using the badge filter
+    productService.getProducts({ limit: 10, badge: 'sale' })
       .then((res) => {
-        const all = res?.data?.products || [];
-        setSaleProducts(all.filter(p => p.badge === 'sale' || (p.discountedPrice > 0 && p.discountedPrice < p.price)));
+        setSaleProducts(res?.data?.products || []);
       })
       .catch(() => setSaleProducts([]));
   }, [fetchProducts, fetchCategories]);
@@ -281,6 +280,8 @@ export const Home = () => {
           />
         </motion.div>
       )}
+
+
 
       <div className="section-divider" />
 

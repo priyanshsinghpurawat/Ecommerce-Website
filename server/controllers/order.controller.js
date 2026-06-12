@@ -1,14 +1,17 @@
-import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { Coupon } from '../models/coupon.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
-import { calculateCouponDiscount } from '../utils/couponCalc.js';
-import { computeCartSubtotal, getUnitPrice } from '../utils/cartTotals.js';
-import { generateOrderNumber, validateShippingAddress } from '../utils/orderBuild.js';
+import {
+  asyncHandler,
+  ApiError,
+  ApiResponse,
+  calculateCouponDiscount,
+  computeCartSubtotal,
+  getUnitPrice,
+  generateOrderNumber,
+  validateShippingAddress
+} from '../utils/helpers.js';
 
 /**
  * @desc    Place order from cart
@@ -46,7 +49,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     discountAmount = couponResult.discountAmount;
     taxableValue = couponResult.finalTotal;
     appliedCouponCode = couponResult.code;
-    
+
     // Find the coupon ID to increment usage
     const couponDoc = await Coupon.findOne({ code: appliedCouponCode });
     if (couponDoc) {
@@ -68,7 +71,9 @@ export const createOrder = asyncHandler(async (req, res) => {
       discountedPrice: product.discountedPrice,
       quantity: item.quantity,
       unitPrice,
-      subtotal: unitPrice * item.quantity
+      subtotal: unitPrice * item.quantity,
+      size: item.size || '',
+      color: item.color || ''
     };
   });
 
@@ -114,6 +119,11 @@ export const createOrder = asyncHandler(async (req, res) => {
       paymentMethod: paymentMethod === 'demo' ? 'demo' : 'cod',
       status: 'confirmed'
     });
+
+    // Increment soldCount for products after successful order creation
+    for (const item of orderItems) {
+      await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+    }
 
     // Increment coupon usage count
     if (appliedCouponId) {
@@ -181,7 +191,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
   let { seller } = req.query;
   const query = {};
-  
+
   // If user is a seller, they can ONLY see their own products' orders
   if (req.user.role === 'seller') {
     seller = req.user._id.toString();
@@ -190,7 +200,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
   if (status && status !== 'all') {
     query.status = status;
   }
-  
+
   if (search) {
     const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.orderNumber = { $regex: escaped, $options: 'i' };
@@ -227,6 +237,15 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(id);
   if (!order) {
     throw new ApiError(404, 'Order not found');
+  }
+
+  // Handle stock and soldCount reversal on cancellation
+  if (status === 'cancelled' && order.status !== 'cancelled') {
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity, soldCount: -item.quantity }
+      });
+    }
   }
 
   order.status = status;

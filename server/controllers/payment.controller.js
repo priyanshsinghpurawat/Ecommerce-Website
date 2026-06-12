@@ -2,10 +2,8 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { Order } from '../models/order.model.js';
 import { Product } from '../models/product.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
-import { buildOrderFromCart, generateOrderNumber } from '../utils/orderBuild.js';
+import { Cart } from '../models/cart.model.js';
+import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber } from '../utils/helpers.js';
 
 const isRazorpayConfigured = () => {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -159,7 +157,11 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   order.razorpayOrderId = razorpay_order_id;
   await order.save();
 
-  const { Cart } = await import('../models/cart.model.js');
+  // Increment soldCount
+  for (const item of order.items) {
+    await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+  }
+
   const cart = await Cart.findOne({ user: req.user._id });
   if (cart) {
     cart.items = [];

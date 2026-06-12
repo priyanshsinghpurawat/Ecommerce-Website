@@ -6,9 +6,8 @@ import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories } from '../services/subcategory.service.js';
-import { getProducts } from '../services/product.service.js';
-import { resolveImageUrl } from '../utils/imageUrl.js';
+import { getSubcategories, getProducts } from '../services/api.js';
+import { resolveImageUrl } from '../utils/helpers.js';
 import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 import { motion } from 'framer-motion';
 

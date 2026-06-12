@@ -1,6 +1,7 @@
+/** WHY: Global state for the logged-in user (session, roles, logout). */
 import { createContext, useState, useEffect } from 'react';
-import * as authService from '../services/auth.service.js';
-import { unwrapData, getErrorMessage } from '../utils/apiHelpers.js';
+import * as authService from '../services/api.js';
+import { unwrapData, getErrorMessage } from '../utils/helpers.js';
 
 export const AuthContext = createContext();
 
@@ -13,7 +14,9 @@ export const AuthProvider = ({ children }) => {
   // We optionally seed UI from a cached `user` for snappier first render,
   // but the server's response is the source of truth for the role and identity.
   useEffect(() => {
+    let isMounted = true;
     const cached = localStorage.getItem('user');
+    
     if (cached) {
       try {
         setUser(JSON.parse(cached));
@@ -23,27 +26,41 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    (async () => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('user');
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    const verifySession = async () => {
       try {
         const body = await authService.me();
+        if (!isMounted) return;
+        
         const fresh = unwrapData(body);
         if (fresh) {
           setUser(fresh);
           setIsAuthenticated(true);
           localStorage.setItem('user', JSON.stringify(fresh));
         } else {
-          setUser(null);
-          setIsAuthenticated(false);
-          localStorage.removeItem('user');
+          throw new Error('No user data');
         }
       } catch {
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem('user');
+        if (!isMounted) return;
+        handleUnauthorized();
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
-    })();
+    };
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const handleAuthSuccess = (body) => {

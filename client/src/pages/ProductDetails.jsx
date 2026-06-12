@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById, getProducts } from '../services/product.service.js';
-import { Loader2, ArrowLeft, Shield, Sparkles, Star, Heart, ShoppingBag, ShieldCheck, Clock, Check, X } from 'lucide-react';
-import { getDiscountPercent } from '../utils/imageUrl.js';
+import { getProductById, getProducts } from '../services/api.js';
+import { Loader2, ArrowLeft, Star, Heart, ShoppingBag, Clock, Check, X, ShieldCheck, Sparkles, Shield } from 'lucide-react';
+import { resolveImageUrl, getDiscountPercent } from '../utils/helpers.js';
 import { toast } from 'react-hot-toast';
-import { resolveImageUrl } from '../utils/imageUrl.js';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useWishlist } from '../hooks/useWishlist.js';
@@ -47,9 +47,6 @@ export const ProductDetails = () => {
   const [deliveryStatus, setDeliveryStatus] = useState(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
 
-  const [lookalikeProducts, setLookalikeProducts] = useState([]);
-  const [similarClothes, setSimilarClothes] = useState([]);
-
   const isWishlisted = isInWishlist(id);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
@@ -73,7 +70,7 @@ export const ProductDetails = () => {
       return;
     }
     setCartLoading(true);
-    const res = await addToCart(product._id, 1);
+    const res = await addToCart(product._id, 1, { size: selectedSize, color: selectedColor });
     setCartLoading(false);
     if (res.success) {
       toast.success(`Added ${product.title} (${selectedSize}) to bag!`);
@@ -95,9 +92,7 @@ export const ProductDetails = () => {
           
           // Set default selected color & size
           let defaultColor = '';
-          if (prod.colors?.length > 0) {
-            defaultColor = prod.colors[0].name;
-          } else if (prod.variants?.length > 0) {
+          if (prod.variants?.length > 0) {
             const firstColorVariant = prod.variants.find(v => v.color);
             if (firstColorVariant) defaultColor = firstColorVariant.color;
           }
@@ -105,22 +100,6 @@ export const ProductDetails = () => {
 
           const isFoot = prod.category?.name?.toLowerCase() === 'footwear' || prod.subcategory?.name?.toLowerCase().includes('shoes') || prod.subcategory?.name?.toLowerCase().includes('sneakers');
           setSelectedSize(isFoot ? 'UK 8' : 'S');
-
-          // Fetch Lookalike Products (Same subcategory)
-          if (prod.subcategory?._id) {
-            const lookalikeRes = await getProducts({ subcategory: prod.subcategory._id, limit: 6 });
-            const filteredLookalikes = (lookalikeRes?.data?.products || []).filter(p => String(p._id) !== String(id));
-            setLookalikeProducts(filteredLookalikes);
-          }
-
-          // Fetch "Complete Your Look" — same category, different subcategory
-          const subcategoryId = prod.subcategory?._id;
-          if (prod.category?._id) {
-            const similarRes = await getProducts({ category: prod.category._id, limit: 12 });
-            const allOtherProds = (similarRes?.data?.products || []).filter(p => String(p._id) !== String(id));
-            const filteredSimilar = allOtherProds.filter(p => String(p.subcategory?._id) !== String(subcategoryId)).slice(0, 6);
-            setSimilarClothes(filteredSimilar);
-          }
         }
       } catch (err) {
         toast.error('Failed to load product details.');
@@ -131,21 +110,26 @@ export const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
+  const relatedItems = product?.relatedProducts || [];
 
 
-  // Update mainImage if selectedColor changes and variant has images
+
+  // Update mainImage when selected color changes — show that color's first image
   useEffect(() => {
-    if (product && selectedColor) {
-      const colorObj = product.colors?.find(c => c.name === selectedColor);
-      if (colorObj?.images?.[0]) {
-        setMainImage(colorObj.images[0]);
+    if (!product) return;
+    if (selectedColor) {
+      // Prefer variant images for this colour
+      const variantImgs = product.variants
+        ?.filter(v => v.color === selectedColor)
+        .flatMap(v => v.images || [])
+        .filter(Boolean) || [];
+      if (variantImgs.length > 0) {
+        setMainImage(variantImgs[0]);
         return;
       }
-      const variant = product.variants?.find(v => v.color === selectedColor && v.images?.length > 0);
-      if (variant) {
-        setMainImage(variant.images[0]);
-      }
     }
+    // Fallback: main product image
+    setMainImage(product.image);
   }, [selectedColor, product]);
 
   const handleCheckPincode = (e) => {
@@ -193,8 +177,16 @@ export const ProductDetails = () => {
     );
   }
 
-  const hasDiscount = product.discountedPrice !== null && product.discountedPrice !== undefined;
-  const unitPrice = hasDiscount ? product.discountedPrice : product.price;
+  const currentVariant = product.variants?.find(
+    (v) => (v.color === selectedColor || !selectedColor) && v.size === selectedSize
+  );
+
+  const basePrice = currentVariant?.price ?? product.price;
+  const discountedPrice = currentVariant?.price ? (currentVariant.discountedPrice ?? null) : product.discountedPrice;
+  const displayStock = currentVariant ? currentVariant.stock : product.stock;
+
+  const hasDiscount = discountedPrice !== null && discountedPrice !== undefined;
+  const unitPrice = hasDiscount ? discountedPrice : basePrice;
   const showOriginalPrice = hasDiscount && unitPrice >= 1500;
 
   const isFootwear = product.category?.name?.toLowerCase() === 'footwear' || 
@@ -202,29 +194,43 @@ export const ProductDetails = () => {
                       product.subcategory?.name?.toLowerCase().includes('sneakers');
 
   const availableColors = [...new Set([
-    ...(product.colors?.map(c => c.name) || []),
     ...(product.variants?.map(v => v.color).filter(Boolean) || [])
   ])];
 
-  let sizeOptions = isFootwear ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11'] : ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
-  let outOfStockSizes = isFootwear ? ['UK 11'] : ['4XL', '5XL'];
+  // Fallback size lists — only used when product has no variants
+  let sizeOptions = isFootwear
+    ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12']
+    : ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+  let outOfStockSizes = []; // never hardcode — derive from real data
 
   if (product.variants && product.variants.length > 0) {
-    const variantsForColor = product.variants.filter(v => v.color === selectedColor || !selectedColor);
-    const availableVariantSizes = [...new Set(variantsForColor.map(v => v.size).filter(Boolean))];
+    const variantsForColor = product.variants.filter(v =>
+      !selectedColor || v.color === selectedColor
+    );
+    const availableVariantSizes = [...new Set(
+      variantsForColor.map(v => v.size).filter(Boolean)
+    )];
     if (availableVariantSizes.length > 0) {
       sizeOptions = availableVariantSizes;
-      outOfStockSizes = variantsForColor.filter(v => v.stock === 0).map(v => v.size);
     }
+    // Out-of-stock: variant exists for this size but stock is 0
+    outOfStockSizes = variantsForColor
+      .filter(v => v.size && Number(v.stock) === 0)
+      .map(v => v.size);
   }
 
-  // Consolidate images from product, colors, and variants
-  const allImages = [...new Set([
-    product.image,
-    ...(product.images || []),
-    ...(product.colors?.flatMap(c => c.images || []) || []),
-    ...(product.variants?.flatMap(v => v.images || []) || [])
-  ])].filter(Boolean);
+  // Gallery: if selected colour has its own images show those exclusively.
+  // Otherwise fall back to the full product gallery.
+  const colorVariantImages = selectedColor
+    ? (product.variants
+        ?.filter(v => v.color === selectedColor)
+        .flatMap(v => v.images || [])
+        .filter(Boolean) || [])
+    : [];
+
+  const allImages = colorVariantImages.length > 0
+    ? colorVariantImages
+    : [...new Set([product.image, ...(product.images || [])])].filter(Boolean);
 
   const currentMeasure = isFootwear 
     ? FOOTWEAR_MEASUREMENTS[selectedSize] 
@@ -268,14 +274,16 @@ export const ProductDetails = () => {
               src={resolveImageUrl(mainImage, 1200)}
               alt={product.title}
               loading="lazy"
-              className="w-full aspect-[4/5] object-cover object-top transition-transform duration-1000 group-hover:scale-102"
+              className="w-full aspect-[4/5] object-cover object-top transition-transform duration-1000 group-hover:scale-108"
             />
             
-            {/* Dynamic Status Overlay */}
+            {/* Dynamic Badge Overlay */}
             <div className="absolute left-6 top-6 flex flex-col gap-2">
-              <span className="bg-black text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] shadow-2xl border border-white/10">
-                NEW ARRIVAL
-              </span>
+              {product.badge && (
+                <span className="bg-black text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] shadow-2xl border border-white/10">
+                  {product.badge.replace('-', ' ')}
+                </span>
+              )}
             </div>
 
             <button
@@ -296,9 +304,11 @@ export const ProductDetails = () => {
               {product.title}
             </h1>
             
-            <p className="text-[11px] font-bold text-app-text/40 uppercase tracking-widest">
-              SKU: {product._id ? `${product._id.slice(-7).toUpperCase()}-${selectedSize}` : '1547921-S'}
-            </p>
+            {currentVariant?.sku && (
+              <p className="text-[11px] font-bold text-app-text/40 uppercase tracking-widest">
+                SKU: {currentVariant.sku}
+              </p>
+            )}
 
             <div className="flex items-baseline gap-4 pt-2">
               {showOriginalPrice ? (
@@ -327,33 +337,75 @@ export const ProductDetails = () => {
 
           {/* Color Section */}
           {availableColors.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-app-text">
-                Color: {selectedColor}
+                Colour: <span className="text-brand-primary">{selectedColor}</span>
               </h3>
-              <div className="flex flex-wrap gap-2.5">
-                {availableColors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => {
-                      setSelectedColor(color);
-                      // Reset size if the new color doesn't have the current size
-                      if (product.variants && product.variants.length > 0) {
-                        const newSizes = product.variants.filter(v => v.color === color).map(v => v.size);
-                        if (newSizes.length > 0 && !newSizes.includes(selectedSize)) {
-                          setSelectedSize(newSizes[0]);
+              <div className="flex flex-wrap gap-3">
+                {availableColors.map((color) => {
+                  const variantImgs = product.variants
+                    ?.filter(v => v.color === color)
+                    .flatMap(v => v.images || [])
+                    .filter(Boolean) || [];
+                  const hasOwnImages = variantImgs.length > 0;
+                  const thumbUrl = hasOwnImages ? variantImgs[0] : null;
+                  const isActive = selectedColor === color;
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        setSelectedColor(color);
+                        if (product.variants && product.variants.length > 0) {
+                          const newSizes = product.variants.filter(v => v.color === color).map(v => v.size);
+                          if (newSizes.length > 0 && !newSizes.includes(selectedSize)) {
+                            setSelectedSize(newSizes[0]);
+                          }
                         }
-                      }
-                    }}
-                    className={`h-11 px-4 text-xs font-bold rounded-lg border-2 transition-all ${
-                      selectedColor === color
-                        ? 'border-brand-primary bg-brand-primary text-black'
-                        : 'border-border bg-app-panel hover:border-app-text text-app-text'
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
+                      }}
+                      title={color}
+                      className={`flex flex-col items-center gap-1.5 p-1.5 rounded-2xl border-2 transition-all ${
+                        isActive
+                          ? 'border-brand-primary shadow-md shadow-brand-primary/20 scale-105'
+                          : 'border-border hover:border-app-text/50'
+                      }`}
+                    >
+                      {/* Thumbnail or colour dot */}
+                      {thumbUrl ? (
+                        <div className="relative">
+                          <img
+                            src={thumbUrl}
+                            alt={color}
+                            className="w-12 h-14 rounded-xl object-cover"
+                          />
+                          {isActive && (
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-brand-primary border-2 border-app-bg" />
+                          )}
+                        </div>
+                      ) : (
+                        <div
+                          className={`w-8 h-8 rounded-full border-2 ${
+                            isActive ? 'border-brand-primary' : 'border-border'
+                          }`}
+                          style={{ backgroundColor: color.toLowerCase() === 'black' ? '#111' :
+                                                     color.toLowerCase() === 'white' ? '#f5f5f5' :
+                                                     color.toLowerCase() === 'blue' ? '#3b82f6' :
+                                                     color.toLowerCase() === 'red' ? '#ef4444' :
+                                                     color.toLowerCase() === 'green' ? '#22c55e' :
+                                                     color.toLowerCase() === 'sand' ? '#c2b280' :
+                                                     color.toLowerCase() === 'sage' ? '#8fae88' :
+                                                     color.toLowerCase() === 'khaki' ? '#c3b091' :
+                                                     color.toLowerCase() === 'navy' ? '#1e3a5f' :
+                                                     color.toLowerCase() === 'grey' ? '#6b7280' :
+                                                     color.toLowerCase() === 'brown' ? '#92400e' :
+                                                     '#888888' }}
+                        />
+                      )}
+                      <span className={`text-[9px] font-black uppercase tracking-wider ${
+                        isActive ? 'text-brand-primary' : 'text-muted'
+                      }`}>{color}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -372,28 +424,46 @@ export const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Sizing measurements strip (Gold/Beige style) */}
+            {/* Sizing measurements strip */}
             {currentMeasure && (
-              <div className="bg-[#fcf8f2] border border-[#f0e4d2] px-4 py-2.5 rounded-xl text-[10px] font-bold text-[#806132] font-mono flex flex-wrap gap-x-4 gap-y-1">
-                {isFootwear ? (
-                  <>
-                    <span>Length: {currentMeasure.length}</span>
-                    <span>•</span>
-                    <span>Sole: {currentMeasure.sole}</span>
-                    <span>•</span>
-                    <span>Fit: Regular</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Chest: {currentMeasure.chest}</span>
-                    <span>•</span>
-                    <span>Length: {currentMeasure.length}</span>
-                    <span>•</span>
-                    <span>Shoulder: {currentMeasure.shoulder}</span>
-                    <span>•</span>
-                    <span>Sleeve: {currentMeasure.sleeve}</span>
-                  </>
-                )}
+              <div className="bg-[#161618] border border-white/10 p-3.5 rounded-2xl shadow-soft font-roboto">
+                <div className={`grid ${isFootwear ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-4`}>
+                  {isFootwear ? (
+                    <>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Length</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.length}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Sole</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.sole}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Fit</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">Regular</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Chest</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.chest}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Length</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.length}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Shoulder</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.shoulder}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Sleeve</span>
+                        <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.sleeve}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -504,30 +574,15 @@ export const ProductDetails = () => {
         </div>
       </div>
 
-      {/* Lookalike Products Section */}
-      {lookalikeProducts.length > 0 && (
+      {/* Related Products Section */}
+      {relatedItems.length > 0 && (
         <div className="pt-16 space-y-8 border-t border-border">
           <div>
             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">Handpicked for you</p>
             <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">You May Also Like</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {lookalikeProducts.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Similar Clothes Section */}
-      {similarClothes.length > 0 && (
-        <div className="pt-16 space-y-8 border-t border-border">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">Style it up</p>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">Complete Your Look</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {similarClothes.map((p) => (
+            {relatedItems.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}
           </div>
@@ -535,9 +590,9 @@ export const ProductDetails = () => {
       )}
 
       {/* Size Guide Modal Popup */}
-      {showSizeGuide && (
+      {showSizeGuide && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#121212] rounded-[2rem] border border-border p-8 max-w-md w-full relative shadow-2xl">
+          <div className="bg-app-card text-app-text rounded-[2rem] border border-border p-8 max-w-md w-full relative shadow-2xl">
             <button 
               onClick={() => setShowSizeGuide(false)} 
               className="absolute top-5 right-5 text-app-text/60 hover:text-app-text transition-colors"
@@ -588,12 +643,13 @@ export const ProductDetails = () => {
             )}
             <button 
               onClick={() => setShowSizeGuide(false)}
-              className="mt-6 w-full py-3 bg-app-text text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+              className="mt-6 w-full py-3 bg-app-text text-app-bg rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
             >
               Close Chart
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

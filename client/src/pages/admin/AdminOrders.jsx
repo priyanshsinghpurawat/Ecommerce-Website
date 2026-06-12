@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getAllOrders, updateOrderStatus } from '../../services/order.service.js';
+import { getAllOrders, updateOrderStatus } from '../../services/api.js';
 import { Loader2, Package, Search, Eye, ArrowUpDown, ChevronDown, CheckCircle, Clock, Truck, XCircle, Download, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';

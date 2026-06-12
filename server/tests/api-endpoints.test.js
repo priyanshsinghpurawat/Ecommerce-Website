@@ -47,11 +47,11 @@ async function getUserToken(email = 'user@example.com') {
   await request(app).post('/api/v1/auth/register').send({
     name: 'Regular User',
     email,
-    password: 'UserPassword123'
+    password: 'StrongP@ss123!'
   });
   const res = await request(app).post('/api/v1/auth/login').send({
     email,
-    password: 'UserPassword123'
+    password: 'StrongP@ss123!'
   });
   return res.body.data.token;
 }
@@ -63,7 +63,7 @@ async function getAdminToken() {
   const adminData = {
     name: 'Admin User',
     email: 'admin@mensvibe.com',
-    password: 'AdminPassword123'
+    password: 'StrongP@ss123!'
   };
   await request(app).post('/api/v1/auth/register').send(adminData);
   await User.findOneAndUpdate({ email: adminData.email }, { role: 'admin' });
@@ -80,24 +80,24 @@ describe('1. Authentication & Security', () => {
   it('should register a new user and hash their password', async () => {
     const res = await request(app)
       .post('/api/v1/auth/register')
-      .send({ name: 'Intern User', email: 'intern@test.com', password: 'password123' })
+      .send({ name: 'Intern User', email: 'intern@test.com', password: 'StrongP@ss123!' })
       .expect(201);
 
     assert.equal(res.body.success, true);
     assert.equal(res.body.data.user.email, 'intern@test.com');
     
     const userInDb = await User.findOne({ email: 'intern@test.com' }).select('+password');
-    assert.notEqual(userInDb.password, 'password123', 'Password should be encrypted in DB');
+    assert.notEqual(userInDb.password, 'StrongP@ss123!', 'Password should be encrypted in DB');
   });
 
   it('should return a valid JWT token on successful login', async () => {
     await request(app)
       .post('/api/v1/auth/register')
-      .send({ name: 'Tester', email: 'test@login.com', password: 'securePassword' });
+      .send({ name: 'Tester', email: 'test@login.com', password: 'StrongP@ss123!' });
 
     const res = await request(app)
       .post('/api/v1/auth/login')
-      .send({ email: 'test@login.com', password: 'securePassword' })
+      .send({ email: 'test@login.com', password: 'StrongP@ss123!' })
       .expect(200);
 
     assert.ok(res.body.data.token, 'Response should contain a JWT token');
@@ -106,11 +106,11 @@ describe('1. Authentication & Security', () => {
   it('should reject login with an incorrect password', async () => {
     await request(app)
       .post('/api/v1/auth/register')
-      .send({ name: 'Tester', email: 'wrong@pass.com', password: 'realPassword' });
+      .send({ name: 'Tester', email: 'wrong@pass.com', password: 'StrongP@ss123!' });
 
     await request(app)
       .post('/api/v1/auth/login')
-      .send({ email: 'wrong@pass.com', password: 'fakePassword' })
+      .send({ email: 'wrong@pass.com', password: 'WrongP@ss123!' })
       .expect(401);
   });
 

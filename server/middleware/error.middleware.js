@@ -1,4 +1,5 @@
-import { ApiError } from '../utils/apiError.js';
+/** WHY: Catches all errors and sends a clean, consistent JSON response to the client. */
+import { ApiError } from '../utils/helpers.js';
 
 const errorHandler = (err, req, res, next) => {
   let error = err;

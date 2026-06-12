@@ -41,12 +41,12 @@ export const HERO_SLIDES = [
     id: 'street-drip',
     eyebrow: 'Urban essentials',
     title: 'Street Drip',
-    subtitle: 'STREETWEAR',
-    description: 'Oversized fits, funky graphics, and bold streetwear aesthetic.',
-    image: '/assets/hero_casual.png',
-    cta: 'Shop collection',
-    link: '/shop?badge=street-drip',
-    gradient: 'from-stone-950/90 via-stone-900/45 to-transparent'
+    subtitle: 'INTERACTIVE LOOKBOOK',
+    description: 'Tap on interactive hotspots to shop complete utility fits, oversized layers, and custom cargos.',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/brown_tvlluh.avif',
+    cta: 'Explore Lookbook',
+    link: '/street-drip',
+    gradient: 'from-zinc-950/90 via-zinc-900/45 to-transparent'
   },
   {
     id: 'accessories',
@@ -68,11 +68,11 @@ export const HERO_SLIDES = [
 
 export const CATEGORY_BANNERS = {
   Clothing: {
-    image: '/assets/mens_shirt.png',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/brown_tvlluh.avif',
     tagline: 'Tees · Pants · Linen'
   },
   Footwear: {
-    image: '/assets/mens_sneakers.png',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781202046/copy_of_scuderia-ferrari-rs-x-mid-motorsport-sneakers_1.avif',
     tagline: 'Sneakers · Sports · Slides'
   }
 };

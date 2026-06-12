@@ -26,22 +26,15 @@ const productSchema = new mongoose.Schema(
     image: {
       type: String,
       required: [true, "Product image URL is required"],
-      default: '/assets/mens_shirt.png'
+      default: '/assets/hero_casual.png'
     },
     images: {
       type: [String],
       default: [],
       validate: [v => v.length <= 10, 'Cannot exceed 10 images']
     },
-    colors: [
-      {
-        name: { type: String, required: true },
-        hex: { type: String, required: true, match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color format'] },
-        images: { type: [String], validate: [v => v.length <= 5, 'Cannot exceed 5 images per color'] }
-      }
-    ],
     /**
-     * Powerlook/Savana-style variants. Each variant carries its own gallery,
+     * Powerlook style variants. Each variant carries its own gallery,
      * stock and optional price override. Flat `images[]` remains as a
      * fallback gallery so existing products keep rendering unchanged.
      */
@@ -88,7 +81,7 @@ const productSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ['men', 'unisex'],
+      enum: ['men', 'women', 'unisex'],
       default: 'men'
     },
     stock: {
@@ -101,11 +94,18 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, "Product seller is required"]
-    }
+    },
+    /**
+     * Curated cross-sell items (Frequently Bought Together / Complete the Look).
+     */
+    relatedProducts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+      }
+    ]
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
 // Indexing strategy for query performance optimization under high catalog load

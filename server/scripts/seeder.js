@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import Papa from 'papaparse';
 import { User } from '../models/user.model.js';
 import { Category } from '../models/category.model.js';
 import { Subcategory } from '../models/subcategory.model.js';
@@ -10,11 +12,28 @@ import { Order } from '../models/order.model.js';
 
 dotenv.config();
 
+/* -------------------------------------------------------------------------- */
+/*                                STATIC CATALOG                               */
+/* -------------------------------------------------------------------------- */
 const catalog = [
+  // ... (keeping existing catalog data)
   {
     category: 'Clothing',
     subcategories: ['T-Shirts', 'Shirts', 'Pants', 'Jeans', 'Streetwear', 'Linen', 'cargo'],
     products: [
+      {
+        sub: 'Streetwear',
+        title: 'Project X: Parachute Cargos',
+        desc: 'Ultra-wide parachute cargos with adjustable ankle toggles. Dropping next month.',
+        price: 3999,
+        sale: 0,
+        stock: 0,
+        img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800',
+        badge: 'limited-edition',
+        rating: 0,
+        reviews: 0,
+        variants: [{ size: 'L', color: 'Olive', stock: 0, sku: 'PN-PRC-OL' }]
+      },
       {
         sub: 'T-Shirts',
         title: 'Essential White Oversized Tee',
@@ -132,12 +151,15 @@ const catalog = [
       },
       {
         sub: 'Streetwear',
-        title: 'Neon Stitch Utility Vest',
-        desc: 'Water-resistant tactical vest with neon accents.',
-        price: 2999,
-        sale: 1799,
-        stock: 15,
-        img: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800',
+        title: 'Black indie shirt',
+        desc: 'unique baggy t-shirt with super oversized pattern gauge fabric in black',
+        price: 1999,
+        sale: 1199,
+        stock: 105,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074311/1743657072_4845052_poraq8.avif',
+        img2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074311/1743657072_7439712_tk4euo.avif',
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074310/1743657072_9580718_vojgz5.avif'
+        ],
         badge: 'limited-edition',
         rating: 4.8,
         reviews: 40,
@@ -300,55 +322,173 @@ const catalog = [
 ];
 
 const couponsData = [
-  { code: 'MENSVIBE10', discountType: 'percentage', discountValue: 10, minCartAmount: 499, isActive: true },
-  { code: 'FIT100', discountType: 'flat', discountValue: 100, minCartAmount: 999, isActive: true }
+  { code: 'MENSVIBE10', discountType: 'percentage', discountValue: 10, minCartAmount: 499, usageLimit: null, perUserLimit: null, isActive: true },
+  { code: 'FESTIVE500', discountType: 'flat', discountValue: 500, minCartAmount: 2499, usageLimit: 100, perUserLimit: 1, isActive: true }
 ];
+
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * CSV IMPORT LOGIC (Consolidated from csvImport.controller)
+ */
+const importFromCSV = async (csvPath, adminUser) => {
+  const csvText = fs.readFileSync(csvPath, 'utf-8');
+  const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+
+  if (parsed.errors.length > 0) {
+    console.error('CSV Parse Errors:', parsed.errors);
+    return;
+  }
+
+  const rows = parsed.data;
+  let createdCount = 0;
+  let updatedCount = 0;
+  const errors = [];
+  const catCache = new Map();
+  const subCache = new Map();
+
+  console.log(`Processing ${rows.length} rows from CSV...`);
+
+  for (const [index, row] of rows.entries()) {
+    try {
+      const {
+        title, description, price, discountedPrice, category, subcategory,
+        stock, badge, variant_color, variant_size, variant_stock, variant_price, image
+      } = row;
+
+      if (!title || !price || !category || !subcategory) {
+        errors.push(`Row ${index + 2}: Missing required fields`);
+        continue;
+      }
+
+      // Resolve Category
+      let catId = catCache.get(category.trim().toLowerCase());
+      if (!catId) {
+        let catDoc = await Category.findOne({ name: new RegExp(`^${escapeRegex(category.trim())}$`, 'i') });
+        if (!catDoc) {
+          catDoc = await Category.create({ name: category.trim() });
+        }
+        catId = catDoc._id;
+        catCache.set(category.trim().toLowerCase(), catId);
+      }
+
+      // Resolve Subcategory
+      let subId = subCache.get(`${catId}_${subcategory.trim().toLowerCase()}`);
+      if (!subId) {
+        let subDoc = await Subcategory.findOne({
+          name: new RegExp(`^${escapeRegex(subcategory.trim())}$`, 'i'),
+        });
+category: catId
+if (!subDoc) {
+  subDoc = await Subcategory.create({ name: subcategory.trim(), category: catId });
+}
+subId = subDoc._id;
+subCache.set(`${catId}_${subcategory.trim().toLowerCase()}`, subId);
+      }
+
+let product = await Product.findOne({ title: title.trim(), seller: adminUser._id });
+
+const variant = (variant_color || variant_size) ? {
+  color: variant_color ? variant_color.trim() : '',
+  size: variant_size ? variant_size.trim() : '',
+  stock: variant_stock ? Number(variant_stock) : 0,
+  price: variant_price ? Number(variant_price) : null,
+} : null;
+
+if (product) {
+  product.price = Number(price);
+  if (variant) {
+    const existingVarIndex = product.variants.findIndex(v => v.color === variant.color && v.size === variant.size);
+    if (existingVarIndex >= 0) {
+      product.variants[existingVarIndex].stock = variant.stock;
+    } else {
+      product.variants.push(variant);
+    }
+  }
+  await product.save();
+  updatedCount++;
+} else {
+  await Product.create({
+    title: title.trim(),
+    description: description || 'Imported from CSV',
+    price: Number(price),
+    discountedPrice: discountedPrice ? Number(discountedPrice) : null,
+    category: catId,
+    subcategory: subId,
+    stock: stock ? Number(stock) : 10,
+    badge: badge || '',
+    seller: adminUser._id,
+    gender: 'men',
+    image: image || '',
+    variants: variant ? [variant] : []
+  });
+  createdCount++;
+}
+    } catch (err) {
+  errors.push(`Row ${index + 2}: ${err.message}`);
+}
+  }
+console.log(`CSV Import Result: ${createdCount} created, ${updatedCount} updated. Errors: ${errors.length}`);
+if (errors.length) console.log('Sample errors:', errors.slice(0, 5));
+};
 
 /**
  * THE MAIN SEED FUNCTION
- * This is the engine that actually talks to MongoDB.
  */
 const seed = async () => {
   try {
-    // 1. Connect to the Database (Local or Production)
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/e-commerce';
-    
-    // SAFETY GUARD: Check if target is a production cluster
     const isProduction = mongoUri.includes('mongodb+srv') || mongoUri.includes('cluster0');
+
     if (isProduction && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
-      console.error('------------------------------------------------------------');
-      console.error('⚠️  CRITICAL SAFETY ALERT: PRODUCTION DATABASE DETECTED');
-      console.error('------------------------------------------------------------');
-      console.error('The seeder script is attempting to wipe a production/Atlas database.');
-      console.error('Target URI: ' + (mongoUri.includes('@') ? mongoUri.split('@')[1] : 'Atlas'));
-      console.error('\nTo proceed, you MUST set ALLOW_PRODUCTION_SEED=true in your environment.');
-      console.error('Aborting to prevent data loss.');
+      console.error('⚠️ CRITICAL: PRODUCTION DATABASE DETECTED. Aborting.');
       process.exit(1);
     }
 
     await mongoose.connect(mongoUri);
-    console.log(`Connected to database: ${isProduction ? 'PRODUCTION (Atlas)' : 'DEVELOPMENT (Local)'}`);
+    console.log(`Connected to DB: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
 
-    // 2. CLEAR THE SLATE
-    // We delete EVERYTHING first so we don't get duplicate data errors.
+    const args = process.argv.slice(2);
+    const csvIndex = args.indexOf('--csv');
+
+    if (csvIndex !== -1 && args[csvIndex + 1]) {
+      const csvPath = args[csvIndex + 1];
+      console.log(`Starting CSV import from ${csvPath}...`);
+
+      let admin = await User.findOne({ role: 'admin' });
+      if (!admin) {
+        console.log('No admin found. Creating a temporary one for import...');
+        admin = await User.create({
+          name: 'Import Admin',
+          email: 'import-admin@mensvibe.in',
+          password: 'StrongP@ss123!',
+          role: 'admin'
+        });
+      }
+
+      await importFromCSV(csvPath, admin);
+      console.log('CSV Import done.');
+      process.exit(0);
+    }
+
+    // DEFAULT SEED (WIPE & REFILL)
     console.log('Clearing old data...');
-    await User.deleteMany({});
-    await Category.deleteMany({});
-    await Subcategory.deleteMany({});
-    await Product.deleteMany({});
-    await Coupon.deleteMany({});
-    await Cart.deleteMany({});
-    await Order.deleteMany({});
+    await Promise.all([
+      User.deleteMany({}),
+      Category.deleteMany({}),
+      Subcategory.deleteMany({}),
+      Product.deleteMany({}),
+      Coupon.deleteMany({}),
+      Cart.deleteMany({}),
+      Order.deleteMany({})
+    ]);
 
-    // 3. CREATE USERS
-    // We create one of each role (Admin, Seller, Regular User)
     console.log('Creating demo users...');
-    await User.create({
+    const adminUser = await User.create({
       name: 'Vibe Admin',
       email: 'admin@mensvibe.in',
-      password: 'adminpassword',
+      password: 'StrongP@ss123!',
       role: 'admin',
-      // ... rest of admin data ...
       avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780309000/dp_hero_casual_mpyrys.png',
       addresses: [{
         fullName: 'Vibe Admin',
@@ -366,68 +506,35 @@ const seed = async () => {
       name: 'Vibe Seller',
       brandName: 'MensVibe Originals',
       email: 'seller@mensvibe.in',
-      password: 'sellerpassword',
+      password: 'StrongP@ss123!',
       role: 'seller',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop',
-      addresses: [{
-        fullName: 'MensVibe Originals',
-        phone: '9876543211',
-        street: 'Market Road 10',
-        city: 'Jaipur',
-        state: 'Rajasthan',
-        zipCode: '302005',
-        country: 'India',
-        isDefault: true
-      }]
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop'
     });
 
     const nikeSeller = await User.create({
       name: 'Nike India',
       brandName: 'Nike Authorized',
       email: 'nike@mensvibe.in',
-      password: 'sellerpassword',
-      role: 'seller',
-      avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780309000/dp_hero_casual_mpyrys.png',
-      addresses: [{
-        fullName: 'Nike Authorized',
-        phone: '9876543212',
-        street: 'Connaught Place',
-        city: 'Delhi',
-        state: 'Delhi',
-        zipCode: '110001',
-        country: 'India',
-        isDefault: true
-      }]
+      password: 'StrongP@ss123!',
+      role: 'seller'
     });
 
     await User.create({
       name: 'Regular Customer',
       email: 'demo@mensvibe.in',
-      password: 'demopassword',
-      role: 'user',
-      avatar: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1779082514/samples/people/boy-snow-hoodie.jpg',
-      addresses: [{
-        fullName: 'Regular Customer',
-        phone: '9876543213',
-        street: 'Customer Lane 5',
-        city: 'Jaipur',
-        state: 'Rajasthan',
-        zipCode: '302012',
-        country: 'India',
-        isDefault: true
-      }]
+      password: 'StrongP@ss123!',
+      role: 'user'
     });
 
     const subIds = {};
+    console.log('Seeding catalog...');
 
     for (const block of catalog) {
       const cat = await Category.create({ name: block.category });
-
       for (const subName of block.subcategories) {
         const sub = await Subcategory.create({ name: subName, category: cat._id });
         subIds[`${block.category}:${subName}`] = sub._id;
       }
-
       for (const p of block.products) {
         await Product.create({
           _id: p._id || undefined,
@@ -450,20 +557,13 @@ const seed = async () => {
       }
     }
 
-    for (const c of couponsData) {
-      await Coupon.create(c);
-    }
-
-    const productCount = await Product.countDocuments();
-    const subCount = await Subcategory.countDocuments();
-    const catCount = await Category.countDocuments();
+    for (const c of couponsData) await Coupon.create(c);
 
     console.log('--- MensVibe seed complete ---');
-    console.log(`Categories: ${catCount} | Subcategories: ${subCount} | Products: ${productCount}`);
-    console.log('Admin: admin@mensvibe.in / adminpassword');
-    console.log('Seller: seller@mensvibe.in / sellerpassword');
-    console.log('User:  demo@mensvibe.in / demopassword');
-    console.log('Coupons: MENSVIBE10, FIT100');
+    console.log('Admin: admin@mensvibe.in / StrongP@ss123!');
+    console.log('Seller: seller@mensvibe.in / StrongP@ss123!');
+    console.log('User: demo@mensvibe.in / StrongP@ss123!');
+    console.log('Coupons: MENSVIBE10 (Unlimited), FESTIVE500 (Limited)');
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);

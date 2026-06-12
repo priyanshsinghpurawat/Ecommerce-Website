@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getSubcategories, createSubcategory, updateSubcategory, deleteSubcategory } from '../../services/subcategory.service.js';
+import { getSubcategories, createSubcategory, updateSubcategory, deleteSubcategory } from '../../services/api.js';
 import { useCategories } from '../../hooks/useCategories.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Plus, Edit2, Trash2, Loader2, Search } from 'lucide-react';

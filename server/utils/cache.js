@@ -1,55 +1,96 @@
+/** WHY: In-memory LRU cache to speed up repeated database queries. */
 import { LRUCache } from 'lru-cache';
+import { redisClient } from '../config/redis.js';
 
-// Process-bound LRU cache to prevent memory leaks/heap exhaustion.
-// Limits size to 1000 entries and supports time-to-live (TTL).
-const cacheStore = new LRUCache({
+// Process-bound LRU cache as fallback or for local caching
+const localCache = new LRUCache({
   max: 1000,
   ttl: 1000 * 60 * 5 // default 5 minutes
 });
 
 /**
- * Get item from cache
- * @param {string} key - Cache key
+ * Get item from cache (Redis or LRU fallback)
  */
-export const getCache = (key) => {
-  return cacheStore.get(key) ?? null;
+export const getCache = async (key) => {
+  try {
+    if (redisClient?.isReady) {
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    }
+  } catch (error) {
+    console.error('Redis GET Error:', error.message);
+  }
+  return localCache.get(key) ?? null;
 };
 
 /**
- * Set item in cache with TTL
+ * Set item in cache
  * @param {string} key - Cache key
  * @param {*} value - Data to cache
  * @param {number} ttlSeconds - Time-to-live in seconds
  */
-export const setCache = (key, value, ttlSeconds = 300) => {
-  cacheStore.set(key, value, { ttl: ttlSeconds * 1000 });
+export const setCache = async (key, value, ttlSeconds = 300) => {
+  try {
+    if (redisClient?.isReady) {
+      await redisClient.set(key, JSON.stringify(value), {
+        EX: ttlSeconds
+      });
+      return;
+    }
+  } catch (error) {
+    console.error('Redis SET Error:', error.message);
+  }
+  localCache.set(key, value, { ttl: ttlSeconds * 1000 });
 };
 
 /**
  * Evict item from cache
- * @param {string} key - Cache key
  */
-export const deleteCache = (key) => {
-  cacheStore.delete(key);
+export const deleteCache = async (key) => {
+  try {
+    if (redisClient?.isReady) {
+      await redisClient.del(key);
+    }
+  } catch (error) {
+    console.error('Redis DEL Error:', error.message);
+  }
+  localCache.delete(key);
 };
 
 /**
- * Evict cache keys matching a pattern (e.g. invalidate all product caches on create/update)
- * @param {string} pattern - Substring to match keys
+ * Evict cache keys matching a pattern
  */
-export const clearCacheByPattern = (pattern) => {
-  for (const key of cacheStore.keys()) {
+export const clearCacheByPattern = async (pattern) => {
+  try {
+    if (redisClient?.isReady) {
+      const keys = await redisClient.keys(`*${pattern}*`);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    }
+  } catch (error) {
+    console.error('Redis Pattern Clear Error:', error.message);
+  }
+  
+  for (const key of localCache.keys()) {
     if (key.includes(pattern)) {
-      cacheStore.delete(key);
+      localCache.delete(key);
     }
   }
 };
 
 /**
- * Clear the entire cache store
+ * Clear entire cache
  */
-export const clearCache = () => {
-  cacheStore.clear();
+export const clearCache = async () => {
+  try {
+    if (redisClient?.isReady) {
+      await redisClient.flushDb();
+    }
+  } catch (error) {
+    console.error('Redis FLUSH Error:', error.message);
+  }
+  localCache.clear();
 };
 // Force nodemon cache clear trigger
 

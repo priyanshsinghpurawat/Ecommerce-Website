@@ -29,43 +29,43 @@ const StockHeatmap = () => {
   };
 
   return (
-    <div className="bg-app-card rounded-[2.5rem] p-8 shadow-soft border border-border-base h-full flex flex-col">
+    <div className="bg-app-card rounded-[1.5rem] p-5 shadow-soft border border-border-base flex flex-col max-h-[300px]">
       {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-sm font-bold text-app-text tracking-tight uppercase italic">Stock Product</h3>
-          <p className="text-[10px] text-muted font-bold uppercase tracking-widest">Average total Product</p>
+          <h3 className="text-xs font-bold text-app-text tracking-tight uppercase italic">Stock Product</h3>
+          <p className="text-[9px] text-muted font-bold uppercase tracking-widest">Average total Product</p>
         </div>
-        <button className="flex items-center gap-1 px-3 py-1 rounded-full border border-border-base text-[9px] font-black uppercase tracking-widest text-app-text/60 hover:bg-app-panel transition-colors">
-          June <ChevronDown className="w-3 h-3" />
+        <button className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-border-base text-[8px] font-black uppercase tracking-widest text-app-text/60 hover:bg-app-panel transition-colors">
+          June <ChevronDown className="w-2.5 h-2.5" />
         </button>
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 mb-8">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-brand-primary/30" />
-          <span className="text-[9px] font-bold text-muted uppercase tracking-tighter">101-200</span>
+      <div className="flex gap-3 mb-5">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-[2px] bg-brand-primary/30" />
+          <span className="text-[8px] font-bold text-muted uppercase tracking-tighter">101-200</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-brand-primary/60" />
-          <span className="text-[9px] font-bold text-muted uppercase tracking-tighter">201-300</span>
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-[2px] bg-brand-primary/60" />
+          <span className="text-[8px] font-bold text-muted uppercase tracking-tighter">201-300</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-brand-primary" />
-          <span className="text-[9px] font-bold text-muted uppercase tracking-tighter">301-400</span>
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-[2px] bg-brand-primary" />
+          <span className="text-[8px] font-bold text-muted uppercase tracking-tighter">301-400</span>
         </div>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-[70px_1fr] gap-x-4">
+      <div className="grid grid-cols-[60px_1fr] gap-x-3 overflow-hidden">
         {/* Empty spacer for top-left */}
         <div />
         
         {/* Days Header */}
-        <div className="grid grid-cols-7 gap-2 mb-2">
+        <div className="grid grid-cols-7 gap-1.5 mb-1.5">
           {days.map((day, i) => (
-            <div key={i} className="text-center text-[9px] font-black text-app-text/20 uppercase tracking-tighter">
+            <div key={i} className="text-center text-[8px] font-black text-app-text/20 uppercase tracking-tighter">
               {day}
             </div>
           ))}
@@ -74,14 +74,14 @@ const StockHeatmap = () => {
         {/* Rows */}
         {categories.map((cat, rowIdx) => (
           <React.Fragment key={cat}>
-            <div className="text-[10px] font-black text-app-text/40 uppercase tracking-tighter flex items-center h-6 italic">
+            <div className="text-[9px] font-black text-app-text/40 uppercase tracking-tighter flex items-center h-5 italic">
               {cat}
             </div>
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
               {heatmapData[rowIdx].map((val, colIdx) => (
                 <div 
                   key={colIdx} 
-                  className={`w-full aspect-square rounded-[4px] ${getColorClass(val)} transition-all duration-300 hover:scale-110 cursor-pointer shadow-sm hover:shadow-brand-primary/20`}
+                  className={`w-full aspect-square rounded-[3px] ${getColorClass(val)} transition-all duration-300 hover:scale-110 cursor-pointer shadow-sm hover:shadow-brand-primary/20`}
                 />
               ))}
             </div>

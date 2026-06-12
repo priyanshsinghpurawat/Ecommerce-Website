@@ -1,8 +1,6 @@
 import { Category } from '../models/category.model.js';
 import { Subcategory } from '../models/subcategory.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 import { getCache, setCache, clearCacheByPattern } from '../utils/cache.js';
 
 /**
@@ -27,7 +25,7 @@ export const createCategory = asyncHandler(async (req, res) => {
   const category = await Category.create({ name });
 
   // Invalidate category cache
-  clearCacheByPattern('categories:');
+  await clearCacheByPattern('categories:');
 
   return res
     .status(201)
@@ -41,7 +39,7 @@ export const createCategory = asyncHandler(async (req, res) => {
  */
 export const getAllCategories = asyncHandler(async (req, res) => {
   const cacheKey = 'categories:all';
-  const cachedData = getCache(cacheKey);
+  const cachedData = await getCache(cacheKey);
 
   if (cachedData) {
     return res
@@ -52,7 +50,7 @@ export const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find({}).sort({ createdAt: -1 });
 
   // Cache categories for 60 seconds
-  setCache(cacheKey, categories, 60);
+  await setCache(cacheKey, categories, 60);
 
   return res
     .status(200)
@@ -100,7 +98,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
   await category.save();
 
   // Invalidate category cache
-  clearCacheByPattern('categories:');
+  await clearCacheByPattern('categories:');
 
   return res
     .status(200)
@@ -126,7 +124,7 @@ export const deleteCategory = asyncHandler(async (req, res) => {
   await Category.findByIdAndDelete(id);
 
   // Invalidate category cache
-  clearCacheByPattern('categories:');
+  await clearCacheByPattern('categories:');
 
   return res
     .status(200)

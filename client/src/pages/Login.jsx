@@ -187,8 +187,11 @@ export const Login = () => {
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text/40 hover:text-app-text"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPassword(!showPassword);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-app-text/40 hover:text-app-text focus:outline-none z-10"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

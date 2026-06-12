@@ -1,9 +1,6 @@
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
-import { normalizeImageUrl } from '../utils/imageUrl.js';
+import { asyncHandler, ApiError, ApiResponse, normalizeImageUrl } from '../utils/helpers.js';
 
 const mapCartForResponse = (cart, req) => {
   const obj = cart.toObject ? cart.toObject() : cart;
@@ -26,7 +23,7 @@ const mapCartForResponse = (cart, req) => {
 const getPopulatedCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId }).populate({
     path: 'items.product',
-    select: 'title price discountedPrice image category description stock',
+    select: 'title price discountedPrice image category description stock seller',
     populate: {
       path: 'category',
       select: 'name slug'
@@ -60,7 +57,7 @@ export const getCart = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const addToCart = asyncHandler(async (req, res) => {
-  const { productId, quantity = 1, size } = req.body;
+  const { productId, quantity = 1, size, color } = req.body;
 
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
@@ -77,21 +74,37 @@ export const addToCart = asyncHandler(async (req, res) => {
     cart = await Cart.create({ user: req.user._id, items: [] });
   }
 
-  // Check if item with SAME productId AND size already exists
-  const itemIndex = cart.items.findIndex(item => item.product.toString() === productId && item.size === size);
+  // Check if item with SAME productId, size, AND color already exists
+  const itemIndex = cart.items.findIndex(
+    item => item.product.toString() === productId && 
+    (item.size || '') === (size || '') && 
+    (item.color || '') === (color || '')
+  );
+
   const newQty = itemIndex > -1
     ? cart.items[itemIndex].quantity + Number(quantity)
     : Number(quantity);
 
-  if (newQty > product.stock) {
-    throw new ApiError(400, `Only ${product.stock} units available in stock`);
+  // Stock validation
+  let availableStock = product.stock;
+  if (product.variants && product.variants.length > 0) {
+    const variant = product.variants.find(
+      v => (v.size || '') === (size || '') && (v.color || '') === (color || '')
+    );
+    if (variant) {
+      availableStock = variant.stock;
+    }
+  }
+
+  if (newQty > availableStock) {
+    throw new ApiError(400, `Only ${availableStock} units available for this selection`);
   }
 
   if (itemIndex > -1) {
     cart.items[itemIndex].quantity = newQty;
   } else {
-    // Add new item with specific size
-    cart.items.push({ product: productId, quantity: Number(quantity), size });
+    // Add new item with specific size and color
+    cart.items.push({ product: productId, quantity: Number(quantity), size, color });
   }
 
   await cart.save();
@@ -109,10 +122,10 @@ export const addToCart = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const updateCartItemQuantity = asyncHandler(async (req, res) => {
-  const { productId, quantity } = req.body;
+  const { itemId, quantity } = req.body;
 
-  if (!productId || quantity === undefined) {
-    throw new ApiError(400, "Product ID and quantity are required");
+  if (!itemId || quantity === undefined) {
+    throw new ApiError(400, "Item ID and quantity are required");
   }
 
   const quantityNum = Number(quantity);
@@ -120,23 +133,35 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Quantity must be at least 1");
   }
 
-  const product = await Product.findById(productId);
-  if (!product) {
-    throw new ApiError(404, "Product not found");
-  }
-  if (quantityNum > product.stock) {
-    throw new ApiError(400, `Only ${product.stock} units available in stock`);
-  }
-
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) {
     throw new ApiError(404, "Cart not found");
   }
 
-  const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-
+  const itemIndex = cart.items.findIndex(item => item._id.toString() === itemId);
   if (itemIndex === -1) {
     throw new ApiError(404, "Item not found in cart");
+  }
+
+  const cartItem = cart.items[itemIndex];
+  const product = await Product.findById(cartItem.product);
+  if (!product) {
+    throw new ApiError(404, "Product not found");
+  }
+
+  // Stock validation
+  let availableStock = product.stock;
+  if (product.variants && product.variants.length > 0) {
+    const variant = product.variants.find(
+      v => (v.size || '') === (cartItem.size || '') && (v.color || '') === (cartItem.color || '')
+    );
+    if (variant) {
+      availableStock = variant.stock;
+    }
+  }
+
+  if (quantityNum > availableStock) {
+    throw new ApiError(400, `Only ${availableStock} units available for this selection`);
   }
 
   cart.items[itemIndex].quantity = quantityNum;
@@ -151,14 +176,14 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Remove an item from cart
- * @route   DELETE /api/v1/cart/remove/:productId
+ * @route   DELETE /api/v1/cart/remove/:itemId
  * @access  Private
  */
 export const removeFromCart = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
+  const { itemId } = req.params;
 
-  if (!productId) {
-    throw new ApiError(400, "Product ID is required");
+  if (!itemId) {
+    throw new ApiError(400, "Item ID is required");
   }
 
   const cart = await Cart.findOne({ user: req.user._id });
@@ -166,8 +191,8 @@ export const removeFromCart = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Cart not found");
   }
 
-  // Evict item
-  cart.items = cart.items.filter(item => item.product.toString() !== productId);
+  // Evict item by its unique database _id
+  cart.items = cart.items.filter(item => item._id.toString() !== itemId);
   await cart.save();
 
   const populatedCart = await getPopulatedCart(req.user._id);

@@ -1,8 +1,5 @@
 import { Coupon } from '../models/coupon.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
-import { calculateCouponDiscount } from '../utils/couponCalc.js';
+import { asyncHandler, ApiError, ApiResponse, calculateCouponDiscount } from '../utils/helpers.js';
 
 /**
  * @desc    Create a new coupon (Admin Only)
@@ -32,7 +29,8 @@ export const createCoupon = asyncHandler(async (req, res) => {
     usageLimit: usageLimit !== undefined ? Number(usageLimit) : null,
     perUserLimit: perUserLimit !== undefined ? Number(perUserLimit) : 1,
     isActive: isActive !== undefined ? isActive : true,
-    appliedProducts: appliedProducts || []
+    appliedProducts: appliedProducts || [],
+    seller: req.user.role === 'seller' ? req.user._id : null
   });
 
   return res
@@ -58,6 +56,11 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
   // Filter by status
   if (status === 'active') query.isActive = true;
   if (status === 'inactive') query.isActive = false;
+
+  // Filter by seller if role is seller
+  if (req.user.role === 'seller') {
+    query.seller = req.user._id;
+  }
 
   const skip = (Number(page) - 1) * Number(limit);
   
@@ -93,6 +96,11 @@ export const updateCoupon = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(id);
   if (!coupon) {
     throw new ApiError(404, "Coupon not found");
+  }
+
+  // Ensure seller can only update their own coupons
+  if (req.user.role === 'seller' && coupon.seller?.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to modify this coupon");
   }
 
   if (code) {
@@ -138,6 +146,11 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
   const coupon = await Coupon.findById(id);
   if (!coupon) {
     throw new ApiError(404, "Coupon not found");
+  }
+
+  // Ensure seller can only delete their own coupons
+  if (req.user.role === 'seller' && coupon.seller?.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to delete this coupon");
   }
 
   await Coupon.findByIdAndDelete(id);

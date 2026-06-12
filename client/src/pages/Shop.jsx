@@ -2,27 +2,41 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories } from '../services/subcategory.service.js';
-import { getProducts } from '../services/product.service.js';
+import { getSubcategories, getProducts } from '../services/api.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
-import { resolveImageUrl } from '../utils/imageUrl.js';
-import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag, Star } from 'lucide-react';
+import { resolveImageUrl } from '../utils/helpers.js';
+import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } from 'lucide-react';
 
-/* ── Color palette for filter swatches ── */
-const COLOR_SWATCHES = [
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Blue', hex: '#2563EB' },
-  { name: 'Red', hex: '#DC2626' },
-  { name: 'Green', hex: '#16A34A' },
-  { name: 'Sand', hex: '#C2B280' },
-  { name: 'Sage', hex: '#87AE73' },
-  { name: 'Khaki', hex: '#C3B091' },
-  { name: 'Neon Green', hex: '#39FF14' },
+/* ── Inline SVG category icons ── */
+const ShirtIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>
+  </svg>
+);
 
-  
-];
+const SportShoeIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m15 10.42 4.8-5.07"/>
+    <path d="M19 18h3"/>
+    <path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14"/>
+  </svg>
+);
+
+/* ── Category icon map ── */
+const CATEGORY_ICONS = {
+  clothing: ShirtIcon,
+  footwear: SportShoeIcon,
+};
+
+/* ── Known colour → CSS value map for swatch rendering ── */
+const COLOR_CSS = {
+  black: '#111111', white: '#f5f5f5', blue: '#3b82f6', red: '#ef4444',
+  green: '#22c55e', sand: '#c2b280', sage: '#8fae88', khaki: '#c3b091',
+  navy: '#1e3a5f', grey: '#6b7280', brown: '#92400e', yellow: '#eab308',
+  pink: '#ec4899', purple: '#a855f7', orange: '#f97316', olive: '#84863b',
+  maroon: '#800000', cream: '#fffdd0', teal: '#14b8a6', 'neon black': '#1a1a1a',
+};
 
 /* ── Collapsible Section Component ── */
 const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
@@ -132,6 +146,20 @@ export const Shop = () => {
       .catch(() => setAllSubcategories([]));
   }, []);
 
+  // Fetch all unique variant colours available in the catalogue
+  const [availableColors, setAvailableColors] = useState([]);
+  useEffect(() => {
+    getProducts({ limit: 200, fields: 'variants' })
+      .then((res) => {
+        const all = res?.data?.products || [];
+        const colours = [...new Set(
+          all.flatMap(p => (p.variants || []).map(v => v.color).filter(Boolean))
+        )].sort();
+        setAvailableColors(colours);
+      })
+      .catch(() => setAvailableColors([]));
+  }, []);
+
 
 
   useEffect(() => { setSearchInput(search); }, [search]);
@@ -193,13 +221,22 @@ export const Shop = () => {
       <CollapsibleSection title="Categories">
         <div className="space-y-1">
           <button type="button" onClick={() => updateFilters({ category: '', subcategory: '', badge: '' })}
-            className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${!category && !badge ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
-          >All Products</button>
-          {categories.map((cat) => (
-            <button key={cat._id} type="button" onClick={() => updateFilters({ category: cat._id, subcategory: '', badge: '' })}
-              className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${category === cat._id ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
-            >{cat.name}</button>
-          ))}
+            className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${!category && !badge ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
+          >
+            <ShoppingBag className="h-4 w-4 shrink-0" />
+            All Products
+          </button>
+          {categories.map((cat) => {
+            const IconComp = CATEGORY_ICONS[cat.name.toLowerCase()];
+            return (
+              <button key={cat._id} type="button" onClick={() => updateFilters({ category: cat._id, subcategory: '', badge: '' })}
+                className={`w-full text-left rounded-xl px-4 py-2.5 text-xs font-bold transition-all flex items-center gap-2.5 ${category === cat._id ? 'bg-app-text text-black' : 'hover:bg-surface-50 text-app-text/70'}`}
+              >
+                {IconComp && <IconComp className="h-4 w-4 shrink-0" />}
+                {cat.name}
+              </button>
+            );
+          })}
         </div>
       </CollapsibleSection>
 
@@ -237,7 +274,36 @@ export const Shop = () => {
         >Apply Price</button>
       </CollapsibleSection>
 
-
+      {/* Colour Filter — dynamic from actual product variants */}
+      {availableColors.length > 0 && (
+        <CollapsibleSection title="Colour" defaultOpen={false}>
+          <div className="flex flex-wrap gap-2">
+            {availableColors.map((col) => {
+              const css = COLOR_CSS[col.toLowerCase()] || '#888888';
+              const isActive = selectedColors.includes(col);
+              return (
+                <button
+                  key={col}
+                  type="button"
+                  title={col}
+                  onClick={() => toggleColor(col)}
+                  className={`flex flex-col items-center gap-1 p-1 rounded-xl border-2 transition-all ${
+                    isActive ? 'border-brand-primary scale-110' : 'border-transparent hover:border-app-text/20'
+                  }`}
+                >
+                  <span
+                    className="w-6 h-6 rounded-full border border-border shadow-sm"
+                    style={{ backgroundColor: css }}
+                  />
+                  <span className={`text-[8px] font-bold uppercase ${
+                    isActive ? 'text-brand-primary' : 'text-muted'
+                  }`}>{col}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CollapsibleSection>
+      )}
 
       {/* Sort */}
       <CollapsibleSection title="Sort By">
@@ -263,54 +329,7 @@ export const Shop = () => {
   return (
     <div className="space-y-8 pb-16">
 
-      {/* ── TOP HORIZONTAL CATEGORY SCROLLER (Powerlook Style) ── */}
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-        <button
-          onClick={() => updateFilters({ category: '', subcategory: '', badge: '' })}
-          className={`flex flex-col items-center gap-2 shrink-0 transition-all ${!category && !badge ? 'scale-105' : 'opacity-60'}`}
-        >
-          <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center border-2 transition-all ${!category && !badge ? 'border-brand-primary bg-brand-primary/10 shadow-lg' : 'border-surface-100 bg-surface-50'
-            }`}>
-            <ShoppingBag className={`h-6 w-6 ${!category && !badge ? 'text-brand-primary' : 'text-app-text/40'}`} />
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-widest">All</span>
-        </button>
 
-        {categories.map((cat) => {
-          const isActive = category === cat._id;
-          return (
-            <button
-              key={cat._id}
-              onClick={() => updateFilters({ category: cat._id, subcategory: '', badge: '' })}
-              className={`flex flex-col items-center gap-2 shrink-0 transition-all ${isActive ? 'scale-105' : 'opacity-60 hover:opacity-100'}`}
-            >
-              <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'border-brand-primary shadow-lg' : 'border-surface-100'
-                }`}>
-                <img
-                  src={getCategoryFallbackImage(cat.name)}
-                  alt={cat.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-widest">{cat.name}</span>
-            </button>
-          );
-        })}
-
-        {/* Static Bestseller Pill */}
-        <button
-          onClick={() => updateFilters({ badge: 'sale', category: '', subcategory: '' })}
-          className={`flex flex-col items-center gap-2 shrink-0 transition-all ${badge === 'sale' ? 'scale-105' : 'opacity-60'}`}
-        >
-          <div className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center border-2 transition-all ${badge === 'sale' ? 'border-red-500 bg-red-50 shadow-lg shadow-red-500/10' : 'border-surface-100 bg-surface-50'
-            }`}>
-            <Star className={`h-6 w-6 ${badge === 'sale' ? 'text-red-500 fill-current' : 'text-app-text/40'}`} />
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-widest">Sale</span>
-        </button>
-      </div>
-
-      <div className="w-full h-px bg-surface-100" />
 
       {/* ── CATEGORY IMAGE GRID (Souled Store style) ── */}
       {categoriesWithSubs.map((cat) => (
@@ -453,16 +472,21 @@ export const Shop = () => {
             </>
           ) : (
             <div className="rounded-[3rem] border border-dashed border-surface-200 py-24 px-8 text-center bg-surface-50/30">
-              <div className="mx-auto w-16 h-16 rounded-full bg-surface-100 flex items-center justify-center mb-6">
-                <Search className="h-6 w-6 text-app-text/20" />
+              <div className="mx-auto w-20 h-20 rounded-full bg-surface-100 flex items-center justify-center mb-6 border border-surface-200">
+                <Search className="h-7 w-7 text-app-text/20" />
               </div>
-              <h3 className="text-lg font-bold text-app-text">No matches found</h3>
-              <p className="text-sm text-app-text/40 mt-2 max-w-xs mx-auto">
-                Try adjusting your filters or clearing them.
+              <h3 className="text-xl font-black uppercase tracking-tight text-app-text">No matches found</h3>
+              <p className="text-xs text-app-text/40 mt-2 max-w-xs mx-auto font-medium leading-relaxed">
+                We couldn't find anything with those filters. Try broadening your search or clearing a filter.
               </p>
-              <button type="button" onClick={clearAllFilters}
-                className="mt-8 inline-flex rounded-xl bg-app-text px-8 py-3 text-[10px] font-bold uppercase tracking-widest text-black hover:scale-105 transition-transform"
-              >Clear all filters</button>
+              <div className="flex items-center justify-center gap-3 mt-8 flex-wrap">
+                <button type="button" onClick={clearAllFilters}
+                  className="inline-flex rounded-xl bg-app-text px-8 py-3 text-[10px] font-black uppercase tracking-widest text-black hover:scale-105 transition-transform shadow-md"
+                >Clear all filters</button>
+                <Link to="/shop" className="inline-flex rounded-xl border border-surface-200 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-app-text/60 hover:border-brand-primary hover:text-brand-primary transition-colors">
+                  Browse all
+                </Link>
+              </div>
             </div>
           )}
         </div>

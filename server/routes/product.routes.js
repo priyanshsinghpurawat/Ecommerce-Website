@@ -6,7 +6,6 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/product.controller.js';
-import { bulkImportFromCSV } from '../controllers/csvImport.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { uploadAny, requireCloudinary } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -17,14 +16,6 @@ const router = Router();
 // Public reads
 router.get('/', getAllProducts);
 router.get('/:id', validate({ params: productIdParamSchema }), getProductById);
-
-router.post(
-  '/bulk-csv',
-  verifyJWT,
-  authorizeRoles('admin', 'seller'),
-  uploadAny(),
-  bulkImportFromCSV
-);
 
 // Auth-protected writes. Order matters:
 // 1) auth → 2) cloudinary precheck → 3) multer parse → 4) zod validate → 5) handler

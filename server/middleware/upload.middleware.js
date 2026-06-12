@@ -6,7 +6,7 @@
  */
 import multer from 'multer';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
-import { ApiError } from '../utils/apiError.js';
+import { ApiError } from '../utils/helpers.js';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB

@@ -106,8 +106,8 @@ npm run seed
 ```
 
 **Demo Credentials:**
-*   **Admin**: `admin@mensvibe.in` / `adminpassword`
-*   **Customer**: `demo@mensvibe.in` / `demopassword`
+*   **Admin**: `admin@mensvibe.in` / `StrongP@ss123!`
+*   **Customer**: `demo@mensvibe.in` / `StrongP@ss123!`
 
 ### 4. Run Locally
 ```bash

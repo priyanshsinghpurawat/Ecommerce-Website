@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts } from '../../services/product.service.js';
-import { getCategories } from '../../services/category.service.js';
-import { TrendingUp, TrendingDown, DollarSign, Package, ShoppingCart, MapPin, Calendar, MoreHorizontal, ArrowUpRight, ArrowDownRight, MoreVertical } from 'lucide-react';
-import { getAllOrders, getOrderAnalytics } from '../../services/order.service.js';
+import { getProducts, getCategories, getAllOrders, getOrderAnalytics } from '../../services/api.js';
 import StockHeatmap from '../../components/admin/StockHeatmap.jsx';
 import RevenueAnalytics from '../../components/admin/RevenueAnalytics.jsx';
+import { TrendingUp, Package } from 'lucide-react';
 
 /**
  * Admin Dashboard overview page with stats cards.

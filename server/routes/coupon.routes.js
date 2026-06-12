@@ -15,10 +15,10 @@ const router = Router();
 // Apply Coupon (available to logged-in users)
 router.post('/apply', verifyJWT, applyCoupon);
 
-// Administrative CRUD operations (Admin Only)
-router.post('/', verifyJWT, authorizeRoles('admin'), validate({ body: createCouponSchema }), createCoupon);
-router.get('/', verifyJWT, authorizeRoles('admin'), getAllCoupons);
-router.put('/:id', verifyJWT, authorizeRoles('admin'), validate({ body: updateCouponSchema }), updateCoupon);
-router.delete('/:id', verifyJWT, authorizeRoles('admin'), deleteCoupon);
+// Administrative CRUD operations (Admin and Seller)
+router.post('/', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: createCouponSchema }), createCoupon);
+router.get('/', verifyJWT, authorizeRoles('admin', 'seller'), getAllCoupons);
+router.put('/:id', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: updateCouponSchema }), updateCoupon);
+router.delete('/:id', verifyJWT, authorizeRoles('admin', 'seller'), deleteCoupon);
 
 export default router;

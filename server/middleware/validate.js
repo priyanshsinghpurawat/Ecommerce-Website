@@ -2,7 +2,7 @@
  * Generic Zod validator. Usage:
  *   router.post('/', validate({ body: productCreateSchema }), handler)
  */
-import { ApiError } from '../utils/apiError.js';
+import { ApiError } from '../utils/helpers.js';
 
 const formatZodError = (err) => {
   const issues = err.issues || err.errors || [];

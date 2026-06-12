@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, UploadCloud, GripVertical } from 'lucide-react';
-import { makeImageItem, validateImage } from '../../utils/uploadHelpers.js';
+import { makeImageItem, validateImage } from '../../utils/helpers.js';
 
 /**
  * Reusable image dropzone with thumbnail strip, reorder (drag), and remove.

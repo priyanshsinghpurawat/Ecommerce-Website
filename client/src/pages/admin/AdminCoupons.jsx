@@ -4,7 +4,7 @@ import {
   createCoupon, 
   updateCoupon, 
   deleteCoupon 
-} from '../../services/coupon.service.js';
+} from '../../services/api.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Plus, Edit2, Trash2, Loader2, Tag, Calendar, AlertCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, Power } from 'lucide-react';
 import { toast } from 'react-hot-toast';

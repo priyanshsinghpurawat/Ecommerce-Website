@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getAllOrders } from '../../services/order.service.js';
+import { getAllOrders } from '../../services/api.js';
 import { Loader2, Package, Search, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVendorProfile } from '../../services/user.service.js';
+import { getVendorProfile } from '../../services/api.js';
 import { 
   Loader2, ArrowLeft, Store, Mail, Phone, MapPin, 
   Package, ShoppingCart, DollarSign, PlusCircle, 

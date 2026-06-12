@@ -13,7 +13,9 @@ const orderItemSchema = new mongoose.Schema(
     discountedPrice: { type: Number, default: 0 },
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true },
-    subtotal: { type: Number, required: true }
+    subtotal: { type: Number, required: true },
+    size: { type: String, trim: true },
+    color: { type: String, trim: true }
   },
   { _id: false }
 );

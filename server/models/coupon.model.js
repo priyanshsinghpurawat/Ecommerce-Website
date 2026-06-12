@@ -55,7 +55,12 @@ const couponSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
       }
-    ]
+    ],
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null // null means global admin coupon
+    }
   },
   {
     timestamps: true

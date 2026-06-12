@@ -18,18 +18,16 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { applyCoupon } from '../services/coupon.service.js';
-import {
+import { 
+  applyCoupon,
   createCheckout,
   verifyPayment,
-  getPaymentConfig
-} from '../services/payment.service.js';
-import { createOrder } from '../services/order.service.js';
-import { getProfile } from '../services/user.service.js';
-import { resolveImageUrl } from '../utils/imageUrl.js';
+  getPaymentConfig,
+  createOrder,
+  getProfile
+} from '../services/api.js';
+import { resolveImageUrl, validateIndianPhone, getErrorMessage } from '../utils/helpers.js';
 import { DEFAULT_SHIPPING, SUGGESTED_COUPONS } from '../constants/checkout.js';
-import { validateIndianPhone } from '../utils/phone.js';
-import { getErrorMessage } from '../utils/apiHelpers.js';
 
 export const Cart = () => {
   const { 
@@ -47,6 +45,7 @@ export const Cart = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [couponInput, setCouponInput] = useState('');
   const [showCheckout, setShowCheckout] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
@@ -97,11 +96,11 @@ export const Cart = () => {
     loadPaymentConfig();
   }, [isAuthenticated]);
 
-  const handleQuantityChange = async (productId, currentQty, amount) => {
+  const handleQuantityChange = async (itemId, currentQty, amount) => {
     const newQty = currentQty + amount;
     if (newQty < 1) return;
     
-    const res = await updateQuantity(productId, newQty);
+    const res = await updateQuantity(itemId, newQty);
     if (!res.success) {
       toast.error(res.error || 'Failed to update quantity.');
     }
@@ -169,7 +168,6 @@ export const Cart = () => {
         paymentMethod: 'cod'
       });
       if (res?.success) {
-        alert('Order placed');
         toast.success('Order placed! Pay when your delivery arrives.');
         await clearCart();
         navigate(`/orders/${res.data._id}`);
@@ -265,6 +263,7 @@ export const Cart = () => {
   const handleProceedCheckout = () => {
     if (!showCheckout) {
       setShowCheckout(true);
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
       return;
     }
     if (!validateShippingForm()) return;
@@ -272,14 +271,17 @@ export const Cart = () => {
   };
 
   const applySuggestedCoupon = async (code) => {
-    if (appliedCoupon?.code === code) return;
+    const trimmed = code?.trim().toUpperCase();
+    if (!trimmed) return;
+    if (appliedCoupon?.code === trimmed) return;
 
     setApplyingCoupon(true);
     setCouponError('');
     try {
-      const response = await applyCoupon(code, cartTotal, cart.items);
+      const response = await applyCoupon(trimmed, cartTotal, cart.items);
       if (response?.success) {
         setAppliedCoupon(response.data);
+        setCouponInput('');
         toast.success(`Coupon "${response.data.code}" applied!`);
       }
     } catch (err) {
@@ -365,28 +367,31 @@ export const Cart = () => {
           <Loader2 className="h-8 w-8 animate-spin text-app-text/45" />
         </div>
       ) : cartItemsCount === 0 ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-16 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[380px]"
+          className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-20 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[420px] gap-5"
         >
-          <div className="h-16 w-16 bg-surface-50/60 rounded-full flex items-center justify-center text-app-text/40 border border-white shadow-sm mb-6 flex-shrink-0">
-            <ShoppingBag className="h-6 w-6" />
+          <div className="h-20 w-20 bg-surface-50/60 rounded-full flex items-center justify-center text-app-text/30 border border-white shadow-md">
+            <ShoppingBag className="h-8 w-8" />
           </div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-app-text mb-2">
-            Your bag is empty
-          </h2>
-          
-          
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-wider text-app-text">Your bag is empty</h2>
+            <p className="text-xs text-app-text/40 mt-1.5 font-medium">Looks like you haven't added anything yet.</p>
+          </div>
           <Link
             to="/shop"
-            className="rounded-2xl bg-app-text px-8 py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover transition-all duration-300 shadow-lg shadow-app-text/20 flex-shrink-0"
+            className="rounded-2xl bg-brand-primary px-10 py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-all shadow-lg shadow-brand-primary/20"
           >
-            Explore Collection
+            Start Shopping
+          </Link>
+          <Link to="/shop?sort=latest" className="text-[10px] font-bold uppercase text-app-text/40 hover:text-brand-primary tracking-wider transition-colors">
+            See new arrivals →
           </Link>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Cart Table Container */}
           <div className="lg:col-span-2 space-y-4">
             <div className="overflow-hidden rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
@@ -438,6 +443,11 @@ export const Cart = () => {
                                   <span className="text-[9px] font-bold text-app-text/40 uppercase block mt-0.5">
                                     {prod.category?.name || 'Unassigned'}
                                   </span>
+                                  {(item.color || item.size) && (
+                                    <span className="text-[9px] font-bold text-brand-primary/80 uppercase block mt-0.5">
+                                      {[item.color, item.size].filter(Boolean).join(' / ')}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -446,7 +456,7 @@ export const Cart = () => {
                             <td className="px-6 py-4 text-center">
                               <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
                                 <button
-                                  onClick={() => handleQuantityChange(prod._id, item.quantity, -1)}
+                                  onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
                                   disabled={item.quantity <= 1}
                                   className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                   title="Decrease Quantity"
@@ -455,7 +465,7 @@ export const Cart = () => {
                                 </button>
                                 <span className="text-xs font-extrabold px-1 font-mono">{item.quantity}</span>
                                 <button
-                                  onClick={() => handleQuantityChange(prod._id, item.quantity, 1)}
+                                  onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
                                   className="text-app-text/50 hover:text-app-text transition-colors"
                                   title="Increase Quantity"
                                 >
@@ -477,7 +487,7 @@ export const Cart = () => {
                             {/* Actions */}
                             <td className="px-6 py-4 text-center">
                               <button
-                                onClick={() => handleRemove(prod._id)}
+                                onClick={() => handleRemove(item._id)}
                                 className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm mx-auto"
                                 title="Remove Item"
                               >
@@ -495,16 +505,11 @@ export const Cart = () => {
 
             {/* Clear Cart Button */}
             <button
-              onClick={() => {
-                if (window.confirm('Are you sure you want to empty your shopping bag?')) {
-                  clearCart();
-                  toast.success('Shopping bag cleared.');
-                }
-              }}
+              onClick={() => { clearCart(); toast.success('Shopping bag cleared.'); }}
               className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-red-400 hover:text-red-500 border border-red-100 hover:bg-red-50/30 px-3.5 py-2 rounded-xl transition-all self-start"
             >
               <Trash2 className="h-3 w-3" />
-              Empty Shopping Bag
+              Empty Bag
             </button>
           </div>
 
@@ -548,36 +553,52 @@ export const Cart = () => {
               </div>
             </div>
 
-            {/* Suggested promo codes */}
-            <div className="pt-4 border-t border-surface-100/50 space-y-2">
+            {/* Promo Codes */}
+            <div className="pt-4 border-t border-surface-100/50 space-y-3">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-app-text/65">
-                Offers — tap to apply
+                Apply Promo Code
               </label>
 
               {!appliedCoupon ? (
-                <div className="flex flex-col gap-2">
-                  {SUGGESTED_COUPONS.map((c) => (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="ENTER CODE"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          applySuggestedCoupon(couponInput);
+                        }
+                      }}
+                      className="flex-1 uppercase rounded-xl border border-surface-100 bg-surface-50/70 px-3 py-2 text-xs font-mono focus:outline-none focus:border-brand-primary"
+                    />
                     <button
-                      key={c.code}
                       type="button"
-                      disabled={applyingCoupon}
-                      onClick={() => applySuggestedCoupon(c.code)}
-                      className="flex items-center justify-between rounded-xl border border-surface-100 bg-surface-50/70 px-3.5 py-2.5 text-left hover:border-brand-primary hover:bg-surface-50/50 transition-colors disabled:opacity-50"
+                      onClick={() => applySuggestedCoupon(couponInput)}
+                      disabled={applyingCoupon || !couponInput.trim()}
+                      className="rounded-xl bg-app-text px-4 py-2 text-[10px] font-black uppercase tracking-wider text-black hover:opacity-90 disabled:opacity-50 transition-all"
                     >
-                      <span className="flex items-center gap-2">
-                        <Ticket className="h-4 w-4 text-brand-primary" />
-                        <span>
-                          <span className="font-mono text-xs font-bold text-app-text">{c.code}</span>
-                          <span className="block text-[9px] text-app-text/50">{c.label} · {c.hint}</span>
-                        </span>
-                      </span>
-                      {applyingCoupon ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-app-text/40" />
-                      ) : (
-                        <span className="text-[9px] font-bold uppercase text-brand-primary">Apply</span>
-                      )}
+                      {applyingCoupon ? '...' : 'Apply'}
                     </button>
-                  ))}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {SUGGESTED_COUPONS.map((c) => (
+                      <button
+                        key={c.code}
+                        type="button"
+                        disabled={applyingCoupon}
+                        onClick={() => applySuggestedCoupon(c.code)}
+                        className="flex items-center gap-1.5 rounded-lg border border-surface-100 bg-surface-50/50 px-2.5 py-1.5 hover:border-brand-primary transition-colors disabled:opacity-50"
+                      >
+                        <Ticket className="h-3 w-3 text-brand-primary" />
+                        <span className="font-mono text-[10px] font-bold">{c.code}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/40 p-2.5 animate-in zoom-in-95 duration-200">
@@ -610,41 +631,7 @@ export const Cart = () => {
               )}
             </div>
 
-            {showCheckout && (
-              <div className="space-y-3 pt-2 border-t border-surface-100/50 animate-in fade-in duration-200">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-app-text">
-                  Shipping — default Jaipur
-                </p>
-                {shippingFields.map(({ key, label, type, maxLength }) => (
-                  <div key={key}>
-                    <label className="text-[9px] font-bold uppercase text-app-text/50">{label}</label>
-                    <input
-                      type={type}
-                      inputMode={key === 'phone' ? 'numeric' : undefined}
-                      maxLength={maxLength}
-                      value={shipping[key]}
-                      onChange={(e) => {
-                        const value =
-                          key === 'phone'
-                            ? e.target.value.replace(/\D/g, '').slice(0, 10)
-                            : e.target.value;
-                        setShipping((s) => ({ ...s, [key]: value }));
-                        if (key === 'phone') setPhoneError('');
-                      }}
-                      className={`mt-0.5 w-full rounded-xl border bg-surface-50/70 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary ${
-                        key === 'phone' && phoneError ? 'border-red-300' : 'border-surface-100'
-                      }`}
-                    />
-                    {key === 'phone' && phoneError && (
-                      <p className="mt-1 text-[9px] font-bold text-red-500">{phoneError}</p>
-                    )}
-                  </div>
-                ))}
-                <Link to="/profile" className="text-[9px] font-bold text-app-text/50 hover:text-app-text underline">
-                  Save a different default in profile
-                </Link>
-              </div>
-            )}
+
 
             {/* Guarantee / Security info */}
             <div className="rounded-2xl bg-surface-50/40 border border-white/60 p-3.5 flex items-start gap-3">
@@ -689,6 +676,48 @@ export const Cart = () => {
             </div>
           </div>
         </div>
+
+        {/* ── Step 2: Shipping Address (decoupled, full-width) ── */}
+        {showCheckout && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md p-6 space-y-5"
+          >
+            <div className="flex items-center gap-3 pb-2 border-b border-surface-100/50">
+              <div className="h-6 w-6 rounded-full bg-brand-primary flex items-center justify-center text-black text-[10px] font-black">2</div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-app-text">Shipping Address</h3>
+              <Link to="/profile" className="ml-auto text-[9px] font-bold text-app-text/40 hover:text-brand-primary underline transition-colors">
+                Edit in profile
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {shippingFields.map(({ key, label, type, maxLength }) => (
+                <div key={key} className={key === 'street' ? 'sm:col-span-2' : ''}>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-app-text/50 block mb-1">{label}</label>
+                  <input
+                    type={type}
+                    inputMode={key === 'phone' ? 'numeric' : undefined}
+                    maxLength={maxLength}
+                    value={shipping[key]}
+                    onChange={(e) => {
+                      const value = key === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value;
+                      setShipping((s) => ({ ...s, [key]: value }));
+                      if (key === 'phone') setPhoneError('');
+                    }}
+                    className={`w-full rounded-xl border bg-surface-50/70 px-4 py-2.5 text-xs focus:outline-none focus:border-brand-primary transition-colors ${
+                      key === 'phone' && phoneError ? 'border-red-300' : 'border-surface-100'
+                    }`}
+                  />
+                  {key === 'phone' && phoneError && (
+                    <p className="mt-1 text-[9px] font-bold text-red-500">{phoneError}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+        </>
       )}
     </div>
   );

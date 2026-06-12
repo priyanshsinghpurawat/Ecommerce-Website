@@ -9,7 +9,8 @@ import {
   User, 
   Menu, 
   X,
-  Plus
+  Plus,
+  Tag
 } from 'lucide-react';
 
 export const SellerLayout = () => {
@@ -26,6 +27,7 @@ export const SellerLayout = () => {
     { to: '/seller/dashboard', label: 'Overview', icon: LayoutDashboard },
     { to: '/seller/products', label: 'My Products', icon: ShoppingBag },
     { to: '/seller/orders', label: 'Store Orders', icon: ClipboardList },
+    { to: '/seller/coupons', label: 'My Coupons', icon: Tag },
   ];
 
   return (

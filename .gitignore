@@ -55,6 +55,7 @@ coverage/
 
 # Server specific
 server/public/
+server/playground/
 
 .gemini/
 .agents/

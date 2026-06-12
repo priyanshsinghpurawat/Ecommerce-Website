@@ -9,8 +9,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env from same directory
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// Load .env from parent directory
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const createDemoOrder = async () => {
   try {
@@ -28,7 +28,7 @@ const createDemoOrder = async () => {
       user = await User.create({
         name: 'Demo Admin',
         email: 'admin@mensvibe.in',
-        password: 'password123',
+        password: 'StrongP@ss123!',
         role: 'admin'
       });
     }

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getOrderById } from '../services/order.service.js';
+import { getOrderById } from '../services/api.js';
 import { Loader2, ArrowLeft, MapPin } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { resolveImageUrl } from '../utils/imageUrl.js';
+import { resolveImageUrl } from '../utils/helpers.js';
 
 export const OrderDetail = () => {
   const { id } = useParams();

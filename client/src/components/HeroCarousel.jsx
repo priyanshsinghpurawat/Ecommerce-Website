@@ -15,7 +15,7 @@ export const HeroCarousel = () => {
       setIndex((i) => (i + 1) % HERO_SLIDES.length);
     }, 4000); // Snappy 4-second scroll
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, index]);
 
   const slide = HERO_SLIDES[index];
 
@@ -126,13 +126,23 @@ export const HeroCarousel = () => {
             <p className="mt-8 max-w-md text-sm text-white/70 leading-relaxed font-bold uppercase tracking-tight">
               {slide.description}
             </p>
-            <Link
-              to={slide.link}
-              className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
-            >
-              {slide.cta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {slide.link.startsWith('#') ? (
+              <a
+                href={slide.link}
+                className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
+              >
+                {slide.cta}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            ) : (
+              <Link
+                to={slide.link}
+                className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
+              >
+                {slide.cta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

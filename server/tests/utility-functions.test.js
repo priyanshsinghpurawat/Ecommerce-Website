@@ -1,7 +1,6 @@
 import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { getUnitPrice, computeCartSubtotal } from '../utils/cartTotals.js';
-import { calculateCouponDiscount } from '../utils/couponCalc.js';
+import { getUnitPrice, computeCartSubtotal, calculateCouponDiscount, slugify } from '../utils/helpers.js';
 import { Coupon } from '../models/coupon.model.js';
 
 /**
@@ -14,9 +13,29 @@ import { Coupon } from '../models/coupon.model.js';
  * Coverage:
  * 1. Cart Totals (Price calculation, subtotals)
  * 2. Coupon Calculations (Flat vs Percentage, Min-Spend rules)
+ * 3. String Manipulation (Slugify)
  */
 
-describe('1. Cart Totals Calculation Logic', () => {
+describe('1. Slugification Logic', () => {
+  it('should convert text to lowercase and replace spaces with hyphens', () => {
+    assert.strictEqual(slugify('Mens T-Shirt'), 'mens-t-shirt');
+  });
+
+  it('should remove special characters and symbols', () => {
+    assert.strictEqual(slugify('Winter @ Collection! 2026'), 'winter-collection-2026');
+  });
+
+  it('should handle leading/trailing spaces and multiple hyphens', () => {
+    assert.strictEqual(slugify('  Heavy   Denim   '), 'heavy-denim');
+  });
+
+  it('should return an empty string for null/undefined input', () => {
+    assert.strictEqual(slugify(null), '');
+    assert.strictEqual(slugify(undefined), '');
+  });
+});
+
+describe('2. Cart Totals Calculation Logic', () => {
   it('should use the discounted price if it is set', () => {
     const product = { price: 1000, discountedPrice: 800 };
     assert.strictEqual(getUnitPrice(product), 800, 'Should return 800 (discounted)');

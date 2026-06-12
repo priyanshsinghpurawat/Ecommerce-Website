@@ -2,10 +2,10 @@
  * verifyJWT — reads Bearer token, loads req.user.
  * authorizeRoles('admin') — blocks users without the right role.
  */
+/** WHY: Verifies JWT tokens and checks if a user has Admin/Seller permissions. */
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user.model.js';
-import { ApiError } from '../utils/apiError.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError, asyncHandler } from '../utils/helpers.js';
 
 // Verify JWT token from header or cookie
 export const verifyJWT = asyncHandler(async (req, res, next) => {

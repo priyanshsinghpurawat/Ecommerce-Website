@@ -1,14 +1,13 @@
 import { Subcategory } from '../models/subcategory.model.js';
 import { Product } from '../models/product.model.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { asyncHandler, ApiResponse } from '../utils/helpers.js';
 import { getCache, setCache } from '../utils/cache.js';
 
 export const getSubcategories = asyncHandler(async (req, res) => {
   const { category } = req.query;
   
   const cacheKey = `subcategories:cat=${category || 'all'}`;
-  const cachedData = getCache(cacheKey);
+  const cachedData = await getCache(cacheKey);
 
   if (cachedData) {
     return res.status(200).json(new ApiResponse(200, cachedData, 'OK (cached)'));
@@ -40,7 +39,7 @@ export const getSubcategories = asyncHandler(async (req, res) => {
   }));
 
   // Cache subcategories for 1 hour (3600 seconds)
-  setCache(cacheKey, subcategories, 3600);
+  await setCache(cacheKey, subcategories, 3600);
 
   return res.status(200).json(new ApiResponse(200, subcategories, 'OK'));
 });
@@ -54,8 +53,8 @@ export const createSubcategory = asyncHandler(async (req, res) => {
   const subcategory = await Subcategory.create({ name, category });
   const cacheKey = `subcategories:cat=${category}`;
   const allCacheKey = 'subcategories:cat=all';
-  setCache(cacheKey, null, 0); // clear cache
-  setCache(allCacheKey, null, 0);
+  await setCache(cacheKey, null, 0); // clear cache
+  await setCache(allCacheKey, null, 0);
 
   return res.status(201).json(new ApiResponse(201, subcategory, 'Subcategory created'));
 });
@@ -70,11 +69,11 @@ export const updateSubcategory = asyncHandler(async (req, res) => {
   }
 
   // Clear cache for old and new category
-  setCache(`subcategories:cat=${subcategory.category}`, null, 0);
+  await setCache(`subcategories:cat=${subcategory.category}`, null, 0);
   if (category) {
-    setCache(`subcategories:cat=${category}`, null, 0);
+    await setCache(`subcategories:cat=${category}`, null, 0);
   }
-  setCache('subcategories:cat=all', null, 0);
+  await setCache('subcategories:cat=all', null, 0);
 
   if (name) subcategory.name = name;
   if (category) subcategory.category = category;
@@ -91,8 +90,8 @@ export const deleteSubcategory = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiResponse(404, null, 'Subcategory not found'));
   }
 
-  setCache(`subcategories:cat=${subcategory.category}`, null, 0);
-  setCache('subcategories:cat=all', null, 0);
+  await setCache(`subcategories:cat=${subcategory.category}`, null, 0);
+  await setCache('subcategories:cat=all', null, 0);
 
   return res.status(200).json(new ApiResponse(200, null, 'Subcategory deleted'));
 });

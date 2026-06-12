@@ -1,7 +1,5 @@
 import crypto from 'crypto';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ApiError } from '../utils/apiError.js';
-import { ApiResponse } from '../utils/apiResponse.js';
+import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 import { User } from '../models/user.model.js';
 import { OAuth2Client } from 'google-auth-library';
 
@@ -23,10 +21,6 @@ const sendAuthResponse = (res, statusCode, user, token, message) =>
 export const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
 
-  if (!idToken) {
-    throw new ApiError(400, 'Google token is missing.');
-  }
-
   try {
     const ticket = await client.verifyIdToken({
       idToken,
@@ -38,16 +32,14 @@ export const googleLogin = asyncHandler(async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create new user if doesn't exist
       user = await User.create({
         name,
         email,
         avatar: picture,
-        password: crypto.randomBytes(32).toString('hex'), // Secure random password for social login
+        password: crypto.randomBytes(32).toString('hex'),
         role: 'user'
       });
     } else {
-      // Sync avatar if missing
       if (!user.avatar) {
         user.avatar = picture;
         await user.save();
@@ -66,10 +58,6 @@ export const googleLogin = asyncHandler(async (req, res) => {
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
 
-  if (!name?.trim() || !email?.trim() || !password) {
-    throw new ApiError(400, 'Name, email, and password are required.');
-  }
-
   const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
   if (existingUser) {
     throw new ApiError(409, 'That email is already registered. Try logging in.');
@@ -79,7 +67,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     password,
-    role: 'user' // Always default to user during public registration
+    role: 'user'
   });
 
   const safeUser = await User.findById(user._id).select('-password');
@@ -90,10 +78,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email?.trim() || !password) {
-    throw new ApiError(400, 'Email and password are required.');
-  }
 
   const user = await User.findOne({ email: email.trim().toLowerCase() }).select('+password');
   if (!user) {

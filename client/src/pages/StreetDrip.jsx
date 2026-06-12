@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts } from '../services/product.service.js';
+import { getProducts } from '../services/api.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { Sparkles, ArrowRight, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { resolveImageUrl } from '../utils/imageUrl.js';
+import { resolveImageUrl } from '../utils/helpers.js';
 
 export const StreetDrip = () => {
   const [products, setProducts] = useState([]);

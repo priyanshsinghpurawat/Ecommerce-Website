@@ -2,9 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   getProfile, updateProfile, 
-  addAddress, updateAddress, deleteAddress, setDefaultAddress 
-} from '../services/user.service.js';
-import { getMyOrders } from '../services/order.service.js';
+  addAddress, updateAddress, deleteAddress, setDefaultAddress,
+  getMyOrders
+} from '../services/api.js';
 import { 
   Loader2, User, MapPin, Package, Heart, Save, Plus, Trash2, 
   CheckCircle2, ChevronRight, ShoppingBag, Clock, ShieldCheck, 
@@ -15,7 +15,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { Modal } from '../components/Modal.jsx';
-import { validateIndianPhone } from '../utils/phone.js';
+import { validateIndianPhone } from '../utils/helpers.js';
 
 export const Profile = () => {
   const { user, setUser } = useAuth();

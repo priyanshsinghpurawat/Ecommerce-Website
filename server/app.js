@@ -1,14 +1,11 @@
-/**
- * Express application setup: security middleware, API routes (images via Cloudinary).
- * Pattern: routes/*.js → controllers/*.js → models/*.js → MongoDB
- * Beginner docs: docs/DEVELOPER_GUIDE.md
- */
+/** WHY: Configures Express middleware, security, and main API routes. */
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { ENV } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { sanitizeRequest } from './middleware/sanitize.middleware.js';
 
@@ -25,7 +22,7 @@ import subcategoryRouter from './routes/subcategory.routes.js';
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') {
+if (ENV.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
@@ -33,14 +30,21 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
+// General rate limiter for all routes
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: ENV.NODE_ENV === 'production' ? 500 : 5000,
+  message: { success: false, message: 'Too many requests. Please try again later.' }
+});
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 1000 : 50,
+  max: ENV.NODE_ENV === 'test' ? 1000 : 50,
   message: { success: false, message: 'Too many login attempts. Wait a few minutes.' }
 });
 
-const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
-const isDev = process.env.NODE_ENV !== 'production';
+const configuredOrigins = ENV.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
+const isDev = ENV.NODE_ENV !== 'production';
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -63,7 +67,10 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 app.use(sanitizeRequest);
-app.use(morgan("dev"));
+app.use(morgan(ENV.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Apply general rate limit to all routes
+app.use(generalLimiter);
 
 // Route declarations
 app.use("/api/v1/auth", authLimiter, authRouter);
@@ -82,7 +89,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/v1/health", (req, res) => {
-  res.json({ ok: true });
+  res.json({ 
+    ok: true, 
+    timestamp: new Date().toISOString(),
+    env: ENV.NODE_ENV 
+  });
 });
 
 // Centralized error handling middleware (must be mounted last)

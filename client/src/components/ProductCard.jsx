@@ -5,7 +5,7 @@ import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { toast } from 'react-hot-toast';
-import { resolveImageUrl, getDiscountPercent } from '../utils/imageUrl.js';
+import { resolveImageUrl, getDiscountPercent } from '../utils/helpers.js';
 
 export const ProductCard = ({ product, activeColor }) => {
   const { addToCart } = useCart();
@@ -30,16 +30,10 @@ export const ProductCard = ({ product, activeColor }) => {
   let secondaryImage = product.images && product.images.length > 0 ? product.images[0] : null;
 
   if (activeColor) {
-    const matchedColor = product.colors?.find(c => c.name && c.name.toLowerCase() === activeColor.toLowerCase());
-    if (matchedColor && matchedColor.images?.length > 0) {
-      displayImage = matchedColor.images[0];
-      secondaryImage = matchedColor.images.length > 1 ? matchedColor.images[1] : (product.images?.[0] || null);
-    } else {
-      const matchedVariant = product.variants?.find(v => v.color && v.color.toLowerCase() === activeColor.toLowerCase() && v.images?.length > 0);
-      if (matchedVariant) {
-        displayImage = matchedVariant.images[0];
-        secondaryImage = matchedVariant.images.length > 1 ? matchedVariant.images[1] : (product.images?.[0] || null);
-      }
+    const matchedVariant = product.variants?.find(v => v.color && v.color.toLowerCase() === activeColor.toLowerCase() && v.images?.length > 0);
+    if (matchedVariant) {
+      displayImage = matchedVariant.images[0];
+      secondaryImage = matchedVariant.images.length > 1 ? matchedVariant.images[1] : (product.images?.[0] || null);
     }
   }
 
@@ -104,10 +98,11 @@ export const ProductCard = ({ product, activeColor }) => {
             loading="lazy"
             onError={(e) => {
               e.target.onerror = null;
-              e.target.src = '/assets/mens_shirt.png';
+              e.target.src = '/assets/hero_casual.png';
             }}
-            className={`h-full w-full object-cover object-top transition-all duration-700 ${isHovered && secondaryImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-              }`}
+            className={`h-full w-full object-cover object-top transition-all duration-700 ${
+              isHovered ? (secondaryImage ? 'opacity-0 scale-108' : 'scale-108') : 'opacity-100 scale-100'
+            }`}
           />
 
           {secondaryImage && (
@@ -115,8 +110,9 @@ export const ProductCard = ({ product, activeColor }) => {
               src={resolveImageUrl(secondaryImage, 600)}
               alt={`${product.title} alternate`}
               loading="lazy"
-              className={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-700 ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-                }`}
+              className={`absolute inset-0 h-full w-full object-cover object-top transition-all duration-700 ${
+                isHovered ? 'opacity-100 scale-108' : 'opacity-0 scale-100'
+              }`}
             />
           )}
         </Link>
@@ -213,14 +209,14 @@ export const ProductCard = ({ product, activeColor }) => {
         </div>
 
         <Link to={`/product/${product._id}`}>
-          <h3 className="text-[12px] font-black uppercase tracking-tight text-app-text leading-tight line-clamp-1 hover:text-brand-primary transition-colors italic">
+          <h3 className="text-[12px] font-black uppercase tracking-tight text-app-text leading-tight line-clamp-1 hover:text-brand-primary transition-colors">
             {product.title}
           </h3>
         </Link>
 
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="text-sm font-black italic tracking-tighter text-app-text">₹{unitPrice.toLocaleString('en-IN')}</span>
+            <span className="text-sm font-black tracking-tighter text-app-text">₹{unitPrice.toLocaleString('en-IN')}</span>
             {showOriginalPrice && (
               <span className="text-[10px] text-muted line-through font-bold tracking-tighter">
                 ₹{product.price.toLocaleString('en-IN')}

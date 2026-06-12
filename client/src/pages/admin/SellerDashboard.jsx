@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getProducts } from '../../services/product.service.js';
-import { getAllOrders } from '../../services/order.service.js';
+import { getProducts, getAllOrders } from '../../services/api.js';
 import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight, Loader2, Clock } from 'lucide-react';
 
 export const SellerDashboard = () => {
