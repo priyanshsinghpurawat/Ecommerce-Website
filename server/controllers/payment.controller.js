@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
+import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Product } from '../models/product.model.js';
 import { Cart } from '../models/cart.model.js';
@@ -44,22 +45,23 @@ export const createCheckout = asyncHandler(async (req, res) => {
   const { shippingAddress, couponCode } = req.body;
   const built = await buildOrderFromCart(req.user._id, { shippingAddress, couponCode });
 
-  // Atomically reserve stock up-front to prevent overselling
-  const decrementedProducts = [];
+  // Transactionally reserve stock up-front to prevent overselling
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     for (const item of built.orderItems) {
       const updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        { new: true }
+        { new: true, session }
       );
       if (!updated) {
         throw new ApiError(400, `Insufficient stock for "${item.title}". It may have just sold out.`);
       }
-      decrementedProducts.push({ id: item.product, qty: item.quantity });
     }
 
-    const order = await Order.create({
+    const [order] = await Order.create([{
       orderNumber: generateOrderNumber(),
       user: req.user._id,
       items: built.orderItems,
@@ -72,7 +74,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
       paymentMethod: 'razorpay',
       paymentStatus: 'pending',
       status: 'pending'
-    });
+    }], { session });
 
     const razorpay = getRazorpay();
     const amountPaise = Math.round(built.total * 100);
@@ -85,7 +87,10 @@ export const createCheckout = asyncHandler(async (req, res) => {
     });
 
     order.razorpayOrderId = rzOrder.id;
-    await order.save();
+    await order.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(201).json(
       new ApiResponse(201, {
@@ -98,10 +103,8 @@ export const createCheckout = asyncHandler(async (req, res) => {
       }, 'Checkout ready')
     );
   } catch (error) {
-    // Rollback any reserved stock on failure
-    for (const item of decrementedProducts) {
-      await Product.findByIdAndUpdate(item.id, { $inc: { stock: item.qty } });
-    }
+    await session.abortTransaction();
+    session.endSession();
     throw error;
   }
 });

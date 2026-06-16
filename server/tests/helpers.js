@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 let mongoServer;
 
@@ -8,7 +8,7 @@ export async function connectTestDb() {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key';
   process.env.JWT_EXPIRY = '1d';
 
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   await mongoose.connect(mongoServer.getUri());
 }
 

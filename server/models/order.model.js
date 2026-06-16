@@ -85,5 +85,6 @@ const orderSchema = new mongoose.Schema(
 // Optimize retrieval of order history (most recent orders first for a specific user)
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ trackingNumber: 1 });
+orderSchema.index({ "items.product": 1 }); // Optimize vendor queries
 
 export const Order = mongoose.model('Order', orderSchema);

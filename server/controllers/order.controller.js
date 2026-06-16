@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
@@ -77,15 +78,16 @@ export const createOrder = asyncHandler(async (req, res) => {
     };
   });
 
-  // Atomic stock check and decrement
-  // Note: We do this INSTEAD of line-by-line checks to prevent race conditions.
-  const decrementedProducts = [];
+  // Transactional stock check and decrement
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     for (const item of validItems) {
       const product = await Product.findOneAndUpdate(
         { _id: item.product._id, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        { new: true }
+        { new: true, session }
       );
 
       if (!product) {
@@ -94,10 +96,9 @@ export const createOrder = asyncHandler(async (req, res) => {
           `Insufficient stock for "${item.product.title}". It might have just sold out.`
         );
       }
-      decrementedProducts.push({ id: item.product._id, qty: item.quantity });
     }
 
-    const order = await Order.create({
+    const [order] = await Order.create([{
       orderNumber: generateOrderNumber(),
       user: req.user._id,
       items: orderItems,
@@ -118,20 +119,23 @@ export const createOrder = asyncHandler(async (req, res) => {
       },
       paymentMethod: paymentMethod === 'demo' ? 'demo' : 'cod',
       status: 'confirmed'
-    });
+    }], { session });
 
     // Increment soldCount for products after successful order creation
     for (const item of orderItems) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+      await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } }, { session });
     }
 
     // Increment coupon usage count
     if (appliedCouponId) {
-      await Coupon.findByIdAndUpdate(appliedCouponId, { $inc: { usageCount: 1 } });
+      await Coupon.findByIdAndUpdate(appliedCouponId, { $inc: { usageCount: 1 } }, { session });
     }
 
     cart.items = [];
-    await cart.save();
+    await cart.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
 
     const populatedOrder = await Order.findById(order._id).populate('user', 'name email');
 
@@ -140,10 +144,8 @@ export const createOrder = asyncHandler(async (req, res) => {
       .json(new ApiResponse(201, populatedOrder, 'Order placed successfully'));
 
   } catch (error) {
-    // Manual rollback of stock if anything failed during the order creation loop
-    for (const item of decrementedProducts) {
-      await Product.findByIdAndUpdate(item.id, { $inc: { stock: item.qty } });
-    }
+    await session.abortTransaction();
+    session.endSession();
     throw error;
   }
 });
