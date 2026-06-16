@@ -31,6 +31,10 @@ export function resolveImageUrl(url, width = 800) {
   let trimmed = url.trim();
   if (!trimmed) return PLACEHOLDER;
 
+  if (trimmed.includes('mens_shirt.png') || trimmed === 'mens_shirt.png') {
+    return '/assets/menshirt.avif';
+  }
+
   if (trimmed.includes('unsplash.com') && !trimmed.startsWith('http')) {
     trimmed = `https://${trimmed.replace(/^https?:\/\//, '')}`;
   }

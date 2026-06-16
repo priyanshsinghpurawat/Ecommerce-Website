@@ -82,6 +82,9 @@ export function normalizeImageUrl(image) {
   if (!image || typeof image !== 'string') return PLACEHOLDER;
   const trimmed = image.trim();
   if (!trimmed) return PLACEHOLDER;
+  if (trimmed.includes('mens_shirt.png') || trimmed === 'mens_shirt.png') {
+    return '/assets/menshirt.avif';
+  }
   if (trimmed.startsWith('http') || trimmed.startsWith('/') || trimmed.startsWith('.')) {
     return trimmed;
   }
