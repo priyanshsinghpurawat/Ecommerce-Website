@@ -68,7 +68,7 @@ export const initInventoryCron = () => {
   cron.schedule('*/14 * * * *', async () => {
     try {
       // Use localhost for internal ping, or a real URL if needed
-      const url = `http://localhost:${ENV.PORT}/api/v1/health`;
+      const url = `http://127.0.0.1:${ENV.PORT}/api/v1/health`;
       await axios.get(url);
       console.log(`[Cron] Self-ping successful.`);
     } catch (error) {

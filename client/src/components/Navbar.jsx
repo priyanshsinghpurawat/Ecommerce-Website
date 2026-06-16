@@ -78,7 +78,7 @@ export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
-  
+
   const menuRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -167,22 +167,22 @@ export const Navbar = () => {
     <header className="sticky top-0 z-50 glass shadow-nav transition-all duration-300">
       <div className="border-b border-black/5 dark:border-white/5">
         <div className="w-full px-2 md:px-4 h-14 flex items-center justify-between gap-4">
-          
+
           {/* 1. LOGO SECTION (Absolute Viewport Left) */}
           <Link to="/" className="flex items-center gap-1.5 shrink-0 group relative">
             <div className="relative">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary text-[15px] font-black text-black group-hover:scale-110 group-hover:rotate-[10deg] transition-all duration-500 shadow-lg group-hover:shadow-brand-primary/50 z-10 relative">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-brand-primary to-[#00a8cc] text-[15px] font-black text-black group-hover:scale-110 group-hover:rotate-[10deg] transition-all duration-500 shadow-lg group-hover:shadow-brand-primary/50 z-10 relative">
                 M
               </span>
               {/* Animated Glow Backdrop */}
-              <div className="absolute inset-0 bg-brand-primary opacity-0 group-hover:opacity-40 blur-xl transition-all duration-500 rounded-full scale-150" />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] opacity-0 group-hover:opacity-40 blur-xl transition-all duration-500 rounded-full scale-150" />
             </div>
-            
+
             <div className="flex flex-col -gap-1">
-              <span className="text-[16px] font-black tracking-tighter text-app-text uppercase group-hover:text-brand-primary transition-colors duration-300">
-                Mens<span className="italic text-brand-primary group-hover:text-accent-cyan group-hover:brightness-125 transition-all">Vibe</span>
+              <span className="text-[16px] uppercase tracking-widest bg-gradient-to-r from-brand-primary to-[#00a8cc] bg-clip-text text-transparent transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(0,168,204,0.4)] group-hover:brightness-110">
+                <span className="font-black">Mens</span><span className="font-light">Vibe</span>
               </span>
-              <div className="h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-brand-primary to-accent-cyan transition-all duration-500 rounded-full" />
+              <div className="h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-brand-primary to-[#00a8cc] transition-all duration-500 rounded-full" />
             </div>
           </Link>
 
@@ -201,7 +201,7 @@ export const Navbar = () => {
                       className="w-full rounded-full border border-surface-200 bg-surface-50 px-4 py-1.5 pl-10 pr-10 text-xs focus:outline-none focus:border-brand-primary transition-all shadow-inner"
                     />
                     <Search className="absolute left-3.5 top-2 h-3.5 w-3.5 text-app-text/45" />
-                    
+
                     {searching ? (
                       <Loader2 className="absolute right-10 top-2 h-3.5 w-3.5 animate-spin text-app-text/45" />
                     ) : null}
@@ -269,24 +269,25 @@ export const Navbar = () => {
                 <NavLink
                   to="/shop"
                   className={({ isActive }) =>
-                    `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
-                      isActive ? 'text-brand-primary underline underline-offset-4' : 'text-app-text/55 hover:text-app-text'
+                    `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-brand-primary underline underline-offset-4' : 'text-app-text/55 hover:text-app-text'
                     }`
                   }
                 >
                   Shop
                 </NavLink>
 
-                <NavLink 
-                  to="/street-drip" 
-                  className={({ isActive }) => 
-                    `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${
-                      isActive ? 'text-accent-purple underline underline-offset-4' : 'text-app-text/55 hover:text-accent-purple'
-                    }`
-                  }
+                <NavLink
+                  to="/street-drip"
+                  className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 transition-all group/drip"
                 >
-                  <Zap className="h-3 w-3" />
-                  Street Drip
+                  {({ isActive }) => (
+                    <>
+                      <Zap className={`h-3 w-3 transition-colors ${isActive ? 'text-brand-primary' : 'text-app-text/55 group-hover/drip:text-brand-primary'}`} />
+                      <span className={`transition-all ${isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-[#00a8cc]' : 'text-app-text/55 group-hover/drip:text-transparent group-hover/drip:bg-clip-text group-hover/drip:bg-gradient-to-r group-hover/drip:from-brand-primary group-hover/drip:to-[#00a8cc]'}`}>
+                        Street Drip
+                      </span>
+                    </>
+                  )}
                 </NavLink>
 
                 {/* Flat quicklinks to subcategories */}
@@ -295,8 +296,7 @@ export const Navbar = () => {
                     key={sub._id}
                     to={`/shop?subcategory=${sub._id}`}
                     className={({ isActive }) =>
-                      `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${
-                        isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'
+                      `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'
                       }`
                     }
                   >
@@ -318,7 +318,7 @@ export const Navbar = () => {
                 <Search className="h-4 w-4" />
               </button>
             ) : null}
-            
+
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-app-text/60 hover:bg-surface-50 hover:text-app-text transition-colors"
@@ -388,7 +388,7 @@ export const Navbar = () => {
                         <p className="text-[10px] font-black uppercase tracking-widest text-brand-primary">Signed in as</p>
                         <p className="text-xs font-bold text-white truncate mt-0.5">{user?.name}</p>
                       </div>
-                      
+
                       <div className="p-2">
                         <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-brand-primary hover:bg-white/5 rounded-2xl transition-all">
                           <User className="h-3.5 w-3.5" /> Account Details
@@ -430,7 +430,7 @@ export const Navbar = () => {
             <Link to="/shop" onClick={() => setMobileOpen(false)} className="rounded-xl bg-brand-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
               Catalog
             </Link>
-            <Link to="/street-drip" onClick={() => setMobileOpen(false)} className="rounded-xl bg-accent-purple px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white shadow-xl">
+            <Link to="/street-drip" onClick={() => setMobileOpen(false)} className="rounded-xl bg-gradient-to-r from-brand-primary to-[#00a8cc] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
               Street Drip
             </Link>
           </div>
@@ -439,21 +439,21 @@ export const Navbar = () => {
           <div className="space-y-3">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-primary mb-2">Shop Categories</p>
             {categoriesWithSubs.map((cat) => (
-              <MobileCategoryAccordion 
-                key={cat._id} 
-                category={cat} 
-                onClose={() => setMobileOpen(false)} 
+              <MobileCategoryAccordion
+                key={cat._id}
+                category={cat}
+                onClose={() => setMobileOpen(false)}
               />
             ))}
           </div>
-          
+
           {!isAuthenticated ? (
             <Link to="/login" onClick={() => setMobileOpen(false)} className="mt-2 rounded-2xl bg-white text-black px-6 py-4 text-xs font-black uppercase tracking-[0.2em] text-center shadow-2xl shadow-white/10">
               Join the Movement
             </Link>
           ) : (
             <div className="mt-2 pt-4 border-t border-white/10 space-y-3">
-               <Link
+              <Link
                 to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/seller/dashboard' : '/profile'}
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center justify-between w-full rounded-2xl bg-brand-primary px-6 py-4 text-xs font-black uppercase tracking-widest text-black shadow-xl"

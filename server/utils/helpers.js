@@ -247,6 +247,8 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
       product: item.product._id,
       title: item.product.title,
       image: item.product.image,
+      price: item.product.price,
+      discountedPrice: item.product.discountedPrice,
       quantity: item.quantity,
       unitPrice,
       subtotal: unitPrice * item.quantity,

@@ -115,7 +115,7 @@ export const Register = () => {
     setServerError('');
     const result = await loginWithGoogle(credentialResponse.credential);
     setGoogleLoading(false);
-    
+
     if (result.success) {
       toast.success('Signed in via Google.');
       navigate('/');
@@ -128,11 +128,15 @@ export const Register = () => {
   const isLoading = isSubmitting || googleLoading;
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-white/80 bg-surface-50/80 p-8 shadow-xl backdrop-blur-sm">
+    <div
+      className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/auth-bg.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/60"></div>
+      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-app-text">Create account</h2>
-          <p className="mt-2 text-sm text-app-text/60">
+          <h2 className="text-2xl font-bold text-white">Create account</h2>
+          <p className="mt-2 text-sm text-white/60">
             Takes a minute. Then you can checkout and track orders.
           </p>
         </div>
@@ -158,18 +162,11 @@ export const Register = () => {
           </div>
         </div>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-surface-200"></div>
-          </div>
-          <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
-            <span className="bg-surface-50 px-3 text-app-text/30">Or fill details</span>
-          </div>
-        </div>
+
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-app-text">
+            <label htmlFor="name" className="mb-1 block text-sm font-medium text-white">
               Name
             </label>
             <input
@@ -178,9 +175,8 @@ export const Register = () => {
               autoComplete="name"
               disabled={isLoading}
               {...register('name')}
-              className={`w-full rounded-lg border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
-                errors.name ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
-              }`}
+              className={`w-full rounded-xl border bg-black/40 px-4 py-3 text-sm text-zinc-300 placeholder-zinc-500 backdrop-blur-md focus:outline-none transition-all ${errors.name ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-black/60'
+                }`}
               placeholder="Priya Sharma"
             />
             {errors.name && (
@@ -192,7 +188,7 @@ export const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-app-text">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-white">
               Email
             </label>
             <input
@@ -201,9 +197,8 @@ export const Register = () => {
               autoComplete="email"
               disabled={isLoading}
               {...register('email')}
-              className={`w-full rounded-lg border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
-                errors.email ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
-              }`}
+              className={`w-full rounded-xl border bg-black/40 px-4 py-3 text-sm text-zinc-300 placeholder-zinc-500 backdrop-blur-md focus:outline-none transition-all ${errors.email ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-black/60'
+                }`}
               placeholder="you@example.com"
             />
             {errors.email && (
@@ -215,7 +210,7 @@ export const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-app-text">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-white">
               Password
             </label>
             <div className="relative">
@@ -226,9 +221,8 @@ export const Register = () => {
                 disabled={isLoading}
                 onKeyDown={handleKeyDown}
                 {...register('password')}
-                className={`w-full rounded-lg border bg-surface-50 pl-3 pr-10 py-2.5 text-sm focus:outline-none transition-colors ${
-                  errors.password ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
-                }`}
+                className={`w-full rounded-xl border bg-black/40 pl-4 pr-12 py-3 text-sm text-zinc-300 placeholder-zinc-500 backdrop-blur-md focus:outline-none transition-all ${errors.password ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-black/60'
+                  }`}
                 placeholder="At least 6 characters"
               />
               <button
@@ -237,7 +231,7 @@ export const Register = () => {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-app-text/40 hover:text-app-text focus:outline-none z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none z-10"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -252,7 +246,7 @@ export const Register = () => {
             {/* Password Strength Indicator */}
             {passwordValue && (
               <div className="mt-2 space-y-1">
-                <div className="flex justify-between text-xs font-semibold text-app-text/60">
+                <div className="flex justify-between text-xs font-semibold text-white/60">
                   <span>Strength: {getStrengthLabel(strengthScore)}</span>
                 </div>
                 <div className="h-1.5 w-full bg-surface-200 rounded-full overflow-hidden">
@@ -281,9 +275,9 @@ export const Register = () => {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-app-text/60">
+        <p className="mt-6 text-center text-sm text-white/60">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-app-text hover:underline">
+          <Link to="/login" className="font-semibold text-white hover:underline">
             Sign in
           </Link>
         </p>

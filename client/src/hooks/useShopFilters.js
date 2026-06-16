@@ -22,12 +22,12 @@ export const useShopFilters = () => {
     color: searchParams.get('color') || '',
   }), [searchParams]);
 
-  const selectedColors = useMemo(() => 
-    filters.color ? filters.color.split(',').filter(Boolean) : [], 
+  const selectedColors = useMemo(() =>
+    filters.color ? filters.color.split(',').filter(Boolean) : [],
     [filters.color]
   );
 
-  const hasActiveFilters = useMemo(() => 
+  const hasActiveFilters = useMemo(() =>
     !!(filters.category || filters.subcategory || filters.badge || filters.minPrice || filters.maxPrice || filters.color || filters.search),
     [filters]
   );
@@ -38,13 +38,13 @@ export const useShopFilters = () => {
       if (val) updated.set(key, val);
       else updated.delete(key);
     });
-    
+
     // Reset page if filters change
     if (!('page' in newParams)) updated.set('page', '1');
-    
+
     // Category/Subcategory logic
     if (newParams.category !== undefined && !newParams.subcategory) updated.delete('subcategory');
-    
+
     setSearchParams(updated);
   }, [searchParams, setSearchParams]);
 
@@ -62,9 +62,9 @@ export const useShopFilters = () => {
   const clearAllFilters = useCallback(() => {
     setPriceMin('');
     setPriceMax('');
-    updateFilters({ 
-      search: '', category: '', subcategory: '', badge: '', 
-      sort: 'latest', minPrice: '', maxPrice: '', color: '', page: '1' 
+    updateFilters({
+      search: '', category: '', subcategory: '', badge: '',
+      sort: 'latest', minPrice: '', maxPrice: '', color: '', page: '1'
     });
   }, [updateFilters]);
 

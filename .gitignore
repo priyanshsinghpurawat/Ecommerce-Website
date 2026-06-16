@@ -43,6 +43,7 @@ MEMORY_*.md
 finalplaningformv.md
 finalplaningformv_*.md
 
+
 # Testing and Coverage
 coverage/
 .nyc_output/
@@ -60,3 +61,15 @@ server/playground/
 .gemini/
 .agents/
 gha-creds-*.json
+skills-lock.json
+
+# Temporary logs & debug scripts
+priyansh_singh_Report_extracted.txt
+top\ change.txt
+server/scripts/debug_products.js
+server/scripts/dev-tools.js
+server/scripts/test_dotenv_loading.js
+
+# Heavy files and reports
+docs/
+screenshots/

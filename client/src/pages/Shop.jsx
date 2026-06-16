@@ -11,15 +11,15 @@ import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } fro
 /* ── Inline SVG category icons ── */
 const ShirtIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>
+    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
   </svg>
 );
 
 const SportShoeIcon = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="m15 10.42 4.8-5.07"/>
-    <path d="M19 18h3"/>
-    <path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14"/>
+    <path d="m15 10.42 4.8-5.07" />
+    <path d="M19 18h3" />
+    <path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14" />
   </svg>
 );
 
@@ -59,10 +59,10 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
 export const Shop = () => {
   const { products, pagination, loading, error } = useProducts();
   const { categories, fetchCategories } = useCategories();
-  const { 
+  const {
     filters, selectedColors, hasActiveFilters,
     priceMin, setPriceMin, priceMax, setPriceMax,
-    updateFilters, toggleColor, applyPriceFilter, clearAllFilters, fetchProducts 
+    updateFilters, toggleColor, applyPriceFilter, clearAllFilters, fetchProducts
   } = useShopFilters();
 
   const [subcategories, setSubcategories] = useState([]);
@@ -100,11 +100,11 @@ export const Shop = () => {
   useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
 
   useEffect(() => {
-    fetchProducts({ 
-      page: filters.page, limit: 15, search: filters.search, 
-      category: filters.category, subcategory: filters.subcategory, 
-      sort: filters.sort, badge: filters.badge, 
-      minPrice: filters.minPrice, maxPrice: filters.maxPrice, color: filters.color 
+    fetchProducts({
+      page: filters.page, limit: 15, search: filters.search,
+      category: filters.category, subcategory: filters.subcategory,
+      sort: filters.sort, badge: filters.badge,
+      minPrice: filters.minPrice, maxPrice: filters.maxPrice, color: filters.color
     });
   }, [fetchProducts, filters]);
 
@@ -186,17 +186,15 @@ export const Shop = () => {
                   type="button"
                   title={col}
                   onClick={() => toggleColor(col)}
-                  className={`flex flex-col items-center gap-1 p-1 rounded-xl border-2 transition-all ${
-                    isActive ? 'border-brand-primary scale-110' : 'border-transparent hover:border-app-text/20'
-                  }`}
+                  className={`flex flex-col items-center gap-1 p-1 rounded-xl border-2 transition-all ${isActive ? 'border-brand-primary scale-110' : 'border-transparent hover:border-app-text/20'
+                    }`}
                 >
                   <span
                     className="w-6 h-6 rounded-full border border-border shadow-sm"
                     style={{ backgroundColor: css }}
                   />
-                  <span className={`text-[8px] font-bold uppercase ${
-                    isActive ? 'text-brand-primary' : 'text-muted'
-                  }`}>{col}</span>
+                  <span className={`text-[8px] font-bold uppercase ${isActive ? 'text-brand-primary' : 'text-muted'
+                    }`}>{col}</span>
                 </button>
               );
             })}
@@ -278,8 +276,8 @@ export const Shop = () => {
             <div className="flex items-center gap-3">
               {/* Sort By Dropdown */}
               <div className="relative">
-                <select 
-                  value={filters.sort} 
+                <select
+                  value={filters.sort}
                   onChange={(e) => updateFilters({ sort: e.target.value })}
                   className="appearance-none rounded-xl border border-surface-200 bg-surface-50 px-4 py-2.5 pr-8 text-xs font-bold focus:outline-none focus:border-brand-primary text-app-text cursor-pointer"
                 >

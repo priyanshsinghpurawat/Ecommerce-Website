@@ -1,7 +1,4 @@
 /** WHY: Entry point to start the server and connect the database. */
-import dotenv from 'dotenv';
-dotenv.config();
-
 import { ENV } from './config/env.js';
 import connectDB from './config/db.js';
 import { connectRedis } from './config/redis.js';

@@ -65,7 +65,7 @@ export const Login = () => {
 
   const onSubmit = async (data) => {
     setServerError('');
-    
+
     // Remember email logic
     if (rememberEmail) {
       localStorage.setItem('rememberedEmail', data.email);
@@ -74,7 +74,7 @@ export const Login = () => {
     }
 
     const result = await loginUser(data.email, data.password);
-    
+
     if (result.success) {
       toast.success("You're in.");
       if (result.user?.role === 'admin' && !location.state?.from) {
@@ -93,7 +93,7 @@ export const Login = () => {
     setServerError('');
     const result = await loginWithGoogle(credentialResponse.credential);
     setGoogleLoading(false);
-    
+
     if (result.success) {
       toast.success('Signed in via Google.');
       navigate(redirectTo);
@@ -106,11 +106,15 @@ export const Login = () => {
   const isLoading = isSubmitting || googleLoading;
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-white/80 bg-surface-50/80 p-8 shadow-xl backdrop-blur-sm">
+    <div
+      className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/auth-bg.png')" }}
+    >
+      <div className="absolute inset-0 bg-black/60"></div>
+      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-app-text">Sign in</h2>
-          <p className="mt-2 text-sm text-app-text/60">
+          <h2 className="text-2xl font-bold text-white">Sign in</h2>
+          <p className="mt-2 text-sm text-white/60">
             Use your MensVibe account to save your bag and orders.
           </p>
         </div>
@@ -136,18 +140,11 @@ export const Login = () => {
           </div>
         </div>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-surface-200"></div>
-          </div>
-          <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
-            <span className="bg-surface-50 px-3 text-app-text/30">Or email</span>
-          </div>
-        </div>
+
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-app-text">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-white">
               Email
             </label>
             <input
@@ -156,9 +153,8 @@ export const Login = () => {
               autoComplete="email"
               disabled={isLoading}
               {...register('email')}
-              className={`w-full rounded-lg border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none transition-colors ${
-                errors.email ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
-              }`}
+              className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 backdrop-blur-sm focus:outline-none transition-all ${errors.email ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-white/10'
+                }`}
               placeholder="demo@mensvibe.in"
             />
             {errors.email && (
@@ -170,7 +166,7 @@ export const Login = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-app-text">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-white">
               Password
             </label>
             <div className="relative">
@@ -181,9 +177,9 @@ export const Login = () => {
                 disabled={isLoading}
                 onKeyDown={handleKeyDown}
                 {...register('password')}
-                className={`w-full rounded-lg border bg-surface-50 pl-3 pr-10 py-2.5 text-sm focus:outline-none transition-colors ${
-                  errors.password ? 'border-error focus:border-error' : 'border-surface-200 focus:border-brand-primary'
-                }`}
+                className={`w-full rounded-xl border bg-white/5 pl-4 pr-12 py-3 text-sm text-white placeholder-white/40 backdrop-blur-sm focus:outline-none transition-all ${errors.password ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-white/10'
+                  }`}
+                placeholder="Enter your password"
               />
               <button
                 type="button"
@@ -191,7 +187,7 @@ export const Login = () => {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-app-text/40 hover:text-app-text focus:outline-none z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none z-10"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -220,7 +216,7 @@ export const Login = () => {
                 onChange={(e) => setRememberEmail(e.target.checked)}
                 className="h-4 w-4 rounded border-surface-200 text-brand-primary focus:ring-brand-primary"
               />
-              <span className="text-xs text-app-text/70 font-medium">Remember my email</span>
+              <span className="text-xs text-white/70 font-medium">Remember my email</span>
             </label>
           </div>
 
@@ -233,9 +229,9 @@ export const Login = () => {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-app-text/60">
+        <p className="mt-6 text-center text-sm text-white/60">
           New here?{' '}
-          <Link to="/register" className="font-semibold text-app-text hover:underline">
+          <Link to="/register" className="font-semibold text-white hover:underline">
             Create an account
           </Link>
         </p>

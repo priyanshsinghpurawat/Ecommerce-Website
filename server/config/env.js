@@ -1,10 +1,11 @@
+import 'dotenv/config';
 import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.string().transform(Number).default('3000'),
-  MONGODB_URI: z.string().url('MONGODB_URI is required and must be a valid URL').default('mongodb://localhost:27017/mensvibe_test'),
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters').default('super-secret-test-key-must-be-long-enough'),
+  MONGODB_URI: z.string().startsWith('mongodb', 'MONGODB_URI must be a valid MongoDB connection string').default('mongodb://localhost:27017/mensvibe_test'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRY: z.string().default('1d'),
   CORS_ORIGIN: z.string().default('*'),
   // Optional but recommended for full functionality
