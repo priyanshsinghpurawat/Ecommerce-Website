@@ -316,6 +316,32 @@ const catalog = [
           { size: '9', color: 'White', stock: 5, sku: 'SK-WHT-9' },
           { size: '10', color: 'White', stock: 5, sku: 'SK-WHT-10' }
         ]
+      },
+      {
+        sub: 'Boots',
+        title: 'Classic Chelsea Leather Boots',
+        desc: 'Handcrafted premium leather Chelsea boots with elastic side panels and durable rubber sole.',
+        price: 6999,
+        sale: 5999,
+        stock: 20,
+        img: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?q=80&w=800',
+        variants: [
+          { size: 'UK 8', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-8' },
+          { size: 'UK 9', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-9' }
+        ]
+      },
+      {
+        sub: 'Sports',
+        title: 'Lightweight Running Shoes',
+        desc: 'Breathable mesh upper with cushioned sole for track and road running.',
+        price: 3999,
+        sale: 2999,
+        stock: 30,
+        img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800',
+        variants: [
+          { size: 'UK 8', color: 'Red', stock: 15, sku: 'SH-RUN-RED-8' },
+          { size: 'UK 9', color: 'Red', stock: 15, sku: 'SH-RUN-RED-9' }
+        ]
       }
     ]
   }
