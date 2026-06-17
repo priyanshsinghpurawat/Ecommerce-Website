@@ -7,6 +7,13 @@ export const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [openUserId, setOpenUserId] = useState(null);
+
+  useEffect(() => {
+    const handleClose = () => setOpenUserId(null);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -116,18 +123,41 @@ export const AdminUsers = () => {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="relative">
-                        <select
+                      <div className="relative" onClick={(e) => e.stopPropagation()}>
+                        <button
                           disabled={updatingId === u._id}
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                          className="appearance-none bg-surface-50 border border-surface-200 rounded-xl px-3 py-1.5 pr-8 text-[10px] font-bold uppercase tracking-wider text-app-text focus:outline-none focus:border-brand-primary cursor-pointer disabled:opacity-50"
+                          onClick={() => setOpenUserId(openUserId === u._id ? null : u._id)}
+                          className="flex items-center gap-2 bg-surface-50 border border-surface-200 rounded-xl px-3 py-1.5 pr-8 text-[10px] font-bold uppercase tracking-wider text-app-text focus:outline-none focus:border-brand-primary cursor-pointer disabled:opacity-50"
                         >
-                          <option value="user">Promote: User</option>
-                          <option value="seller">Promote: Seller</option>
-                          <option value="admin">Promote: Admin</option>
-                        </select>
-                        <ChevronDown className="absolute right-2.5 top-2 h-3 w-3 pointer-events-none text-app-text/40" />
+                          <span>Promote: {u.role}</span>
+                          <ChevronDown className={`h-3 w-3 transition-transform ${openUserId === u._id ? 'rotate-180' : ''} text-app-text/40`} />
+                        </button>
+                        
+                        {openUserId === u._id && (
+                          <div className="absolute right-0 mt-1.5 w-40 rounded-xl border border-white/10 bg-[#121212]/95 backdrop-blur-xl py-1 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {[
+                              { val: 'user', label: 'Promote: User' },
+                              { val: 'seller', label: 'Promote: Seller' },
+                              { val: 'admin', label: 'Promote: Admin' }
+                            ].map((opt) => (
+                              <button
+                                key={opt.val}
+                                onClick={() => {
+                                  handleRoleChange(u._id, opt.val);
+                                  setOpenUserId(null);
+                                }}
+                                className={`w-full text-left px-3.5 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                                  u.role === opt.val
+                                    ? 'text-brand-primary bg-white/5'
+                                    : 'text-app-text/75 hover:text-brand-primary hover:bg-white/5'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
                         {updatingId === u._id && (
                           <div className="absolute inset-0 flex items-center justify-center bg-surface-50/50 rounded-xl">
                             <Loader2 className="h-3 w-3 animate-spin text-brand-primary" />

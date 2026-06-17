@@ -107,7 +107,7 @@ export const Footer = () => {
             <p className="text-[9px] font-bold uppercase text-emerald-600 mb-1 flex items-center gap-1.5">
               <Sparkles className="h-3 w-3" /> Exclusive Offer
             </p>
-            <p className="text-[11px] text-app-text/40 italic">Use code <span className="text-app-text font-bold not-italic">MENSVIBE10</span> for 10% off</p>
+            <p className="text-[11px] text-app-text/40 italic">First order? Use <span className="text-app-text font-bold not-italic">WELCOME50</span> for ₹50 off</p>
           </div>
         </div>
       </div>

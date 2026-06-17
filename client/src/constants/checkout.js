@@ -11,6 +11,7 @@ export const DEFAULT_SHIPPING = {
 
 /** Tap-to-apply coupons (must exist in DB — run `npm run seed`) */
 export const SUGGESTED_COUPONS = [
+  { code: 'WELCOME50', label: '₹50 off', hint: 'First Order' },
   { code: 'MENSVIBE10', label: '10% off', hint: 'Min ₹499' },
-  { code: 'FIT100', label: '₹100 off', hint: 'Min ₹999' }
+  { code: 'FESTIVE500', label: '₹500 off', hint: 'Min ₹2499' }
 ];

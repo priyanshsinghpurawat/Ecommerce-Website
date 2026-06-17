@@ -50,6 +50,10 @@ const couponSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    newUsersOnly: {
+      type: Boolean,
+      default: false
+    },
     appliedProducts: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -7,7 +7,7 @@ import { asyncHandler, ApiError, ApiResponse, calculateCouponDiscount } from '..
  * @access  Private/Admin
  */
 export const createCoupon = asyncHandler(async (req, res) => {
-  const { code, discountType, discountValue, minCartAmount, expiryDate, usageLimit, perUserLimit, isActive, appliedProducts } = req.body;
+  const { code, discountType, discountValue, minCartAmount, expiryDate, usageLimit, perUserLimit, isActive, appliedProducts, newUsersOnly } = req.body;
 
   if (!code || !discountType || discountValue === undefined) {
     throw new ApiError(400, "Coupon code, discount type, and discount value are required");
@@ -29,6 +29,7 @@ export const createCoupon = asyncHandler(async (req, res) => {
     usageLimit: usageLimit !== undefined ? Number(usageLimit) : null,
     perUserLimit: perUserLimit !== undefined ? Number(perUserLimit) : 1,
     isActive: isActive !== undefined ? isActive : true,
+    newUsersOnly: newUsersOnly !== undefined ? newUsersOnly : false,
     appliedProducts: appliedProducts || [],
     seller: req.user.role === 'seller' ? req.user._id : null
   });
@@ -91,7 +92,7 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
  */
 export const updateCoupon = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { code, discountType, discountValue, minCartAmount, expiryDate, usageLimit, perUserLimit, isActive, appliedProducts } = req.body;
+  const { code, discountType, discountValue, minCartAmount, expiryDate, usageLimit, perUserLimit, isActive, appliedProducts, newUsersOnly } = req.body;
 
   const coupon = await Coupon.findById(id);
   if (!coupon) {
@@ -126,6 +127,7 @@ export const updateCoupon = asyncHandler(async (req, res) => {
   if (perUserLimit !== undefined) coupon.perUserLimit = perUserLimit === '' ? 1 : Number(perUserLimit);
   
   if (isActive !== undefined) coupon.isActive = isActive;
+  if (newUsersOnly !== undefined) coupon.newUsersOnly = newUsersOnly;
   if (appliedProducts !== undefined) coupon.appliedProducts = appliedProducts;
 
   await coupon.save();

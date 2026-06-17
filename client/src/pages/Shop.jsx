@@ -57,12 +57,12 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
 };
 
 export const Shop = () => {
-  const { products, pagination, loading, error } = useProducts();
+  const { products, pagination, loading, error, fetchProducts } = useProducts();
   const { categories, fetchCategories } = useCategories();
   const {
     filters, selectedColors, hasActiveFilters,
     priceMin, setPriceMin, priceMax, setPriceMax,
-    updateFilters, toggleColor, applyPriceFilter, clearAllFilters, fetchProducts
+    updateFilters, toggleColor, applyPriceFilter, clearAllFilters
   } = useShopFilters();
 
   const [subcategories, setSubcategories] = useState([]);

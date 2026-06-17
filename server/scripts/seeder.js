@@ -349,7 +349,8 @@ const catalog = [
 
 const couponsData = [
   { code: 'MENSVIBE10', discountType: 'percentage', discountValue: 10, minCartAmount: 499, usageLimit: null, perUserLimit: null, isActive: true },
-  { code: 'FESTIVE500', discountType: 'flat', discountValue: 500, minCartAmount: 2499, usageLimit: 100, perUserLimit: 1, isActive: true }
+  { code: 'FESTIVE500', discountType: 'flat', discountValue: 500, minCartAmount: 2499, usageLimit: 100, perUserLimit: 1, isActive: true },
+  { code: 'WELCOME50', discountType: 'flat', discountValue: 50, minCartAmount: 0, usageLimit: null, perUserLimit: 1, isActive: true, newUsersOnly: true }
 ];
 
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -589,7 +590,7 @@ const seed = async () => {
     console.log('Admin: admin@mensvibe.in / StrongP@ss123!');
     console.log('Seller: seller@mensvibe.in / StrongP@ss123!');
     console.log('User: demo@mensvibe.in / StrongP@ss123!');
-    console.log('Coupons: MENSVIBE10 (Unlimited), FESTIVE500 (Limited)');
+    console.log('Coupons: MENSVIBE10 (Unlimited), FESTIVE500 (Limited), WELCOME50 (First Order Only)');
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);

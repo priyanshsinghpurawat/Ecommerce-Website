@@ -38,6 +38,7 @@ export const AdminCoupons = () => {
     usageLimit: '',
     perUserLimit: '1',
     isActive: true,
+    newUsersOnly: false,
     appliedProducts: '' // Comma separated IDs
   });
   const [formErrors, setFormErrors] = useState({});
@@ -74,6 +75,7 @@ export const AdminCoupons = () => {
       usageLimit: '',
       perUserLimit: '1',
       isActive: true,
+      newUsersOnly: false,
       appliedProducts: ''
     });
     setFormErrors({});
@@ -99,6 +101,7 @@ export const AdminCoupons = () => {
       usageLimit: coupon.usageLimit !== null ? coupon.usageLimit.toString() : '',
       perUserLimit: coupon.perUserLimit.toString(),
       isActive: coupon.isActive,
+      newUsersOnly: coupon.newUsersOnly || false,
       appliedProducts: coupon.appliedProducts ? coupon.appliedProducts.join(', ') : ''
     });
     setFormErrors({});
@@ -152,6 +155,7 @@ export const AdminCoupons = () => {
       usageLimit: formData.usageLimit === '' ? null : Number(formData.usageLimit),
       perUserLimit: Number(formData.perUserLimit),
       isActive: formData.isActive,
+      newUsersOnly: formData.newUsersOnly,
       appliedProducts: appliedProductsArray
     };
 
@@ -283,9 +287,16 @@ export const AdminCoupons = () => {
                 {coupons.map((coupon) => (
                   <tr key={coupon._id} className="hover:bg-surface-50/20 transition-all">
                     <td className="px-6 py-4 font-mono font-bold tracking-wider text-brand-primary">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-3.5 w-3.5" />
-                        {coupon.code}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-3.5 w-3.5" />
+                          {coupon.code}
+                        </div>
+                        {coupon.newUsersOnly && (
+                          <span className="text-[8px] font-sans font-black uppercase tracking-wider text-brand-primary bg-brand-primary/10 border border-brand-primary/20 rounded px-1.5 py-0.5 w-max mt-0.5">
+                            First Order Only
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 uppercase text-[10px] tracking-wider text-app-text/65">
@@ -513,18 +524,33 @@ export const AdminCoupons = () => {
             <p className="text-[9px] text-app-text/40 italic">Leave empty to apply to all products in cart.</p>
           </div>
 
-          {/* Active / Inactive Status */}
-          <div className="flex items-center gap-3 pt-2">
-            <input
-              type="checkbox"
-              id="isActive"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="h-4 w-4 rounded border-surface-200 text-app-text focus:ring-brand-primary"
-            />
-            <label htmlFor="isActive" className="text-[11px] font-bold uppercase tracking-wider text-app-text/70 cursor-pointer">
-              Active (Make this coupon ready for customer checkouts)
-            </label>
+          {/* Active & New Users Only Statuses */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="h-4 w-4 rounded border-surface-200 text-app-text focus:ring-brand-primary"
+              />
+              <label htmlFor="isActive" className="text-[11px] font-bold uppercase tracking-wider text-app-text/70 cursor-pointer">
+                Active (Ready for checkout)
+              </label>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="newUsersOnly"
+                checked={formData.newUsersOnly}
+                onChange={(e) => setFormData({ ...formData, newUsersOnly: e.target.checked })}
+                className="h-4 w-4 rounded border-surface-200 text-app-text focus:ring-brand-primary"
+              />
+              <label htmlFor="newUsersOnly" className="text-[11px] font-bold uppercase tracking-wider text-app-text/70 cursor-pointer">
+                New Users Only (First Order Only)
+              </label>
+            </div>
           </div>
 
           {/* Submit Action */}

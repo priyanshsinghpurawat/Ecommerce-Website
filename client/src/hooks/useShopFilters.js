@@ -1,10 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useProducts } from '../hooks/useProducts.js';
 
 export const useShopFilters = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { fetchProducts } = useProducts();
 
   const [priceMin, setPriceMin] = useState(searchParams.get('minPrice') || '');
   const [priceMax, setPriceMax] = useState(searchParams.get('maxPrice') || '');
@@ -79,7 +77,6 @@ export const useShopFilters = () => {
     updateFilters,
     toggleColor,
     applyPriceFilter,
-    clearAllFilters,
-    fetchProducts
+    clearAllFilters
   };
 };

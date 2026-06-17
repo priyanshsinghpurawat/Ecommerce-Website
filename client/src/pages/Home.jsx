@@ -155,9 +155,9 @@ export const Home = () => {
         ].map(({ icon: Icon, label, text }) => (
           <div
             key={label}
-            className="flex items-center gap-4 rounded-[2rem] border border-border-base bg-surface-100 p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
+            className="flex items-center gap-4 rounded-[2rem] border border-white/10 bg-[#121212]/95 backdrop-blur-xl p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-app-text text-brand-primary shadow-lg transition-transform group-hover:scale-110">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/15 text-brand-primary border border-brand-primary/20 shadow-lg transition-transform group-hover:scale-110">
               <Icon className="h-5 w-5" />
             </div>
             <div>

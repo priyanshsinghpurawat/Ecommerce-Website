@@ -20,12 +20,12 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop with transition-opacity and blur */}
       <div 
-        className="fixed inset-0 bg-app-text/30 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300"
         onClick={onClose}
       />
       
       {/* Modal Card with premium glassmorphism styling */}
-      <div className="relative w-full max-w-lg transform overflow-hidden rounded-3xl border border-white/80 bg-surface-50/70 p-5 text-left align-middle shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95">
+      <div className="relative w-full max-w-lg transform overflow-hidden rounded-3xl border border-white/10 bg-[#121212]/95 p-5 text-left align-middle shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95">
         
         {/* Header Section */}
         <div className="flex items-center justify-between border-b border-surface-100/55 pb-3">

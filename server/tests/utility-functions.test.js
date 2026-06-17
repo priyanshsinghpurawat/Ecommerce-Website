@@ -2,6 +2,7 @@ import { describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { getUnitPrice, computeCartSubtotal, calculateCouponDiscount, slugify } from '../utils/helpers.js';
 import { Coupon } from '../models/coupon.model.js';
+import { Order } from '../models/order.model.js';
 
 /**
  * MASTER UTILITY FUNCTIONS TEST SUITE
@@ -122,5 +123,45 @@ describe('2. Coupon Discount Logic', () => {
     );
     
     findOneMock.mock.restore();
+  });
+
+  it('should accept a new-user-only coupon if the user has no previous orders', async () => {
+    const findOneMock = mock.method(Coupon, 'findOne', () => Promise.resolve({
+      code: 'NEWUSER10',
+      isActive: true,
+      discountType: 'percentage',
+      discountValue: 10,
+      minCartAmount: 0,
+      newUsersOnly: true
+    }));
+    const countDocumentsMock = mock.method(Order, 'countDocuments', () => Promise.resolve(0));
+
+    const result = await calculateCouponDiscount('NEWUSER10', 1000, [], 'user_id_123');
+    assert.strictEqual(result.discountAmount, 100);
+    assert.strictEqual(result.finalTotal, 900);
+
+    findOneMock.mock.restore();
+    countDocumentsMock.mock.restore();
+  });
+
+  it('should reject a new-user-only coupon if the user has existing orders', async () => {
+    const findOneMock = mock.method(Coupon, 'findOne', () => Promise.resolve({
+      code: 'NEWUSER10',
+      isActive: true,
+      discountType: 'percentage',
+      discountValue: 10,
+      minCartAmount: 0,
+      newUsersOnly: true
+    }));
+    const countDocumentsMock = mock.method(Order, 'countDocuments', () => Promise.resolve(1));
+
+    await assert.rejects(
+      calculateCouponDiscount('NEWUSER10', 1000, [], 'user_id_123'),
+      /only valid for your first order/i,
+      'Should reject because user has 1 order'
+    );
+
+    findOneMock.mock.restore();
+    countDocumentsMock.mock.restore();
   });
 });

@@ -9,7 +9,8 @@ export const createCouponSchema = z.object({
   usageLimit: z.number().int().nonnegative().nullable().default(null),
   perUserLimit: z.number().int().nonnegative().nullable().default(1),
   appliedProducts: z.array(z.string()).optional(),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  newUsersOnly: z.boolean().default(false).optional()
 });
 
 export const updateCouponSchema = createCouponSchema.partial();

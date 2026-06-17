@@ -153,6 +153,16 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
     }
   }
 
+  if (userId && coupon.newUsersOnly) {
+    const userOrderCount = await Order.countDocuments({
+      user: userId,
+      status: { $ne: 'cancelled' }
+    });
+    if (userOrderCount > 0) {
+      throw new ApiError(400, `This coupon is only valid for your first order.`);
+    }
+  }
+
   const cartTotalNum = Number(cartTotal);
   if (cartTotalNum < coupon.minCartAmount) {
     throw new ApiError(400, `Minimum purchase of ₹${coupon.minCartAmount} required.`);
