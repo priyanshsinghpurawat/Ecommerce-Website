@@ -9,6 +9,15 @@ const api = axios.create({
   withCredentials: true
 });
 
+// Fallback to Bearer token for cross-origin requests where 3rd party cookies might be blocked
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -37,6 +37,7 @@ export const Register = () => {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(registerSchema),
@@ -242,6 +243,22 @@ export const Register = () => {
                 {errors.password.message}
               </p>
             )}
+
+            <div className="mt-2 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  const suggested = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-2).toUpperCase() + '!';
+                  setValue('password', suggested, { shouldValidate: true, shouldDirty: true });
+                  toast.success(`Suggested password applied & copied!`, { duration: 3000 });
+                  navigator.clipboard.writeText(suggested);
+                  setShowPassword(true); // Show the password so they can see what it is
+                }}
+                className="text-[10px] font-bold text-brand-primary uppercase tracking-wider hover:underline"
+              >
+                Suggest Password
+              </button>
+            </div>
 
             {/* Password Strength Indicator */}
             {passwordValue && (

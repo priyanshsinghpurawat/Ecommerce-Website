@@ -7,6 +7,8 @@ import { useAuth } from '../hooks/useAuth.js';
 import { GoogleLogin } from '@react-oauth/google';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import confetti from 'canvas-confetti';
+
 
 const loginSchema = z.object({
   email: z
@@ -77,11 +79,19 @@ export const Login = () => {
 
     if (result.success) {
       toast.success("You're in.");
-      if (result.user?.role === 'admin' && !location.state?.from) {
-        navigate('/admin/dashboard');
-      } else {
-        navigate(redirectTo);
-      }
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#a3e635', '#ffffff', '#000000']
+      });
+      setTimeout(() => {
+        if (result.user?.role === 'admin' && !location.state?.from) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate(redirectTo);
+        }
+      }, 1000);
     } else {
       setServerError(result.error);
       toast.error(result.error || 'Failed to sign in.');
@@ -96,7 +106,15 @@ export const Login = () => {
 
     if (result.success) {
       toast.success('Signed in via Google.');
-      navigate(redirectTo);
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#a3e635', '#ffffff', '#000000']
+      });
+      setTimeout(() => {
+        navigate(redirectTo);
+      }, 1000);
     } else {
       setServerError(result.error);
       toast.error(result.error || 'Google Sign-In failed.');

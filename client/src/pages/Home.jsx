@@ -188,13 +188,13 @@ export const Home = () => {
               <Link
                 key={cat._id}
                 to={`/shop?category=${cat._id}`}
-                className="group relative h-48 sm:h-56 rounded-[2.5rem] overflow-hidden shadow-soft"
+                className="group relative h-48 sm:h-56 rounded-[2.5rem] overflow-hidden shadow-soft bg-zinc-900 border border-border transition-all"
               >
                 <img
                   src={banner.image}
                   alt={cat.name}
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
+                  className="absolute inset-0 w-full h-full object-contain p-6 transition-transform duration-1000 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                 <div className="absolute bottom-7 left-7">

@@ -204,25 +204,39 @@ export const ProductDetails = () => {
       : CLOTHING_MEASUREMENTS[selectedSize];
   }, [isFootwear, selectedSize]);
 
-  const handleCheckPincode = (e) => {
+  const handleCheckPincode = async (e) => {
     e.preventDefault();
     if (!/^\d{6}$/.test(pincode)) {
       toast.error('Please enter a valid 6-digit pincode.');
       return;
     }
-    // Basic mocked validation for restricted zones
-    if (['000000', '999999'].includes(pincode)) {
-      toast.error('Delivery is not available in this area.');
-      return;
-    }
+    
     setCheckingPincode(true);
-    setTimeout(() => {
-      setCheckingPincode(false);
-      setDeliveryStatus({
+    try {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await response.json();
+      
+      if (data && data[0] && data[0].Status === 'Success') {
+        const area = data[0].PostOffice[0].Name;
+        const district = data[0].PostOffice[0].District;
+        setDeliveryStatus({
+          success: true,
+          message: `Delivery available to ${area}, ${district}. Estimated 2-3 business days. Cash on delivery available.`
+        });
+      } else {
+         setDeliveryStatus({
+          success: false,
+          message: 'Invalid Pincode or delivery not available.'
+        });
+      }
+    } catch (error) {
+       setDeliveryStatus({
         success: true,
         message: 'Estimated delivery in 2-3 business days. Cash on delivery available.'
       });
-    }, 800);
+    } finally {
+      setCheckingPincode(false);
+    }
   };
 
   return (
@@ -551,8 +565,8 @@ export const ProductDetails = () => {
                 </button>
               </form>
               {deliveryStatus ? (
-                <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1.5">
-                  <Check className="h-3.5 w-3.5" /> {deliveryStatus.message}
+                <p className={`text-[10px] font-bold uppercase flex items-center gap-1.5 ${deliveryStatus.success ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {deliveryStatus.success ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />} {deliveryStatus.message}
                 </p>
               ) : null}
             </div>

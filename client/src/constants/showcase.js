@@ -68,7 +68,7 @@ export const HERO_SLIDES = [
 
 export const CATEGORY_BANNERS = {
   Clothing: {
-    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/brown_tvlluh.avif',
+    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/br_mr3443.avif',
     tagline: 'Tees · Pants · Linen'
   },
   Footwear: {

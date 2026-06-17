@@ -2,13 +2,14 @@ import crypto from 'crypto';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 import { User } from '../models/user.model.js';
 import { OAuth2Client } from 'google-auth-library';
+import { ENV } from '../config/env.js';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: ENV.NODE_ENV === 'production',
+  sameSite: ENV.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 24 * 60 * 60 * 1000
 };
 
