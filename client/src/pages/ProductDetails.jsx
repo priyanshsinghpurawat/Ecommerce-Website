@@ -213,12 +213,12 @@ export const ProductDetails = () => {
     
     setCheckingPincode(true);
     try {
-      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
-      const data = await response.json();
+      const response = await fetch(`https://api.zippopotam.us/in/${pincode}`);
       
-      if (data && data[0] && data[0].Status === 'Success') {
-        const area = data[0].PostOffice[0].Name;
-        const district = data[0].PostOffice[0].District;
+      if (response.ok) {
+        const data = await response.json();
+        const area = data.places[0]["place name"];
+        const district = data.places[0].state;
         setDeliveryStatus({
           success: true,
           message: `Delivery available to ${area}, ${district}. Estimated 2-3 business days. Cash on delivery available.`
