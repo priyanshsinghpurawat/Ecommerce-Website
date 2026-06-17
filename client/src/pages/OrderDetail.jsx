@@ -89,7 +89,14 @@ export const OrderDetail = () => {
                         alt={item.title}
                         className="w-12 h-12 rounded-lg object-cover border border-white"
                       />
-                      <span className="font-bold uppercase text-[11px]">{item.title}</span>
+                      <div>
+                        <span className="font-bold uppercase text-[11px] block">{item.title}</span>
+                        {item.status && (
+                          <span className="inline-block text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-surface-200 text-app-text/70 mt-1">
+                            {item.status}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center font-mono">{item.quantity}</td>
@@ -153,8 +160,15 @@ export const OrderDetail = () => {
             ) : (
               <div className="relative space-y-6">
                 <div className="absolute left-[11px] top-3 bottom-3 w-px bg-surface-200" />
-                {['pending', 'processing', 'shipped', 'delivered'].map((stage, idx) => {
-                  const currentIndex = ['pending', 'processing', 'shipped', 'delivered'].indexOf(order.status);
+                {['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered'].map((stage, idx) => {
+                  const statusMap = {
+                    pending: 0,
+                    confirmed: 1,
+                    partially_shipped: 2,
+                    shipped: 3,
+                    delivered: 4
+                  };
+                  const currentIndex = statusMap[order.status] ?? 0;
                   const isCompleted = idx <= currentIndex;
                   const isCurrent = idx === currentIndex;
                   
@@ -169,14 +183,15 @@ export const OrderDetail = () => {
                         <p className={`text-[11px] font-black uppercase tracking-widest ${
                           isCompleted ? 'text-app-text' : 'text-app-text/40'
                         }`}>
-                          {stage}
+                          {stage.replace('_', ' ')}
                         </p>
                         {isCurrent && (
                           <p className="text-[9px] font-bold text-app-text/50 uppercase tracking-widest mt-1">
                             {stage === 'pending' && 'Order placed successfully'}
-                            {stage === 'processing' && 'Preparing your items'}
-                            {stage === 'shipped' && 'Handed over to delivery partner'}
-                            {stage === 'delivered' && 'Package delivered'}
+                            {stage === 'confirmed' && 'Fulfillment in progress'}
+                            {stage === 'partially_shipped' && 'Some of your items have shipped'}
+                            {stage === 'shipped' && 'All items handed over to delivery partners'}
+                            {stage === 'delivered' && 'All items delivered successfully'}
                           </p>
                         )}
                       </div>

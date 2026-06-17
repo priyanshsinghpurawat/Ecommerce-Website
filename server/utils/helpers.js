@@ -258,6 +258,7 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
     const unitPrice = getUnitPrice(item.product);
     return {
       product: item.product._id,
+      vendor: item.product.seller,
       title: item.product.title,
       image: item.product.image,
       price: item.product.price,
@@ -266,7 +267,8 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
       unitPrice,
       subtotal: unitPrice * item.quantity,
       size: item.size || '',
-      color: item.color || ''
+      color: item.color || '',
+      status: 'confirmed'
     };
   });
 
