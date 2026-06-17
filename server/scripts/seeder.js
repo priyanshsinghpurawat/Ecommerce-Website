@@ -404,13 +404,13 @@ const importFromCSV = async (csvPath, adminUser) => {
       if (!subId) {
         let subDoc = await Subcategory.findOne({
           name: new RegExp(`^${escapeRegex(subcategory.trim())}$`, 'i'),
+          category: catId
         });
-category: catId
-if (!subDoc) {
-  subDoc = await Subcategory.create({ name: subcategory.trim(), category: catId });
-}
-subId = subDoc._id;
-subCache.set(`${catId}_${subcategory.trim().toLowerCase()}`, subId);
+        if (!subDoc) {
+          subDoc = await Subcategory.create({ name: subcategory.trim(), category: catId });
+        }
+        subId = subDoc._id;
+        subCache.set(`${catId}_${subcategory.trim().toLowerCase()}`, subId);
       }
 
 let product = await Product.findOne({ title: title.trim(), seller: adminUser._id });

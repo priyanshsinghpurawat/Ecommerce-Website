@@ -35,7 +35,8 @@ export const AdminVendorProfile = () => {
     );
   }
 
-  const { vendor, stats, products, topProducts, recentOrders } = data;
+  const { vendor, stats, products: rawProducts, topProducts, recentOrders } = data;
+  const products = rawProducts || [];
   const formatCurrency = (val) => `₹${val.toLocaleString('en-IN')}`;
 
   return (
@@ -217,10 +218,10 @@ export const AdminVendorProfile = () => {
                   <h4 className="text-[11px] font-black uppercase tracking-tight text-app-text line-clamp-2 leading-snug">{p.title}</h4>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-[8px] font-black uppercase tracking-widest text-brand-primary bg-app-text px-2 py-0.5 rounded-md">
-                      {p.category?.name}
+                      {p.category?.name || 'Uncategorized'}
                     </span>
                     <span className="text-[8px] font-bold text-app-text/40 uppercase tracking-tighter">
-                      {p.subcategory?.name}
+                      {p.subcategory?.name || 'General'}
                     </span>
                   </div>
                 </div>

@@ -248,11 +248,20 @@ export const Register = () => {
               <button
                 type="button"
                 onClick={() => {
-                  const suggested = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-2).toUpperCase() + '!';
+                  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+                  const array = new Uint8Array(12);
+                  window.crypto.getRandomValues(array);
+                  let suggested = "";
+                  for (let i = 0; i < array.length; i++) {
+                    suggested += charset[array[i] % charset.length];
+                  }
+                  
                   setValue('password', suggested, { shouldValidate: true, shouldDirty: true });
                   toast.success(`Suggested password applied & copied!`, { duration: 3000 });
-                  navigator.clipboard.writeText(suggested);
-                  setShowPassword(true); // Show the password so they can see what it is
+                  navigator.clipboard.writeText(suggested).catch(err => {
+                    console.error('Clipboard write failed:', err);
+                  });
+                  setShowPassword(true);
                 }}
                 className="text-[10px] font-bold text-brand-primary uppercase tracking-wider hover:underline"
               >

@@ -99,7 +99,7 @@ export const AdminVendors = () => {
                     <div className="flex flex-wrap gap-1.5 max-w-[220px]">
                       {v.categories?.length > 0 ? v.categories.map((cat, idx) => (
                         <span key={idx} className="px-2.5 py-1 rounded-lg bg-app-text text-[8px] font-black uppercase tracking-[0.15em] text-brand-primary border border-white/5">
-                          {cat}
+                          {typeof cat === 'object' ? cat.name : cat}
                         </span>
                       )) : (
                         <span className="text-[9px] text-app-text/30 font-medium italic">Catalogue Empty</span>

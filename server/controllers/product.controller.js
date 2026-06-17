@@ -288,17 +288,21 @@ export const updateProduct = asyncHandler(async (req, res) => {
     if (gender) product.gender = gender;
     if (stock !== undefined && stock !== '') product.stock = Number(stock);
 
-    if (coverUrl) product.image = coverUrl;
-    product.images = galleryUrls;
+    const finalCover = coverUrl || req.body.existingCover || product.image;
+    product.image = finalCover;
+    product.images = galleryUrls.filter(url => url !== finalCover);
     if (Array.isArray(safeJSON(req.body.variantsMeta, null))) {
       product.variants = variants;
     }
 
     const meta = ProductService.parseProductMeta(req.body);
     if (meta.badge !== undefined) product.badge = meta.badge;
-    if (meta.rating !== undefined) product.rating = meta.rating;
-    if (meta.reviewCount !== undefined) product.reviewCount = meta.reviewCount;
     if (meta.relatedProducts !== undefined) product.relatedProducts = meta.relatedProducts;
+
+    if (req.user.role === 'admin') {
+      if (meta.rating !== undefined) product.rating = meta.rating;
+      if (meta.reviewCount !== undefined) product.reviewCount = meta.reviewCount;
+    }
 
     await product.save();
 

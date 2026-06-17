@@ -212,9 +212,12 @@ export const ProductDetails = () => {
     }
     
     setCheckingPincode(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     try {
       // 1. Try PostalPincode.in API first (provides detailed area and city info)
-      const resPost = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const resPost = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, { signal: controller.signal });
       if (resPost.ok) {
         const data = await resPost.json();
         if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
@@ -226,6 +229,7 @@ export const ProductDetails = () => {
             success: true,
             message: `Delivery available to ${area}, ${district}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
           });
+          clearTimeout(timeoutId);
           setCheckingPincode(false);
           return;
         }
@@ -236,7 +240,7 @@ export const ProductDetails = () => {
 
     try {
       // 2. Fallback to Zippopotam.us (using uppercase IN country code)
-      const resZip = await fetch(`https://api.zippopotam.us/IN/${pincode}`);
+      const resZip = await fetch(`https://api.zippopotam.us/IN/${pincode}`, { signal: controller.signal });
       if (resZip.ok) {
         const data = await resZip.json();
         if (data && data.places && data.places[0]) {
@@ -246,12 +250,15 @@ export const ProductDetails = () => {
             success: true,
             message: `Delivery available to ${area}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
           });
+          clearTimeout(timeoutId);
           setCheckingPincode(false);
           return;
         }
       }
     } catch (err) {
       console.warn("Zippopotam API failed, trying offline validation...", err);
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     // 3. Simple regex / offline validation fallback (if both APIs are down/unstable)
@@ -260,7 +267,7 @@ export const ProductDetails = () => {
     if (pinRegex.test(pincode)) {
       setDeliveryStatus({
         success: true,
-        message: 'Delivery is available to your location. Estimated 2-3 business days. Cash on delivery available.'
+        message: 'Valid Pincode format. Assuming deliverable offline. Estimated 2-3 business days.'
       });
     } else {
       setDeliveryStatus({

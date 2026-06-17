@@ -102,8 +102,8 @@ export const AdminLayout = () => {
               </div>
             </div>
             <div className="truncate flex-1">
-              <p className="text-[11px] font-black italic text-white truncate uppercase tracking-tight">Root Admin</p>
-              <p className="text-[9px] text-white/30 truncate font-black tracking-widest uppercase">System Auth OK</p>
+              <p className="text-[11px] font-black italic text-white truncate uppercase tracking-tight">{user?.name || 'Root Admin'}</p>
+              <p className="text-[9px] text-white/30 truncate font-black tracking-widest uppercase">{user?.email || 'System Auth OK'}</p>
             </div>
             <button
               onClick={handleLogout}

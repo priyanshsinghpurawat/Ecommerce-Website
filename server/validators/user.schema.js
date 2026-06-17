@@ -13,9 +13,7 @@ export const updateUserSchema = z.object({
     (val) => !val || /^[6-9]\d{9}$/.test(normalizePhone(val)),
     { message: 'Invalid phone number' }
   ),
-  brandName: z.string().optional(),
-  isActive: z.boolean().optional(),
-  role: z.enum(['user', 'admin', 'seller']).optional()
+  brandName: z.string().optional()
 });
 
 export const addressSchema = z.object({

@@ -71,7 +71,7 @@ export const ProductCard = ({ product, activeColor }) => {
       return;
     }
     setAddingToCart(true);
-    const res = await addToCart(product._id, 1, { size });
+    const res = await addToCart(product._id, 1, { size, color: activeColor || '' });
     if (res.success) {
       toast.success(`Added ${product.title} (${size}) to bag!`);
       setShowSizes(false);

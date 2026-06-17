@@ -15,9 +15,19 @@ const orderItemSchema = new mongoose.Schema(
     unitPrice: { type: Number, required: true },
     subtotal: { type: Number, required: true },
     size: { type: String, trim: true },
-    color: { type: String, trim: true }
-  },
-  { _id: false }
+    color: { type: String, trim: true },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+      default: 'confirmed'
+    },
+    trackingNumber: { type: String, trim: true },
+    deliveryDate: { type: Date }
+  }
 );
 
 const shippingAddressSchema = new mongoose.Schema(
@@ -75,7 +85,7 @@ const orderSchema = new mongoose.Schema(
     deliveryDate: { type: Date },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+      enum: ['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'],
       default: 'pending'
     }
   },

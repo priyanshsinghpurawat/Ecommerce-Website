@@ -9,8 +9,7 @@
     "start": "node index.js",
     "build": "npm install --legacy-peer-deps",
     "dev": "nodemon index.js",
-    "free-port": "powershell -ExecutionPolicy Bypass -File ./scripts/free-port.ps1",
-    "dev:clean": "npm run free-port && nodemon index.js",
+    "dev:clean": "nodemon index.js",
     "seed": "node scripts/seeder.js",
     "test": "vitest run"
   },

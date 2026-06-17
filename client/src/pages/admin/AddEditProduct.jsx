@@ -129,9 +129,17 @@ export default function AddEditProduct() {
       fd.append(k, String(v));
     });
 
-    const keepGallery = gallery.filter((i) => i.kind === 'remote').map((i) => i.url);
+    const keepGallery = [];
+    gallery.forEach((i, idx) => {
+      if (idx === 0) {
+        if (i.kind === 'remote') fd.append('existingCover', i.url);
+        else fd.append('cover', i.file);
+      } else {
+        if (i.kind === 'remote') keepGallery.push(i.url);
+        else fd.append('gallery', i.file);
+      }
+    });
     fd.append('existingImages', JSON.stringify(keepGallery));
-    gallery.filter((i) => i.kind === 'file').forEach((i) => fd.append('gallery', i.file));
 
     const variantsMeta = variants.map((v) => ({
       color: v.color, size: v.size, sku: v.sku,

@@ -3,6 +3,7 @@ import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { Coupon } from '../models/coupon.model.js';
+import { User } from '../models/user.model.js';
 import {
   asyncHandler,
   ApiError,
@@ -230,6 +231,9 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
   session.startTransaction();
 
   try {
+    // Acquire lock on user to prevent concurrent checkout race conditions (Bug #7)
+    await User.findByIdAndUpdate(userId, { $set: { updatedAt: new Date() } }, { session });
+
     const validItems = cart.items.filter((item) => item.product);
     await deductProductStock(validItems, session);
 

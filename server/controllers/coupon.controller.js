@@ -1,5 +1,6 @@
 import { Coupon } from '../models/coupon.model.js';
-import { asyncHandler, ApiError, ApiResponse, calculateCouponDiscount } from '../utils/helpers.js';
+import { Cart } from '../models/cart.model.js';
+import { asyncHandler, ApiError, ApiResponse, calculateCouponDiscount, computeCartSubtotal } from '../utils/helpers.js';
 
 /**
  * @desc    Create a new coupon (Admin Only)
@@ -168,13 +169,21 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const applyCoupon = asyncHandler(async (req, res) => {
-  const { code, cartTotal, cartItems } = req.body;
+  const { code } = req.body;
 
-  if (!code || cartTotal === undefined) {
-    throw new ApiError(400, "Coupon code and cart total are required");
+  if (!code) {
+    throw new ApiError(400, "Coupon code is required");
   }
 
-  const result = await calculateCouponDiscount(code, cartTotal, cartItems, req.user._id);
+  const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
+  if (!cart || cart.items.length === 0) {
+    throw new ApiError(400, "Your cart is empty");
+  }
+
+  const validItems = cart.items.filter(item => item.product);
+  const cartTotal = computeCartSubtotal(validItems);
+
+  const result = await calculateCouponDiscount(code, cartTotal, validItems, req.user._id);
 
   return res.status(200).json(
     new ApiResponse(200, result, "Coupon applied successfully")

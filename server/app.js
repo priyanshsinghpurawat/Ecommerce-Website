@@ -55,9 +55,7 @@ app.use(cors({
     if (configuredOrigins?.includes(origin)) {
       return callback(null, true);
     }
-    if (!configuredOrigins?.length && isDev) {
-      return callback(null, true);
-    }
+
     callback(new Error(`CORS blocked origin: ${origin}`));
   },
   credentials: true

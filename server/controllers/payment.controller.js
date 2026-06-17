@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Product } from '../models/product.model.js';
 import { Cart } from '../models/cart.model.js';
+import { Coupon } from '../models/coupon.model.js';
+import { User } from '../models/user.model.js';
 import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber } from '../utils/helpers.js';
 
 const isRazorpayConfigured = () => {
@@ -50,6 +52,17 @@ export const createCheckout = asyncHandler(async (req, res) => {
   session.startTransaction();
 
   try {
+    // Acquire lock on user to prevent checkout race conditions (Bug #7)
+    await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
+
+    let appliedCouponId = null;
+    if (built.appliedCouponCode) {
+      const couponDoc = await Coupon.findOne({ code: built.appliedCouponCode });
+      if (couponDoc) {
+        appliedCouponId = couponDoc._id;
+      }
+    }
+
     for (const item of built.orderItems) {
       const updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
@@ -69,6 +82,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
       taxAmount: built.taxAmount,
       discountAmount: built.discountAmount,
       total: built.total,
+      coupon: appliedCouponId,
       couponCode: built.appliedCouponCode,
       shippingAddress: built.shippingAddress,
       paymentMethod: 'razorpay',
@@ -135,6 +149,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   if (!order) {
     throw new ApiError(404, 'Order not found');
   }
+  if (order.razorpayOrderId !== razorpay_order_id) {
+    throw new ApiError(400, 'Order ID mismatch');
+  }
   if (order.user.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Not your order');
   }
@@ -142,7 +159,10 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, order, 'Already paid'));
   }
 
-  if (expected !== razorpay_signature) {
+  const expectedBuffer = Buffer.from(expected, 'hex');
+  const signatureBuffer = Buffer.from(razorpay_signature, 'hex');
+
+  if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
     // Signature failed — release the reserved stock and mark order failed
     for (const item of order.items) {
       await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
@@ -159,6 +179,10 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   order.razorpayPaymentId = razorpay_payment_id;
   order.razorpayOrderId = razorpay_order_id;
   await order.save();
+
+  if (order.coupon) {
+    await Coupon.findByIdAndUpdate(order.coupon, { $inc: { usageCount: 1 } });
+  }
 
   // Increment soldCount
   for (const item of order.items) {

@@ -137,8 +137,10 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
     const isRevenueOrder = ['confirmed', 'shipped', 'delivered'].includes(order.status);
     
     order.items.forEach(item => {
-      const productIdStr = item.product.toString();
-      if (productIds.some(pid => pid.equals(item.product))) {
+      const itemProductId = item.product?._id || item.product;
+      const productIdStr = String(itemProductId);
+      
+      if (productIds.some(pid => String(pid) === productIdStr)) {
         const itemRevenue = (item.unitPrice * item.quantity);
         
         if (isRevenueOrder) {
@@ -151,8 +153,8 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
         
         if (isRevenueOrder) {
           productStats[productIdStr].revenue += itemRevenue;
+          productStats[productIdStr].units += item.quantity;
         }
-        productStats[productIdStr].units += item.quantity;
       }
     });
   });

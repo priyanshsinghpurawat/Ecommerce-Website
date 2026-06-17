@@ -113,7 +113,11 @@ export const Login = () => {
         colors: ['#a3e635', '#ffffff', '#000000']
       });
       setTimeout(() => {
-        navigate(redirectTo);
+        if (result.user?.role === 'admin' && !location.state?.from) {
+          navigate('/admin/dashboard');
+        } else {
+          navigate(redirectTo);
+        }
       }, 1000);
     } else {
       setServerError(result.error);
