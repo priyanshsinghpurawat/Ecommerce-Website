@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getAllOrders } from '../../services/api.js';
-import { Loader2, Package, Search, Eye } from 'lucide-react';
+import { getAllOrders, updateOrderStatus } from '../../services/api.js';
+import { Loader2, Eye, Truck, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';
 
@@ -11,6 +11,7 @@ export const SellerOrders = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const fetchMyOrders = async () => {
     if (!user?._id) return;
@@ -29,81 +30,141 @@ export const SellerOrders = () => {
     fetchMyOrders();
   }, [user]);
 
+  const handleUpdateItemStatus = async (orderId, itemId, newStatus) => {
+    setUpdating(true);
+    try {
+      await updateOrderStatus(orderId, { status: newStatus, itemId });
+      toast.success(`Item marked as ${newStatus}`);
+      await fetchMyOrders();
+      // Update selected order in modal
+      const res = await getAllOrders({ seller: user._id });
+      const updatedOrder = (res.data || []).find(o => o._id === orderId);
+      if (updatedOrder) setSelectedOrder(updatedOrder);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) {
-    return <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-app-text/20" /></div>;
+    return <div className="flex h-[50vh] items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-gray-500" /></div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
       <div>
-        <h2 className="text-xl font-bold uppercase tracking-wider text-app-text">Customer Orders</h2>
-        <p className="text-xs text-app-text/50">Orders containing your listed products.</p>
+        <h2 className="text-3xl font-bold text-gray-900">Customer Orders</h2>
+        <p className="text-base text-gray-600 mt-2">Manage fulfillment for your specific items across all customer orders.</p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="p-20 text-center border-2 border-dashed border-border-base rounded-[40px]">
-          <p className="text-muted font-bold uppercase text-xs">No sales yet.</p>
+        <div className="p-20 text-center border border-gray-200 bg-white rounded-2xl shadow-sm">
+          <p className="text-gray-500 font-medium text-lg">No sales yet.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-3xl border border-border-base bg-surface-50/40 shadow-soft">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-border-base bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-muted">
+              <tr className="border-b border-gray-200 bg-gray-50 text-sm font-semibold text-gray-600">
                 <th className="px-6 py-4">Order #</th>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4 text-center">My Items</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Order Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-base/40">
-              {orders.map(order => (
-                <tr key={order._id} className="hover:bg-surface-50/30 transition-colors">
-                  <td className="px-6 py-4 font-mono font-bold text-app-text">{order.orderNumber}</td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-app-text">{order.user?.name}</p>
-                    <p className="text-[10px] text-muted">{order.user?.email}</p>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="px-2 py-0.5 rounded-lg bg-surface-100 border border-border-base font-bold text-app-text">
-                        {order.items.length}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button onClick={() => { setSelectedOrder(order); setDetailModalOpen(true); }} className="p-2 rounded-xl bg-surface-50 text-app-text hover:bg-app-text hover:text-app-bg transition-all shadow-sm">
-                      <Eye className="h-3.5 w-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-gray-100">
+              {orders.map(order => {
+                const myItems = order.items.filter(it => String(it.vendor) === String(user._id));
+                return (
+                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-mono font-bold text-gray-900">{order.orderNumber}</td>
+                    <td className="px-6 py-4">
+                      <p className="text-base font-semibold text-gray-900">{order.user?.name}</p>
+                      <p className="text-sm text-gray-500">{order.user?.email}</p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="px-3 py-1 rounded-lg bg-gray-100 font-bold text-gray-700">
+                        {myItems.length}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-700">
+                        {order.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button 
+                        onClick={() => { setSelectedOrder(order); setDetailModalOpen(true); }} 
+                        className="p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-brand-primary hover:text-black transition-all shadow-sm"
+                        title="View Fulfillment Details"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Detail Modal */}
-      <Modal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)} title="Sale Details">
+      {/* Fulfillment Detail Modal */}
+      <Modal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)} title="Fulfillment Details">
         {selectedOrder && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-surface-50 border border-border-base">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">Shipping To</h4>
-              <p className="text-xs font-bold text-app-text">{selectedOrder.shippingAddress?.fullName}</p>
-              <p className="text-[10px] text-muted">
+          <div className="space-y-6">
+            <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200">
+              <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Shipping To</h4>
+              <p className="text-base font-bold text-gray-900">{selectedOrder.shippingAddress?.fullName}</p>
+              <p className="text-sm text-gray-600 mt-1">
                 {selectedOrder.shippingAddress?.street}, {selectedOrder.shippingAddress?.city}<br />
                 {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.zipCode}
               </p>
             </div>
-            <div className="space-y-2">
-               <h4 className="text-[10px] font-black uppercase tracking-widest text-muted">Itemized Breakdown</h4>
-               {selectedOrder.items.map((it, i) => (
-                 <div key={i} className="flex justify-between items-center p-2 rounded-xl bg-surface-100 border border-border-base">
-                    <span className="text-xs font-bold text-app-text truncate max-w-[200px]">{it.title}</span>
-                    <span className="text-[10px] font-mono font-black text-app-text">x{it.quantity}</span>
+            
+            <div className="space-y-3">
+               <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Your Items in this Order</h4>
+               {selectedOrder.items
+                 .filter(it => String(it.vendor) === String(user._id))
+                 .map((it) => (
+                 <div key={it._id} className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-base font-bold text-gray-900 block">{it.title}</span>
+                        <span className="text-sm text-gray-500 block">Quantity: {it.quantity}</span>
+                        <span className="text-sm text-gray-500 block">Status: <span className="font-bold text-gray-700 uppercase">{it.status}</span></span>
+                      </div>
+                      <span className="text-lg font-bold text-emerald-600">₹{(it.unitPrice * it.quantity).toLocaleString('en-IN')}</span>
+                    </div>
+
+                    {/* Action Buttons for this specific item */}
+                    <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                      {it.status === 'confirmed' && (
+                        <button 
+                          disabled={updating}
+                          onClick={() => handleUpdateItemStatus(selectedOrder._id, it._id, 'shipped')}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-bold hover:bg-blue-200 transition-colors disabled:opacity-50"
+                        >
+                          <Truck className="w-4 h-4" /> Mark as Shipped
+                        </button>
+                      )}
+                      {it.status === 'shipped' && (
+                        <button 
+                          disabled={updating}
+                          onClick={() => handleUpdateItemStatus(selectedOrder._id, it._id, 'delivered')}
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold hover:bg-emerald-200 transition-colors disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Mark as Delivered
+                        </button>
+                      )}
+                      {it.status === 'delivered' && (
+                        <span className="text-sm font-bold text-emerald-600 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" /> Delivered successfully
+                        </span>
+                      )}
+                    </div>
                  </div>
                ))}
             </div>

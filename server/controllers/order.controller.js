@@ -16,7 +16,7 @@ import {
 } from '../utils/helpers.js';
 
 const GST_TAX_RATE = 0.18;
-const VALID_ORDER_STATUSES = ['confirmed', 'shipped', 'delivered', 'cancelled'];
+const VALID_ORDER_STATUSES = ['confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'];
 
 /* -------------------------------------------------------------------------- */
 /*                                 CONTROLLERS                                */
@@ -114,16 +114,51 @@ export const getAllOrders = asyncHandler(async (req, res) => {
  */
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, itemId, trackingNumber } = req.body;
 
   validateOrderStatus(status);
 
-  const order = await Order.findById(id);
+  const order = await Order.findById(id).populate('items.product', 'seller');
   if (!order) {
     throw new ApiError(404, 'Order not found');
   }
 
-  await transitionOrderStatus(order, status);
+  // If user is a seller, they can only update their own items
+  if (req.user.role === 'seller') {
+    if (itemId) {
+      const item = order.items.id(itemId);
+      if (!item) throw new ApiError(404, 'Item not found in order');
+      if (item.vendor.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, 'You are not authorized to update this item');
+      }
+      await transitionOrderItemStatus(order, item, status, trackingNumber);
+    } else {
+      // Update all items belonging to this seller
+      let updatedAny = false;
+      for (const item of order.items) {
+        if (item.vendor.toString() === req.user._id.toString()) {
+          await transitionOrderItemStatus(order, item, status, trackingNumber);
+          updatedAny = true;
+        }
+      }
+      if (!updatedAny) throw new ApiError(403, 'No items found for this vendor in this order');
+    }
+  } else if (req.user.role === 'admin') {
+    // Admin can update specific item or whole order
+    if (itemId) {
+      const item = order.items.id(itemId);
+      if (!item) throw new ApiError(404, 'Item not found in order');
+      await transitionOrderItemStatus(order, item, status, trackingNumber);
+    } else {
+      await transitionOrderStatus(order, status);
+    }
+  } else {
+    throw new ApiError(403, 'You are not authorized to update order status');
+  }
+
+  // Recalculate root order status
+  recalculateRootOrderStatus(order);
+  await order.save();
 
   return res
     .status(200)
@@ -158,7 +193,7 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 async function fetchAndValidateUserCart(userId) {
   const cart = await Cart.findOne({ user: userId }).populate({
     path: 'items.product',
-    select: 'title price discountedPrice image stock'
+    select: 'title price discountedPrice image stock seller'
   });
 
   if (!cart || cart.items.length === 0) {
@@ -202,6 +237,7 @@ async function calculateOrderTotals(cart, couponCode, userId) {
     const unitPrice = getUnitPrice(product);
     return {
       product: product._id,
+      vendor: product.seller,
       title: product.title,
       image: product.image,
       price: product.price,
@@ -210,7 +246,8 @@ async function calculateOrderTotals(cart, couponCode, userId) {
       unitPrice,
       subtotal: unitPrice * item.quantity,
       size: item.size || '',
-      color: item.color || ''
+      color: item.color || '',
+      status: 'confirmed'
     };
   });
 
@@ -350,27 +387,70 @@ async function transitionOrderStatus(order, newStatus) {
     await reDeductStockForOrder(order);
   }
 
-  order.status = newStatus;
-  await order.save();
+  // Update all items to match root status
+  for (const item of order.items) {
+    item.status = newStatus;
+  }
 }
 
-async function restoreStockForOrder(order) {
-  for (const item of order.items) {
+async function transitionOrderItemStatus(order, item, newStatus, trackingNumber) {
+  const oldStatus = item.status;
+
+  if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
     await Product.findByIdAndUpdate(item.product, {
       $inc: { stock: item.quantity, soldCount: -item.quantity }
     });
   }
+
+  if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
+    const product = await Product.findById(item.product);
+    if (!product || product.stock < item.quantity) {
+      throw new ApiError(400, `Cannot reinstate item. Product "${item.title}" is out of stock.`);
+    }
+    await Product.findByIdAndUpdate(item.product, {
+      $inc: { stock: -item.quantity, soldCount: item.quantity }
+    });
+  }
+
+  item.status = newStatus;
+  if (trackingNumber) item.trackingNumber = trackingNumber;
+  if (newStatus === 'delivered') item.deliveryDate = new Date();
+}
+
+function recalculateRootOrderStatus(order) {
+  const itemStatuses = order.items.map(i => i.status);
+  
+  if (itemStatuses.every(s => s === 'cancelled')) {
+    order.status = 'cancelled';
+  } else if (itemStatuses.every(s => s === 'delivered' || s === 'cancelled')) {
+    order.status = 'delivered';
+  } else if (itemStatuses.every(s => s === 'shipped' || s === 'delivered' || s === 'cancelled')) {
+    order.status = 'shipped';
+  } else if (itemStatuses.some(s => s === 'shipped' || s === 'delivered')) {
+    order.status = 'partially_shipped';
+  } else {
+    order.status = 'confirmed';
+  }
+}
+
+async function restoreStockForOrder(order) {
+  for (const item of order.items) {
+    if (item.status !== 'cancelled') {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity, soldCount: -item.quantity }
+      });
+      item.status = 'cancelled';
+    }
+  }
 }
 
 async function reDeductStockForOrder(order) {
-  // Check stock levels first
   for (const item of order.items) {
     const product = await Product.findById(item.product);
     if (!product || product.stock < item.quantity) {
       throw new ApiError(400, `Cannot reinstate order. Product "${item.title}" is out of stock.`);
     }
   }
-  // Safely decrement if all available
   for (const item of order.items) {
     await Product.findByIdAndUpdate(item.product, {
       $inc: { stock: -item.quantity, soldCount: item.quantity }
