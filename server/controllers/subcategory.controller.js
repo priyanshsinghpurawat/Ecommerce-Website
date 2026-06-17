@@ -38,8 +38,8 @@ export const getSubcategories = asyncHandler(async (req, res) => {
     image: imageMap[sub._id.toString()] || null
   }));
 
-  // Cache subcategories for 1 hour (3600 seconds)
-  await setCache(cacheKey, subcategories, 3600);
+  // Cache subcategories for 60 seconds (matching categories)
+  await setCache(cacheKey, subcategories, 60);
 
   return res.status(200).json(new ApiResponse(200, subcategories, 'OK'));
 });

@@ -4,6 +4,7 @@ import connectDB from './config/db.js';
 import { connectRedis } from './config/redis.js';
 import { app } from './app.js';
 import { initInventoryCron } from './utils/cron.js';
+import { clearCache } from './utils/cache.js';
 
 const startServer = async () => {
   try {
@@ -14,6 +15,10 @@ const startServer = async () => {
     if (ENV.REDIS_URL) {
       await connectRedis();
     }
+
+    // Flush cache on startup to clear any stale category or query cache
+    await clearCache();
+    console.log('Cache flushed successfully on startup.');
 
     // Initialize background tasks
     initInventoryCron();

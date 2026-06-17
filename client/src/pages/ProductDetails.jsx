@@ -213,30 +213,62 @@ export const ProductDetails = () => {
     
     setCheckingPincode(true);
     try {
-      const response = await fetch(`https://api.zippopotam.us/in/${pincode}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        const area = data.places[0]["place name"];
-        const district = data.places[0].state;
-        setDeliveryStatus({
-          success: true,
-          message: `Delivery available to ${area}, ${district}. Estimated 2-3 business days. Cash on delivery available.`
-        });
-      } else {
-         setDeliveryStatus({
-          success: false,
-          message: 'Invalid Pincode or delivery not available.'
-        });
+      // 1. Try PostalPincode.in API first (provides detailed area and city info)
+      const resPost = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      if (resPost.ok) {
+        const data = await resPost.json();
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+          const area = postOffice.Name || postOffice.Block;
+          const district = postOffice.District;
+          const state = postOffice.State;
+          setDeliveryStatus({
+            success: true,
+            message: `Delivery available to ${area}, ${district}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
+          });
+          setCheckingPincode(false);
+          return;
+        }
       }
-    } catch (error) {
-       setDeliveryStatus({
-        success: true,
-        message: 'Estimated delivery in 2-3 business days. Cash on delivery available.'
-      });
-    } finally {
-      setCheckingPincode(false);
+    } catch (err) {
+      console.warn("PostalPincode API failed, trying fallback...", err);
     }
+
+    try {
+      // 2. Fallback to Zippopotam.us (using uppercase IN country code)
+      const resZip = await fetch(`https://api.zippopotam.us/IN/${pincode}`);
+      if (resZip.ok) {
+        const data = await resZip.json();
+        if (data && data.places && data.places[0]) {
+          const area = data.places[0]["place name"];
+          const state = data.places[0].state;
+          setDeliveryStatus({
+            success: true,
+            message: `Delivery available to ${area}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
+          });
+          setCheckingPincode(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Zippopotam API failed, trying offline validation...", err);
+    }
+
+    // 3. Simple regex / offline validation fallback (if both APIs are down/unstable)
+    // Indian pincodes are 6 digits and do not start with 0
+    const pinRegex = /^[1-9][0-9]{5}$/;
+    if (pinRegex.test(pincode)) {
+      setDeliveryStatus({
+        success: true,
+        message: 'Delivery is available to your location. Estimated 2-3 business days. Cash on delivery available.'
+      });
+    } else {
+      setDeliveryStatus({
+        success: false,
+        message: 'Invalid Pincode format. Please enter a valid 6-digit Indian PIN code.'
+      });
+    }
+    setCheckingPincode(false);
   };
 
   return (

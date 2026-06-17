@@ -464,7 +464,7 @@ if (errors.length) console.log('Sample errors:', errors.slice(0, 5));
 const seed = async () => {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/e-commerce';
-    const isProduction = mongoUri.includes('mongodb+srv') || mongoUri.includes('cluster0');
+    const isProduction = mongoUri.includes('mongodb+srv') || mongoUri.includes('cluster') || mongoUri.includes('mongodb.net');
 
     if (isProduction && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
       console.error('⚠️ CRITICAL: PRODUCTION DATABASE DETECTED. Aborting.');
