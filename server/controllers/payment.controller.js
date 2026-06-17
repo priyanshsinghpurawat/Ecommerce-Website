@@ -7,10 +7,11 @@ import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
 import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber } from '../utils/helpers.js';
+import { ENV } from '../config/env.js';
 
 const isRazorpayConfigured = () => {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const keyId = ENV.RAZORPAY_KEY_ID;
+  const keySecret = ENV.RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) return false;
   if (keyId.includes('your_') || keySecret.includes('your_')) return false;
   return true;
@@ -23,7 +24,7 @@ export const getPaymentConfig = asyncHandler(async (req, res) => {
       200,
       {
         razorpayEnabled: enabled,
-        keyId: enabled ? process.env.RAZORPAY_KEY_ID : null
+        keyId: enabled ? ENV.RAZORPAY_KEY_ID : null
       },
       'Payment config'
     )
@@ -38,8 +39,8 @@ const getRazorpay = () => {
     );
   }
   return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
+    key_id: ENV.RAZORPAY_KEY_ID,
+    key_secret: ENV.RAZORPAY_KEY_SECRET
   });
 };
 
@@ -113,7 +114,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
         amount: built.total,
         amountPaise,
         razorpayOrderId: rzOrder.id,
-        keyId: process.env.RAZORPAY_KEY_ID
+        keyId: ENV.RAZORPAY_KEY_ID
       }, 'Checkout ready')
     );
   } catch (error) {
@@ -135,7 +136,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Payment verification fields missing');
   }
 
-  const secret = process.env.RAZORPAY_KEY_SECRET;
+  const secret = ENV.RAZORPAY_KEY_SECRET;
   if (!secret) {
     throw new ApiError(503, 'Razorpay secret not configured');
   }

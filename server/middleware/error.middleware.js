@@ -1,6 +1,8 @@
 /** WHY: Catches all errors and sends a clean, consistent JSON response to the client. */
 import { ApiError } from '../utils/helpers.js';
 
+import { ENV } from '../config/env.js';
+
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
@@ -39,7 +41,7 @@ const errorHandler = (err, req, res, next) => {
     statusCode: error.statusCode,
     message: error.message,
     errors: error.errors,
-    ...(process.env.NODE_ENV === 'development' ? { stack: error.stack } : {})
+    ...(ENV.NODE_ENV === 'development' ? { stack: error.stack } : {})
   };
 
   return res.status(error.statusCode).json(response);

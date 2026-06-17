@@ -6,6 +6,7 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user.model.js';
 import { ApiError, asyncHandler } from '../utils/helpers.js';
+import { ENV } from '../config/env.js';
 
 // Verify JWT token from header or cookie
 export const verifyJWT = asyncHandler(async (req, res, next) => {
@@ -16,7 +17,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.verify(token, ENV.JWT_SECRET);
     const user = await User.findById(decodedToken._id).select("-password");
 
     if (!user) {

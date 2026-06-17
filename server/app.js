@@ -22,6 +22,8 @@ import subcategoryRouter from './routes/subcategory.routes.js';
 
 const app = express();
 
+app.disable('x-powered-by');
+
 if (ENV.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
@@ -61,8 +63,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: "16kb" }));
-app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
 app.use(sanitizeRequest);
 app.use(morgan(ENV.NODE_ENV === 'production' ? 'combined' : 'dev'));

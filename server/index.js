@@ -1,7 +1,8 @@
 /** WHY: Entry point to start the server and connect the database. */
+import mongoose from 'mongoose';
 import { ENV } from './config/env.js';
 import connectDB from './config/db.js';
-import { connectRedis } from './config/redis.js';
+import { connectRedis, redisClient } from './config/redis.js';
 import { app } from './app.js';
 import { initInventoryCron } from './utils/cron.js';
 import { clearCache } from './utils/cache.js';
@@ -30,7 +31,9 @@ const startServer = async () => {
     // Handle process-level errors
     process.on('unhandledRejection', (reason, promise) => {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      // In production, you might want to restart the process
+      if (ENV.NODE_ENV === 'production') {
+        process.exit(1);
+      }
     });
 
     process.on('uncaughtException', (error) => {
@@ -40,9 +43,23 @@ const startServer = async () => {
 
     // Graceful shutdown
     const shutdown = async () => {
-      console.log('Shutting down server...');
+      console.log('Shutting down server gracefully...');
       server.close(async () => {
-        // Close other connections here (DB, Redis)
+        try {
+          await mongoose.disconnect();
+          console.log('MongoDB connection closed.');
+        } catch (err) {
+          console.error('Error closing MongoDB connection:', err.message);
+        }
+
+        if (redisClient?.isReady) {
+          try {
+            await redisClient.quit();
+            console.log('Redis connection closed.');
+          } catch (err) {
+            console.error('Error closing Redis connection:', err.message);
+          }
+        }
         process.exit(0);
       });
     };

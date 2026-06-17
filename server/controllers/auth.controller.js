@@ -4,7 +4,7 @@ import { User } from '../models/user.model.js';
 import { OAuth2Client } from 'google-auth-library';
 import { ENV } from '../config/env.js';
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(ENV.GOOGLE_CLIENT_ID);
 
 const cookieOptions = {
   httpOnly: true,
@@ -25,7 +25,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
   try {
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: ENV.GOOGLE_CLIENT_ID
     });
 
     const { name, email, picture, sub: googleId } = ticket.getPayload();

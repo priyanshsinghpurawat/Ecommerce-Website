@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { ENV } from '../config/env.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -96,9 +97,9 @@ userSchema.methods.generateAccessToken = function () {
       email: this.email,
       role: this.role
     },
-    process.env.JWT_SECRET,
+    ENV.JWT_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRY
+      expiresIn: ENV.JWT_EXPIRY
     }
   );
 };

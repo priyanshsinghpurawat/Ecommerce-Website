@@ -5,6 +5,7 @@
  * via utils/cloudinaryUpload so errors map to clean ApiError responses.
  */
 import multer from 'multer';
+import { fileTypeFromBuffer } from 'file-type';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import { ApiError } from '../utils/helpers.js';
 
@@ -30,16 +31,38 @@ export const upload = multer({
  * Use as: router.post('/', uploadAny(), ...handlers)
  */
 export const uploadAny = () => (req, res, next) => {
-  upload.any()(req, res, (err) => {
-    if (!err) return next();
-    if (err instanceof ApiError) return next(err);
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return next(new ApiError(413, `Image too large. Max ${MAX_BYTES / 1024 / 1024}MB per file.`));
+  upload.any()(req, res, async (err) => {
+    if (err) {
+      if (err instanceof ApiError) return next(err);
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return next(new ApiError(413, `Image too large. Max ${MAX_BYTES / 1024 / 1024}MB per file.`));
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return next(new ApiError(413, `Too many files. Max ${MAX_FILES} per request.`));
+      }
+      return next(new ApiError(400, err.message || 'Upload failed.'));
     }
-    if (err.code === 'LIMIT_FILE_COUNT') {
-      return next(new ApiError(413, `Too many files. Max ${MAX_FILES} per request.`));
+
+    // Server-side validation of file signature (magic bytes)
+    if (req.files && Array.isArray(req.files)) {
+      for (const file of req.files) {
+        try {
+          const detected = await fileTypeFromBuffer(file.buffer);
+          if (!detected || !ALLOWED_MIME.has(detected.mime)) {
+            return next(
+              new ApiError(
+                400,
+                `Invalid or malicious file content detected for "${file.originalname}". Only JPG, PNG, WEBP, and AVIF are allowed.`
+              )
+            );
+          }
+        } catch (error) {
+          return next(new ApiError(400, `Failed to analyze file signature for "${file.originalname}".`));
+        }
+      }
     }
-    return next(new ApiError(400, err.message || 'Upload failed.'));
+
+    next();
   });
 };
 
