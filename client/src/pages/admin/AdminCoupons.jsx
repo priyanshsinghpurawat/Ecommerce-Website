@@ -6,7 +6,9 @@ import {
   deleteCoupon 
 } from '../../services/api.js';
 import { Modal } from '../../components/Modal.jsx';
-import { Plus, Edit2, Trash2, Loader2, Tag, Calendar, AlertCircle, Search, ArrowUpDown, ChevronLeft, ChevronRight, Power } from 'lucide-react';
+import { Input } from '../../components/Input.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
+import { Plus, Edit2, Trash2, Loader2, Tag, Calendar, AlertCircle, Search, ArrowUpDown, Power } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export const AdminCoupons = () => {
@@ -364,30 +366,12 @@ export const AdminCoupons = () => {
             </table>
           </div>
 
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-surface-100 bg-surface-50/20 px-6 py-4">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-app-text/50">
-                Page {pagination.currentPage} of {pagination.totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={pagination.currentPage === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-200 bg-surface-50 text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-50"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-200 bg-surface-50 text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-50"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={setPage}
+            loading={loading}
+          />
         </div>
       ) : (
         <div className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 p-12 text-center">
@@ -404,26 +388,22 @@ export const AdminCoupons = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           
           {/* Coupon Code */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Coupon Code</label>
-            <input
-              type="text"
-              name="code"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              placeholder="e.g. WELCOME10"
-              disabled={isEditing} // Prevent code modification on update
-              className={`w-full rounded-xl border bg-surface-50 px-3.5 py-2.5 font-mono text-xs focus:outline-none uppercase ${
-                formErrors.code ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
-              }`}
-            />
-            {formErrors.code && <span className="text-[10px] font-bold text-red-500">{formErrors.code}</span>}
-          </div>
+          <Input
+            label="Coupon Code"
+            id="code"
+            name="code"
+            value={formData.code}
+            onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+            placeholder="e.g. WELCOME50"
+            disabled={isEditing}
+            error={formErrors.code}
+            className="font-mono uppercase !bg-surface-50"
+          />
 
           {/* Discount Configuration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Discount Type</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-app-text/70">Discount Type</label>
               <select
                 name="discountType"
                 value={formData.discountType}
@@ -435,51 +415,43 @@ export const AdminCoupons = () => {
               </select>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">
-                {formData.discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount (₹)'}
-              </label>
-              <input
-                type="number"
-                name="discountValue"
-                value={formData.discountValue}
-                onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                placeholder={formData.discountType === 'percentage' ? 'e.g. 10' : 'e.g. 250'}
-                className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
-                  formErrors.discountValue ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
-                }`}
-              />
-              {formErrors.discountValue && <span className="text-[10px] font-bold text-red-500">{formErrors.discountValue}</span>}
-            </div>
+            <Input
+              label={formData.discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount (₹)'}
+              id="discountValue"
+              type="number"
+              name="discountValue"
+              value={formData.discountValue}
+              onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
+              placeholder={formData.discountType === 'percentage' ? 'e.g. 10' : 'e.g. 250'}
+              error={formErrors.discountValue}
+              className="!bg-surface-50"
+            />
           </div>
 
           {/* Rules / Min Order & Expiry */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Min. Spend Limit (₹)</label>
-              <input
-                type="number"
-                name="minCartAmount"
-                value={formData.minCartAmount}
-                onChange={(e) => setFormData({ ...formData, minCartAmount: e.target.value })}
-                placeholder="e.g. 1000"
-                className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none ${
-                  formErrors.minCartAmount ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
-                }`}
-              />
-              {formErrors.minCartAmount && <span className="text-[10px] font-bold text-red-500">{formErrors.minCartAmount}</span>}
-            </div>
+            <Input
+              label="Min. Spend Limit (₹)"
+              id="minCartAmount"
+              type="number"
+              name="minCartAmount"
+              value={formData.minCartAmount}
+              onChange={(e) => setFormData({ ...formData, minCartAmount: e.target.value })}
+              placeholder="e.g. 1000"
+              error={formErrors.minCartAmount}
+              className="!bg-surface-50"
+            />
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Expiry Date</label>
-              <input
-                type="date"
-                name="expiryDate"
-                value={formData.expiryDate}
-                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 font-sans text-xs focus:outline-none focus:border-brand-primary"
-              />
-            </div>
+            <Input
+              label="Expiry Date"
+              id="expiryDate"
+              type="date"
+              name="expiryDate"
+              value={formData.expiryDate}
+              onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+              error={formErrors.expiryDate}
+              className="!bg-surface-50"
+            />
           </div>
 
           {/* Usage Safeguards */}
@@ -488,25 +460,25 @@ export const AdminCoupons = () => {
               <AlertCircle className="h-3 w-3" /> Commercial Safeguards
             </h4>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/40">Total Usage Limit</label>
-                <input
-                  type="number"
-                  placeholder="Infinite"
-                  value={formData.usageLimit}
-                  onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
-                  className="w-full rounded-xl border border-border-base bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/40">Uses Per Customer</label>
-                <input
-                  type="number"
-                  value={formData.perUserLimit}
-                  onChange={(e) => setFormData({ ...formData, perUserLimit: e.target.value })}
-                  className="w-full rounded-xl border border-border-base bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
-                />
-              </div>
+              <Input
+                label="Total Usage Limit"
+                id="usageLimit"
+                type="number"
+                placeholder="Infinite"
+                value={formData.usageLimit}
+                onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                error={formErrors.usageLimit}
+                className="!bg-surface-50"
+              />
+              <Input
+                label="Uses Per Customer"
+                id="perUserLimit"
+                type="number"
+                value={formData.perUserLimit}
+                onChange={(e) => setFormData({ ...formData, perUserLimit: e.target.value })}
+                error={formErrors.perUserLimit}
+                className="!bg-surface-50"
+              />
             </div>
           </div>
 

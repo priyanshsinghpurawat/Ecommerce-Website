@@ -12,7 +12,7 @@
     "free-port": "powershell -ExecutionPolicy Bypass -File ./scripts/free-port.ps1",
     "dev:clean": "npm run free-port && nodemon index.js",
     "seed": "node scripts/seeder.js",
-    "test": "node --test --test-concurrency=1 tests/**/*.test.js"
+    "test": "vitest run"
   },
   "dependencies": {
     "axios": "^1.17.0",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "mongodb-memory-server": "^10.1.4",
     "nodemon": "^3.1.0",
-    "supertest": "^7.1.0"
+    "supertest": "^7.1.0",
+    "vitest": "^4.1.9"
   }
 }

@@ -3,6 +3,7 @@ import { useCategories } from '../../hooks/useCategories.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Plus, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Input } from '../../components/Input.jsx';
 
 export const AdminCategories = () => {
   const { categories, loading, fetchCategories, addCategory, editCategory, removeCategory } = useCategories();
@@ -156,22 +157,17 @@ export const AdminCategories = () => {
         title={isEditing ? 'Rename Category' : 'Create Category'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-app-text/60">Category Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setErrorMsg('');
-              }}
-              placeholder="e.g. Living Room, Essentials"
-              className={`w-full rounded-xl border bg-surface-50 px-3.5 py-2.5 font-sans text-xs focus:outline-none ${
-                errorMsg ? 'border-red-400 focus:border-red-500' : 'border-surface-200 focus:border-brand-primary'
-              }`}
-            />
-            {errorMsg && <p className="text-[10px] font-bold text-red-500">{errorMsg}</p>}
-          </div>
+          <Input
+            label="Category Name"
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setErrorMsg('');
+            }}
+            placeholder="e.g. Living Room, Essentials"
+            error={errorMsg}
+          />
 
           <button
             type="submit"

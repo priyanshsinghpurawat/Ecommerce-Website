@@ -4,8 +4,9 @@ import { useProducts } from '../../hooks/useProducts.js';
 import { useCategories } from '../../hooks/useCategories.js';
 import { getVendors, getSubcategories } from '../../services/api.js';
 import { Modal } from '../../components/Modal.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import { DashboardTableSkeleton } from '../../components/Skeleton.jsx';
-import { Plus, Edit2, Trash2, Upload, Loader2, Search, ArrowUpDown, ChevronLeft, ChevronRight, Eye, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, Loader2, Search, ArrowUpDown, Eye, Star } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { resolveImageUrl, getDiscountPercent } from '../../utils/helpers.js';
 import api from '../../services/api.js';
@@ -234,30 +235,12 @@ export const AdminProducts = () => {
             </table>
           </div>
 
-          {/* Pagination (Auto-shows only when products exceed 12) */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-border-base bg-app-bg/30 px-6 py-4">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted">
-                Page {pagination.currentPage} of {pagination.totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={pagination.currentPage === 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border-base bg-app-bg text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-100 transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border-base bg-app-bg text-app-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-100 transition-colors"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={setPage}
+            loading={loading}
+          />
         </div>
       ) : (
         <div className="rounded-[2rem] border-2 border-dashed border-border-base bg-surface-100 p-12 text-center">

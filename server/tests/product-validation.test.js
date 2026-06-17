@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect } from 'vitest';
 import { productBodySchema } from '../validators/product.schema.js';
 
 describe('Product Variant Validation', () => {
@@ -15,7 +14,7 @@ describe('Product Variant Validation', () => {
       ]
     };
     const result = productBodySchema.safeParse(validProduct);
-    assert.strictEqual(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it('should fail if variant stock is negative', () => {
@@ -30,6 +29,6 @@ describe('Product Variant Validation', () => {
       ]
     };
     const result = productBodySchema.safeParse(invalidProduct);
-    assert.strictEqual(result.success, false);
+    expect(result.success).toBe(false);
   });
 });

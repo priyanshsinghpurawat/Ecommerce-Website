@@ -1,4 +1,4 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, beforeAll as before, afterAll as after, beforeEach } from 'vitest';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import request from 'supertest';

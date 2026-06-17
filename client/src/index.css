@@ -74,6 +74,14 @@
     @apply bg-app-bg text-app-text selection:bg-brand-primary selection:text-black min-h-screen antialiased;
     font-family: var(--font-sans);
   }
+  select option {
+    background-color: #161616;
+    color: #faffeb;
+  }
+  .theme-light select option {
+    background-color: #ffffff;
+    color: #121212;
+  }
 }
 
 @layer utilities {
