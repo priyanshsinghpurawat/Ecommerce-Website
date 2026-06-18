@@ -12,10 +12,12 @@ import { ProductCard } from '../components/ProductCard.jsx';
 import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether.jsx';
 
 const CLOTHING_MEASUREMENTS = {
+  XS: { chest: '40 in', length: '27 in', shoulder: '18.5 in', sleeve: '24 in' },
   S: { chest: '42 in', length: '28 in', shoulder: '19 in', sleeve: '24.5 in' },
   M: { chest: '44 in', length: '29 in', shoulder: '19.5 in', sleeve: '25 in' },
   L: { chest: '46 in', length: '30 in', shoulder: '20 in', sleeve: '25.5 in' },
   XL: { chest: '48 in', length: '31 in', shoulder: '20.5 in', sleeve: '26 in' },
+  XXL: { chest: '50 in', length: '31.5 in', shoulder: '21 in', sleeve: '26.5 in' },
   '2XL': { chest: '50 in', length: '31.5 in', shoulder: '21 in', sleeve: '26.5 in' },
   '3XL': { chest: '52 in', length: '32 in', shoulder: '21.5 in', sleeve: '27 in' },
   '4XL': { chest: '54 in', length: '32.5 in', shoulder: '22 in', sleeve: '27.5 in' },
@@ -28,7 +30,7 @@ const FOOTWEAR_MEASUREMENTS = {
   'UK 8': { length: '26.8 cm', sole: 'EVA Cushioned' },
   'UK 9': { length: '27.6 cm', sole: 'EVA Cushioned' },
   'UK 10': { length: '28.4 cm', sole: 'EVA Cushioned' },
-  'UK 11': { length: '29.3 cm', sole: 'EVA Cushioned' },
+  'UK 11': { length: '29.6 cm', sole: 'EVA Cushioned' },
 };
 
 export const ProductDetails = () => {
@@ -163,7 +165,7 @@ export const ProductDetails = () => {
     if (!product) return { sizeOptions: [], outOfStockSizes: [] };
     let sizeOptions = isFootwear
       ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12']
-      : ['S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+      : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', '5XL'];
     let outOfStockSizes = [];
 
     if (product.variants && product.variants.length > 0) {
@@ -702,12 +704,16 @@ export const ProductDetails = () => {
                   </tr>
                 </thead>
                 <tbody className="font-sans text-app-text/75">
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XS</td><td className="py-2.5">40 in</td><td className="py-2.5">27 in</td><td className="py-2.5">24 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">S</td><td className="py-2.5">42 in</td><td className="py-2.5">28 in</td><td className="py-2.5">24.5 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">M</td><td className="py-2.5">44 in</td><td className="py-2.5">29 in</td><td className="py-2.5">25 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">L</td><td className="py-2.5">46 in</td><td className="py-2.5">30 in</td><td className="py-2.5">25.5 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">XL</td><td className="py-2.5">48 in</td><td className="py-2.5">31 in</td><td className="py-2.5">26 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XXL</td><td className="py-2.5">50 in</td><td className="py-2.5">31.5 in</td><td className="py-2.5">26.5 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">2XL</td><td className="py-2.5">50 in</td><td className="py-2.5">31.5 in</td><td className="py-2.5">26.5 in</td></tr>
                   <tr className="border-b border-border"><td className="py-2.5 font-bold">3XL</td><td className="py-2.5">52 in</td><td className="py-2.5">32 in</td><td className="py-2.5">27 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">4XL</td><td className="py-2.5">54 in</td><td className="py-2.5">32.5 in</td><td className="py-2.5">27.5 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">5XL</td><td className="py-2.5">56 in</td><td className="py-2.5">33 in</td><td className="py-2.5">28 in</td></tr>
                 </tbody>
               </table>
             )}

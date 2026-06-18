@@ -45,7 +45,7 @@ const calculateSellerData = (products, orders) => {
 
   return {
     totalProducts: products.length,
-    totalOrders: orders.length,
+    totalOrders: orders.filter(o => o.status !== 'cancelled').length,
     revenue,
     activeCategories: categoriesCount,
     topProducts,

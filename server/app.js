@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import csurf from 'csurf';
 import { ENV } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { sanitizeRequest } from './middleware/sanitize.middleware.js';
@@ -64,8 +65,26 @@ app.use(cookieParser());
 app.use(sanitizeRequest);
 app.use(morgan(ENV.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+// CSRF Protection
+// NOTE: The 'csurf' library is deprecated but is used here as a straightforward
+// implementation of the double-submit cookie pattern. Consider migrating to a
+// custom implementation or a more modern library in the future.
+const csrfProtection = csurf({ 
+  cookie: {
+    httpOnly: true,
+    secure: ENV.NODE_ENV === 'production',
+    sameSite: 'strict'
+  } 
+});
+app.use(csrfProtection);
+
 // Apply general rate limit to all routes
 app.use(generalLimiter);
+
+// Route for frontend to get a CSRF token
+app.get("/api/v1/csrf-token", (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 // Route declarations
 app.use("/api/v1/auth", authLimiter, authRouter);

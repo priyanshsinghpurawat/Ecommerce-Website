@@ -13,6 +13,11 @@ const errorHandler = (err, req, res, next) => {
     error = new ApiError(statusCode, message, error.errors || [], err.stack);
   }
 
+  // csurf token error
+  if (err.code === 'EBADCSRFTOKEN') {
+    error = new ApiError(403, "Invalid CSRF token. Request blocked.");
+  }
+
   // Mongoose duplicate key error (code 11000)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];

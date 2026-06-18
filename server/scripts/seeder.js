@@ -23,16 +23,26 @@ const catalog = [
     products: [
       {
         sub: 'Streetwear',
-        title: 'Project X: Parachute Cargos',
-        desc: 'Ultra-wide parachute cargos with adjustable ankle toggles. Dropping next month.',
-        price: 3999,
-        sale: 0,
-        stock: 0,
-        img: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800',
+        title: 'Premium Blue Check Shirt',
+        desc: 'blue check shirt with wide pattern for streetwear.',
+        price: 2599,
+        sale: 1299,
+        stock: 10000,
+        img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781002947/mensvibe/products/bluecheckcloth.avif',
         badge: 'limited-edition',
         rating: 0,
         reviews: 0,
-        variants: [{ size: 'L', color: 'Olive', stock: 0, sku: 'PN-PRC-OL' }]
+        variants: [
+          { size: 'XS', color: 'Blue Check', stock: 50, sku: 'SH-BLU-XS' },
+          { size: 'S', color: 'Blue Check', stock: 100, sku: 'SH-BLU-S' },
+          { size: 'M', color: 'Blue Check', stock: 150, sku: 'SH-BLU-M' },
+          { size: 'L', color: 'Blue Check', stock: 200, sku: 'SH-BLU-L' },
+          { size: 'XL', color: 'Blue Check', stock: 150, sku: 'SH-BLU-XL' },
+          { size: 'XXL', color: 'Blue Check', stock: 100, sku: 'SH-BLU-XXL' },
+          { size: '3XL', color: 'Blue Check', stock: 50, sku: 'SH-BLU-3XL' },
+          { size: '4XL', color: 'Blue Check', stock: 30, sku: 'SH-BLU-4XL' },
+          { size: '5XL', color: 'Blue Check', stock: 20, sku: 'SH-BLU-5XL' }
+        ]
       },
       {
         sub: 'T-Shirts',
@@ -46,7 +56,17 @@ const catalog = [
         badge: 'new-arrival',
         rating: 4.8,
         reviews: 120,
-        variants: [{ size: 'S', color: 'White', stock: 15, sku: 'TS-WHT-S' }]
+        variants: [
+          { size: 'XS', color: 'White', stock: 15, sku: 'TS-WHT-XS' },
+          { size: 'S', color: 'White', stock: 15, sku: 'TS-WHT-S' },
+          { size: 'M', color: 'White', stock: 20, sku: 'TS-WHT-M' },
+          { size: 'L', color: 'White', stock: 25, sku: 'TS-WHT-L' },
+          { size: 'XL', color: 'White', stock: 20, sku: 'TS-WHT-XL' },
+          { size: 'XXL', color: 'White', stock: 15, sku: 'TS-WHT-XXL' },
+          { size: '3XL', color: 'White', stock: 10, sku: 'TS-WHT-3XL' },
+          { size: '4XL', color: 'White', stock: 5, sku: 'TS-WHT-4XL' },
+          { size: '5XL', color: 'White', stock: 5, sku: 'TS-WHT-5XL' }
+        ]
       },
       {
         sub: 'T-Shirts',
@@ -58,7 +78,17 @@ const catalog = [
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074036/1713961601_3287348_z7rvi9.avif',
         rating: 4.5,
         reviews: 85,
-        variants: [{ size: 'M', color: 'Black', stock: 20, sku: 'TS-BLK-M' }]
+        variants: [
+          { size: 'XS', color: 'Black', stock: 15, sku: 'TS-BLK-XS' },
+          { size: 'S', color: 'Black', stock: 15, sku: 'TS-BLK-S' },
+          { size: 'M', color: 'Black', stock: 20, sku: 'TS-BLK-M' },
+          { size: 'L', color: 'Black', stock: 25, sku: 'TS-BLK-L' },
+          { size: 'XL', color: 'Black', stock: 20, sku: 'TS-BLK-XL' },
+          { size: 'XXL', color: 'Black', stock: 15, sku: 'TS-BLK-XXL' },
+          { size: '3XL', color: 'Black', stock: 10, sku: 'TS-BLK-3XL' },
+          { size: '4XL', color: 'Black', stock: 5, sku: 'TS-BLK-4XL' },
+          { size: '5XL', color: 'Black', stock: 5, sku: 'TS-BLK-5XL' }
+        ]
       },
       {
         sub: 'Shirts',
@@ -72,7 +102,17 @@ const catalog = [
         badge: 'sale',
         rating: 4.2,
         reviews: 45,
-        variants: [{ size: 'L', color: 'Sage', stock: 10, sku: 'SH-SGE-L' }]
+        variants: [
+          { size: 'XS', color: 'Sage', stock: 10, sku: 'SH-SGE-XS' },
+          { size: 'S', color: 'Sage', stock: 10, sku: 'SH-SGE-S' },
+          { size: 'M', color: 'Sage', stock: 15, sku: 'SH-SGE-M' },
+          { size: 'L', color: 'Sage', stock: 10, sku: 'SH-SGE-L' },
+          { size: 'XL', color: 'Sage', stock: 15, sku: 'SH-SGE-XL' },
+          { size: 'XXL', color: 'Sage', stock: 10, sku: 'SH-SGE-XXL' },
+          { size: '3XL', color: 'Sage', stock: 5, sku: 'SH-SGE-3XL' },
+          { size: '4XL', color: 'Sage', stock: 5, sku: 'SH-SGE-4XL' },
+          { size: '5XL', color: 'Sage', stock: 5, sku: 'SH-SGE-5XL' }
+        ]
       },
       {
         sub: 'Shirts',
@@ -83,7 +123,17 @@ const catalog = [
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073624/1731995063_3156808_i9pamp.avif',
         rating: 4.7,
         reviews: 60,
-        variants: [{ size: 'M', color: 'Blue', stock: 15, sku: 'SH-OX-BLU' }]
+        variants: [
+          { size: 'XS', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-XS' },
+          { size: 'S', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-S' },
+          { size: 'M', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-M' },
+          { size: 'L', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-L' },
+          { size: 'XL', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-XL' },
+          { size: 'XXL', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-XXL' },
+          { size: '3XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-3XL' },
+          { size: '4XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-4XL' },
+          { size: '5XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-5XL' }
+        ]
       },
       {
         sub: 'Pants',
@@ -95,7 +145,17 @@ const catalog = [
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078161/1776160930_1162861_q03uav.avif',
         rating: 4.4,
         reviews: 92,
-        variants: [{ size: '32', color: 'Khaki', stock: 20, sku: 'PN-CH-KH' }]
+        variants: [
+          { size: '28', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-28' },
+          { size: '30', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-30' },
+          { size: '32', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-32' },
+          { size: '34', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-34' },
+          { size: '36', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-36' },
+          { size: '38', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-38' },
+          { size: '40', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-40' },
+          { size: '42', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-42' },
+          { size: '44', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-44' }
+        ]
       },
       {
         sub: 'Pants',
@@ -109,7 +169,17 @@ const catalog = [
         badge: 'limited-edition',
         rating: 4.6,
         reviews: 110,
-        variants: [{ size: '32', color: 'Blue', stock: 15, sku: 'PN-DN-BLU' }]
+        variants: [
+          { size: '28', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-28' },
+          { size: '30', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-30' },
+          { size: '32', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-32' },
+          { size: '34', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-34' },
+          { size: '36', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-36' },
+          { size: '38', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-38' },
+          { size: '40', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-40' },
+          { size: '42', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-42' },
+          { size: '44', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-44' }
+        ]
       },
       {
         sub: 'Jeans',
@@ -121,7 +191,17 @@ const catalog = [
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781078227/1776160930_2881167_bf97jq.avif',
         rating: 4.5,
         reviews: 75,
-        variants: [{ size: '34', color: 'Black', stock: 20, sku: 'PN-DN-BLK' }]
+        variants: [
+          { size: '28', color: 'Black', stock: 10, sku: 'PN-DN-BLK-28' },
+          { size: '30', color: 'Black', stock: 15, sku: 'PN-DN-BLK-30' },
+          { size: '32', color: 'Black', stock: 15, sku: 'PN-DN-BLK-32' },
+          { size: '34', color: 'Black', stock: 20, sku: 'PN-DN-BLK-34' },
+          { size: '36', color: 'Black', stock: 15, sku: 'PN-DN-BLK-36' },
+          { size: '38', color: 'Black', stock: 10, sku: 'PN-DN-BLK-38' },
+          { size: '40', color: 'Black', stock: 5, sku: 'PN-DN-BLK-40' },
+          { size: '42', color: 'Black', stock: 5, sku: 'PN-DN-BLK-42' },
+          { size: '44', color: 'Black', stock: 5, sku: 'PN-DN-BLK-44' }
+        ]
       },
       {
         sub: 'Streetwear',
@@ -134,7 +214,17 @@ const catalog = [
         badge: 'street-drip',
         rating: 4.9,
         reviews: 150,
-        variants: [{ size: '32', color: 'Black', stock: 10, sku: 'PN-CRG-BLK' }]
+        variants: [
+          { size: '28', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-28' },
+          { size: '30', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-30' },
+          { size: '32', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-32' },
+          { size: '34', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-34' },
+          { size: '36', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-36' },
+          { size: '38', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-38' },
+          { size: '40', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-40' },
+          { size: '42', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-42' },
+          { size: '44', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-44' }
+        ]
       },
       {
         sub: 'Shirts',
@@ -147,7 +237,17 @@ const catalog = [
         badge: 'street-drip',
         rating: 4.6,
         reviews: 25,
-        variants: [{ size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU' }]
+        variants: [
+          { size: 'XS', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-XS' },
+          { size: 'S', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-S' },
+          { size: 'M', color: 'Blue Check', stock: 15, sku: 'SH-VPO-BLU-M' },
+          { size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-L' },
+          { size: 'XL', color: 'Blue Check', stock: 15, sku: 'SH-VPO-BLU-XL' },
+          { size: 'XXL', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-XXL' },
+          { size: '3XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-3XL' },
+          { size: '4XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-4XL' },
+          { size: '5XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-5XL' }
+        ]
       },
       {
         sub: 'Streetwear',
@@ -158,12 +258,21 @@ const catalog = [
         stock: 105,
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074311/1743657072_4845052_poraq8.avif',
         img2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074311/1743657072_7439712_tk4euo.avif',
-        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074310/1743657072_9580718_vojgz5.avif'
-        ],
+        extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074310/1743657072_9580718_vojgz5.avif'],
         badge: 'limited-edition',
         rating: 4.8,
         reviews: 40,
-        variants: [{ size: 'M', color: 'Neon Black', stock: 8, sku: 'VT-NST-M' }]
+        variants: [
+          { size: 'XS', color: 'Neon Black', stock: 5, sku: 'VT-NST-XS' },
+          { size: 'S', color: 'Neon Black', stock: 5, sku: 'VT-NST-S' },
+          { size: 'M', color: 'Neon Black', stock: 8, sku: 'VT-NST-M' },
+          { size: 'L', color: 'Neon Black', stock: 10, sku: 'VT-NST-L' },
+          { size: 'XL', color: 'Neon Black', stock: 10, sku: 'VT-NST-XL' },
+          { size: 'XXL', color: 'Neon Black', stock: 8, sku: 'VT-NST-XXL' },
+          { size: '3XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-3XL' },
+          { size: '4XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-4XL' },
+          { size: '5XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-5XL' }
+        ]
       },
       {
         sub: 'Linen',
@@ -176,8 +285,15 @@ const catalog = [
         extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074253/1779703404_2796734_h243zv.avif'],
         badge: 'new-arrival',
         variants: [
+          { size: 'XS', color: 'Pink', stock: 10, sku: 'LN-PNK-XS' },
+          { size: 'S', color: 'Pink', stock: 10, sku: 'LN-PNK-S' },
           { size: 'M', color: 'Pink', stock: 15, sku: 'LN-PNK-M' },
-          { size: 'L', color: 'Pink', stock: 15, sku: 'LN-PNK-L' }
+          { size: 'L', color: 'Pink', stock: 15, sku: 'LN-PNK-L' },
+          { size: 'XL', color: 'Pink', stock: 15, sku: 'LN-PNK-XL' },
+          { size: 'XXL', color: 'Pink', stock: 10, sku: 'LN-PNK-XXL' },
+          { size: '3XL', color: 'Pink', stock: 5, sku: 'LN-PNK-3XL' },
+          { size: '4XL', color: 'Pink', stock: 5, sku: 'LN-PNK-4XL' },
+          { size: '5XL', color: 'Pink', stock: 5, sku: 'LN-PNK-5XL' }
         ]
       },
       {
@@ -191,12 +307,22 @@ const catalog = [
         extraImgs: [
           'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074255/acidgreen_axuirf.avif',
           'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/i_v9qslc.avif',
-          'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/acid_ixbr2q.avif',
+          'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/acid_ixbr2q.avif'
         ],
         badge: 'street-drip',
         rating: 4.7,
         reviews: 58,
-        variants: [{ size: 'L', color: 'Grey', stock: 15, sku: 'SW-AW-GRY' }]
+        variants: [
+          { size: 'XS', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-XS' },
+          { size: 'S', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-S' },
+          { size: 'M', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-M' },
+          { size: 'L', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-L' },
+          { size: 'XL', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-XL' },
+          { size: 'XXL', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-XXL' },
+          { size: '3XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-3XL' },
+          { size: '4XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-4XL' },
+          { size: '5XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-5XL' }
+        ]
       },
       {
         sub: 'Streetwear',
@@ -212,7 +338,17 @@ const catalog = [
         badge: 'street-drip',
         rating: 4.9,
         reviews: 24,
-        variants: [{ size: 'M', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB' }]
+        variants: [
+          { size: 'XS', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XS' },
+          { size: 'S', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-S' },
+          { size: 'M', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-M' },
+          { size: 'L', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-L' },
+          { size: 'XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XL' },
+          { size: 'XXL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XXL' },
+          { size: '3XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-3XL' },
+          { size: '4XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-4XL' },
+          { size: '5XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-5XL' }
+        ]
       },
       {
         sub: 'Linen',
@@ -225,8 +361,15 @@ const catalog = [
         extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984921/mensvibe/products/1739601040_1918057.avif'],
         badge: 'limited-edition',
         variants: [
+          { size: 'XS', color: 'White', stock: 10, sku: 'LN-WHT-XS' },
+          { size: 'S', color: 'White', stock: 10, sku: 'LN-WHT-S' },
           { size: 'M', color: 'White', stock: 15, sku: 'LN-WHT-M' },
-          { size: 'L', color: 'White', stock: 10, sku: 'LN-WHT-L' }
+          { size: 'L', color: 'White', stock: 10, sku: 'LN-WHT-L' },
+          { size: 'XL', color: 'White', stock: 15, sku: 'LN-WHT-XL' },
+          { size: 'XXL', color: 'White', stock: 10, sku: 'LN-WHT-XXL' },
+          { size: '3XL', color: 'White', stock: 5, sku: 'LN-WHT-3XL' },
+          { size: '4XL', color: 'White', stock: 5, sku: 'LN-WHT-4XL' },
+          { size: '5XL', color: 'White', stock: 5, sku: 'LN-WHT-5XL' }
         ]
       },
       {
@@ -247,7 +390,17 @@ const catalog = [
         badge: 'street-drip',
         rating: 4.6,
         reviews: 25,
-        variants: []
+        variants: [
+          { size: 'XS', color: 'Blue Check', stock: 5, sku: 'SH-VPO-XS' },
+          { size: 'S', color: 'Blue Check', stock: 5, sku: 'SH-VPO-S' },
+          { size: 'M', color: 'Blue Check', stock: 8, sku: 'SH-VPO-M' },
+          { size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-L' },
+          { size: 'XL', color: 'Blue Check', stock: 10, sku: 'SH-VPO-XL' },
+          { size: 'XXL', color: 'Blue Check', stock: 8, sku: 'SH-VPO-XXL' },
+          { size: '3XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-3XL' },
+          { size: '4XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-4XL' },
+          { size: '5XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-5XL' }
+        ]
       },
       {
         _id: '6a27ebfaad7d78cd89ec2128',
@@ -266,7 +419,17 @@ const catalog = [
         badge: 'street-drip',
         rating: 4.8,
         reviews: 120,
-        variants: []
+        variants: [
+          { size: 'XS', color: 'Black', stock: 5, sku: 'TS-SUP-XS' },
+          { size: 'S', color: 'Black', stock: 5, sku: 'TS-SUP-S' },
+          { size: 'M', color: 'Black', stock: 8, sku: 'TS-SUP-M' },
+          { size: 'L', color: 'Black', stock: 10, sku: 'TS-SUP-L' },
+          { size: 'XL', color: 'Black', stock: 10, sku: 'TS-SUP-XL' },
+          { size: 'XXL', color: 'Black', stock: 8, sku: 'TS-SUP-XXL' },
+          { size: '3XL', color: 'Black', stock: 5, sku: 'TS-SUP-3XL' },
+          { size: '4XL', color: 'Black', stock: 5, sku: 'TS-SUP-4XL' },
+          { size: '5XL', color: 'Black', stock: 5, sku: 'TS-SUP-5XL' }
+        ]
       },
       {
         _id: '6a27e842ad7d78cd89ec1f43',
@@ -285,16 +448,15 @@ const catalog = [
         rating: 4.9,
         reviews: 150,
         variants: [
-          {
-            color: 'Grey',
-            size: '32',
-            sku: 'PN-CRG-GRY-32',
-            stock: 10,
-            price: 900,
-            images: [
-              'https://res.cloudinary.com/decppyzuk/image/upload/v1781000255/mensvibe/products/1757075251_6209198.avif'
-            ]
-          }
+          { size: '28', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-28' },
+          { size: '30', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-30' },
+          { size: '32', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-32' },
+          { size: '34', color: 'Grey', stock: 20, sku: 'PN-CRG-GRY-34' },
+          { size: '36', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-36' },
+          { size: '38', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-38' },
+          { size: '40', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-40' },
+          { size: '42', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-42' },
+          { size: '44', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-44' }
         ]
       }
     ]
@@ -586,10 +748,7 @@ const seed = async () => {
 
     for (const c of couponsData) await Coupon.create(c);
 
-    console.log('--- MensVibe seed complete ---');
-    console.log('Admin: admin@mensvibe.in / StrongP@ss123!');
-    console.log('Seller: seller@mensvibe.in / StrongP@ss123!');
-    console.log('User: demo@mensvibe.in / StrongP@ss123!');
+    console.log('--- MensVibe seed complete ---')
     console.log('Coupons: MENSVIBE10 (Unlimited), FESTIVE500 (Limited), WELCOME50 (First Order Only)');
     process.exit(0);
   } catch (error) {

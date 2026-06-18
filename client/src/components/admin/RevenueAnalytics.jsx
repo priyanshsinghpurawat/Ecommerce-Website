@@ -37,12 +37,41 @@ const CustomTooltip = ({ active, payload, label }) => {
 const RevenueAnalytics = ({ data }) => {
   const { dailyRevenue = [], categoryPerformance = [], peakHours = [] } = data;
 
-  // Format daily revenue for line chart
-  const revenueData = dailyRevenue.map(item => ({
-    name: new Date(item._id).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-    revenue: item.revenue,
-    orders: item.orders
-  }));
+  // Format daily revenue for line chart - guarantee exactly 30 data points representing last 30 days
+  const revenueData = (() => {
+    const dataMap = new Map();
+    const today = new Date();
+    
+    // Pre-populate the map with last 30 days (default to 0 revenue and 0 orders)
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const key = `${year}-${month}-${day}`;
+      
+      const label = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+      dataMap.set(key, {
+        name: label,
+        revenue: 0,
+        orders: 0
+      });
+    }
+
+    // Overlay actual database aggregate data
+    dailyRevenue.forEach(item => {
+      // item._id is in format YYYY-MM-DD
+      if (item._id && dataMap.has(item._id)) {
+        const entry = dataMap.get(item._id);
+        entry.revenue = item.revenue;
+        entry.orders = item.orders;
+      }
+    });
+
+    return Array.from(dataMap.values());
+  })();
 
   // Format peak hours (fill missing hours with 0)
   const fullPeakHours = Array.from({ length: 24 }, (_, i) => {

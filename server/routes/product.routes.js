@@ -38,7 +38,7 @@ router.put(
   authorizeRoles('admin', 'seller'),
   requireCloudinary,
   uploadAny(),
-  validate({ params: productIdParamSchema }),
+  validate({ params: productIdParamSchema, body: productBodySchema }),
   updateProduct
 );
 

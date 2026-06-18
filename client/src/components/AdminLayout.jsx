@@ -173,8 +173,12 @@ export const AdminLayout = () => {
         </header>
 
         {/* Main Dashboard Space */}
-        <main className="flex-1 overflow-y-auto bg-[#0a0a0b] p-8 custom-scrollbar">
-          <div className="max-w-[1400px] mx-auto animate-in fade-in zoom-in-95 duration-500">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#0a0a0b] p-8 custom-scrollbar relative">
+          {/* Subtle Ambient Page Glows */}
+          <div className="absolute top-[5%] right-[-150px] w-[650px] h-[650px] rounded-full bg-brand-primary/8 blur-[140px] pointer-events-none z-0 opacity-75" />
+          <div className="absolute bottom-[-50px] left-[-200px] w-[750px] h-[750px] rounded-full bg-accent-cyan/6 blur-[160px] pointer-events-none z-0 opacity-60" />
+
+          <div className="max-w-[1400px] mx-auto animate-in fade-in zoom-in-95 duration-500 relative z-10">
             <Outlet />
           </div>
         </main>

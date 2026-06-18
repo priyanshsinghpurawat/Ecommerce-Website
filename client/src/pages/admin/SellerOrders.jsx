@@ -13,16 +13,16 @@ export const SellerOrders = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = async (showLoading = true) => {
     if (!user?._id) return;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const res = await getAllOrders({ seller: user._id });
       setOrders(res.data || []);
     } catch {
       toast.error('Failed to load orders');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -35,11 +35,23 @@ export const SellerOrders = () => {
     try {
       await updateOrderStatus(orderId, { status: newStatus, itemId });
       toast.success(`Item marked as ${newStatus}`);
-      await fetchMyOrders();
-      // Update selected order in modal
-      const res = await getAllOrders({ seller: user._id });
-      const updatedOrder = (res.data || []).find(o => o._id === orderId);
-      if (updatedOrder) setSelectedOrder(updatedOrder);
+      
+      // Optimistically update local orders list
+      setOrders(prev => prev.map(o => {
+        if (o._id !== orderId) return o;
+        const updatedItems = o.items.map(item => item._id === itemId ? { ...item, status: newStatus } : item);
+        return { ...o, items: updatedItems };
+      }));
+
+      // Optimistically update selected order in modal
+      setSelectedOrder(prev => {
+        if (!prev || prev._id !== orderId) return prev;
+        const updatedItems = prev.items.map(item => item._id === itemId ? { ...item, status: newStatus } : item);
+        return { ...prev, items: updatedItems };
+      });
+
+      // Background silent refetch
+      fetchMyOrders(false);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update status');
     } finally {

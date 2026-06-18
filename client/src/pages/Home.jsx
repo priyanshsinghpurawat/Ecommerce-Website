@@ -93,7 +93,7 @@ export const Home = () => {
   ).filter(Boolean);
 
   return (
-    <div className="space-y-12 md:space-y-16 pb-20">
+    <div className="space-y-12 md:space-y-16 pb-6">
       <div className="-mx-4 md:mx-0">
         <HeroCarousel />
       </div>
@@ -138,78 +138,9 @@ export const Home = () => {
         </div>
       </motion.section>
 
-      <div className="section-divider" />
 
-      {/* Promo strip */}
-      <motion.div 
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={fadeInUp}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0"
-      >
-        {[
-          { icon: Sparkles, label: 'Free shipping', text: 'On all orders across India' },
-          { icon: Zap, label: 'COD available', text: 'Pay when your order arrives' },
-          { icon: Flame, label: 'Fresh drops', text: 'Curated weekly releases' }
-        ].map(({ icon: Icon, label, text }) => (
-          <div
-            key={label}
-            className="flex items-center gap-4 rounded-[2rem] border border-white/10 bg-[#121212]/95 backdrop-blur-xl p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/15 text-brand-primary border border-brand-primary/20 shadow-lg transition-transform group-hover:scale-110">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-app-text">{label}</p>
-              <p className="text-[10px] text-muted font-bold uppercase tracking-tight mt-0.5">{text}</p>
-            </div>
-          </div>
-        ))}
-      </motion.div>
 
-      <div className="section-divider" />
 
-      {/* Category banners */}
-      <motion.section 
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={fadeInUp}
-        className="px-0 space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black uppercase tracking-tighter text-app-text">The Collections</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {categories.map((cat) => {
-            const banner = CATEGORY_BANNERS[cat.name] || CATEGORY_BANNERS.Clothing;
-            return (
-              <Link
-                key={cat._id}
-                to={`/shop?category=${cat._id}`}
-                className="group relative h-48 sm:h-56 rounded-[2.5rem] overflow-hidden shadow-soft bg-zinc-900 border border-border transition-all"
-              >
-                <img
-                  src={banner.image}
-                  alt={cat.name}
-                  loading="lazy"
-                  className="absolute inset-0 w-full h-full object-contain p-6 transition-transform duration-1000 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute bottom-7 left-7">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary mb-1">
-                    {banner.tagline}
-                  </p>
-                  <span className="text-3xl font-black text-white uppercase italic tracking-tighter">{cat.name}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </motion.section>
-
-      <div className="section-divider" />
 
       <motion.div 
         initial="hidden"
@@ -283,8 +214,6 @@ export const Home = () => {
 
 
 
-      <div className="section-divider" />
-
       {/* Full-width CTA */}
       <motion.section 
         initial="hidden"
@@ -312,6 +241,46 @@ export const Home = () => {
           Enter Shop
         </Link>
       </motion.section>
+
+      {/* Promo strip */}
+      <motion.div 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={fadeInUp}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0"
+      >
+        {[
+          { icon: Sparkles, label: 'Free shipping', text: 'On all orders across India' },
+          { icon: Zap, label: 'COD available', text: 'Pay when your order arrives' },
+          { icon: Flame, label: 'Fresh drops', text: 'Curated weekly releases' }
+        ].map(({ icon: Icon, label, text }) => (
+          <div
+            key={label}
+            className="flex items-center gap-4 rounded-[2rem] border border-white/10 bg-[#121212]/95 backdrop-blur-xl p-6 shadow-soft hover:acid-glow transition-all duration-500 group"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/15 text-brand-primary border border-brand-primary/20 shadow-lg transition-transform group-hover:scale-110">
+              <Icon className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-app-text">{label}</p>
+              <p className="text-[10px] text-muted font-bold uppercase tracking-tight mt-0.5">{text}</p>
+            </div>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Infinite Scrolling Brand Ethos Marquee */}
+      <div className="w-full overflow-hidden bg-white/[0.02] dark:bg-black/[0.1] py-8 border-y border-white/5 select-none -mx-4 md:mx-0">
+        <div className="animate-marquee whitespace-nowrap text-2xl md:text-4xl font-black uppercase tracking-[0.3em] italic flex gap-4">
+          <span className="text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.15)]">
+            MENSVIBE STUDIO · <span className="text-brand-primary [-webkit-text-stroke:0]">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary [-webkit-text-stroke:0]">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
+          </span>
+          <span className="text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.15)]">
+            MENSVIBE STUDIO · <span className="text-brand-primary [-webkit-text-stroke:0]">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary [-webkit-text-stroke:0]">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

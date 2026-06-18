@@ -63,10 +63,18 @@ export const deleteCache = async (key) => {
 export const clearCacheByPattern = async (pattern) => {
   try {
     if (redisClient?.isReady) {
-      const keys = await redisClient.keys(`*${pattern}*`);
-      if (keys.length > 0) {
-        await redisClient.del(keys);
-      }
+      let cursor = 0;
+      do {
+        const reply = await redisClient.scan(cursor, {
+          MATCH: `*${pattern}*`,
+          COUNT: 100, // Process 100 keys per iteration
+        });
+        cursor = reply.cursor;
+        const keys = reply.keys;
+        if (keys.length > 0) {
+          await redisClient.del(keys);
+        }
+      } while (cursor !== 0);
     }
   } catch (error) {
     console.error('Redis Pattern Clear Error:', error.message);

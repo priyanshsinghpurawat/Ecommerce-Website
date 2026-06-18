@@ -97,10 +97,7 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* 2. Revenue Analytics Section */}
-      {analytics && <RevenueAnalytics data={analytics} />}
-
-      {/* 3. Operational Grid */}
+      {/* 2. Operational Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left: Stock Heatmap Visualization */}
@@ -150,6 +147,9 @@ export const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* 3. Revenue Analytics Section */}
+      {analytics && <RevenueAnalytics data={analytics} />}
 
       {/* 4. Critical Alerts Row (Moved Down) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

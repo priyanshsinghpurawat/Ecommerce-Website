@@ -165,7 +165,7 @@ export const AdminCategories = () => {
               setName(e.target.value);
               setErrorMsg('');
             }}
-            placeholder="e.g. Living Room, Essentials"
+            placeholder="Category name"
             error={errorMsg}
           />
 

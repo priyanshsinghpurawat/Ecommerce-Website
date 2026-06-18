@@ -17,7 +17,7 @@ router.post('/', verifyJWT, validate({ body: createOrderSchema }), createOrder);
 router.get('/my', verifyJWT, getMyOrders);
 router.get('/analytics', verifyJWT, authorizeRoles('admin'), getOrderAnalytics);
 router.get('/', verifyJWT, authorizeRoles('admin', 'seller'), getAllOrders);
-router.patch('/:id/status', verifyJWT, authorizeRoles('admin'), validate({ body: updateOrderStatusSchema }), updateOrderStatus);
+router.patch('/:id/status', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: updateOrderStatusSchema }), updateOrderStatus);
 router.get('/:id', verifyJWT, getOrderById);
 
 export default router;

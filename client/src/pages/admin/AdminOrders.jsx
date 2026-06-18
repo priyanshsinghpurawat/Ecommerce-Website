@@ -19,15 +19,15 @@ export const AdminOrders = () => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await getAllOrders({ search, status, seller: sellerId });
       if (res?.success) setOrders(res.data || []);
     } catch {
       toast.error('Failed to load orders.');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -41,7 +41,12 @@ export const AdminOrders = () => {
       const res = await updateOrderStatus(id, newStatus);
       if (res.success) {
         toast.success('Order status updated');
-        fetchOrders();
+        // Optimistically update local orders list
+        setOrders(prev => prev.map(o => o._id === id ? { ...o, status: newStatus } : o));
+        // Sync selectedOrder state to update the modal content in real-time
+        setSelectedOrder(prev => prev && prev._id === id ? { ...prev, status: newStatus } : prev);
+        // Silent background refresh
+        fetchOrders(false);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Status update failed');

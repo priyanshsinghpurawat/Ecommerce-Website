@@ -29,8 +29,8 @@ const COLOR_MAP = {
 const COLOR_OPTIONS = Object.keys(COLOR_MAP);
 
 const SIZE_GROUPS = [
-  { label: 'Apparel', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'], types: ['clothing', 'apparel', 'sportswear'] },
-  { label: 'Bottoms (Waist)', sizes: ['28', '30', '32', '34', '36', '38', '40'], types: ['clothing', 'apparel', 'bottoms'] },
+  { label: 'Apparel', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'], types: ['clothing', 'apparel', 'sportswear'] },
+  { label: 'Bottoms (Waist)', sizes: ['28', '30', '32', '34', '36', '38', '40', '42', '44'], types: ['clothing', 'apparel', 'bottoms'] },
   { label: 'Footwear (UK)', sizes: ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12', 'UK 13'], types: ['footwear', 'shoes', 'sneakers', 'boots'] },
 ];
 

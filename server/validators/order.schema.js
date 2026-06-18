@@ -23,5 +23,8 @@ export const createOrderSchema = z.object({
 });
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum(['confirmed', 'shipped', 'delivered', 'cancelled'])
+  status: z.enum(['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled']),
+  itemId: z.string().optional(),
+  trackingNumber: z.string().optional()
 });
+

@@ -1,5 +1,6 @@
 /**
  * Shared HTTP client. Auth uses httpOnly cookie (withCredentials: true).
+ * Includes CSRF protection via double-submit cookie pattern.
  */
 import axios from 'axios';
 
@@ -9,12 +10,50 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Fallback to Bearer token for cross-origin requests where 3rd party cookies might be blocked
-api.interceptors.request.use((config) => {
+// --- CSRF Token Handling ---
+let csrfToken = null;
+let isFetchingToken = false;
+let tokenPromise = null;
+
+const getCsrfToken = async () => {
+  if (csrfToken) return csrfToken;
+  if (isFetchingToken) return tokenPromise;
+
+  isFetchingToken = true;
+  tokenPromise = api.get('/csrf-token')
+    .then(res => {
+      csrfToken = res.data.csrfToken;
+      return csrfToken;
+    })
+    .catch(err => {
+      console.error("Failed to fetch CSRF token", err);
+      return null;
+    })
+    .finally(() => {
+      isFetchingToken = false;
+    });
+
+  return tokenPromise;
+};
+
+// --- Interceptors ---
+
+api.interceptors.request.use(async (config) => {
+  // 1. Attach Bearer token for cross-origin fallback
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // 2. Attach CSRF token for state-changing requests
+  const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  if (config.method && stateChangingMethods.includes(config.method.toUpperCase())) {
+    const token = await getCsrfToken();
+    if (token) {
+      config.headers['X-CSRF-Token'] = token;
+    }
+  }
+  
   return config;
 });
 
@@ -25,17 +64,22 @@ api.interceptors.response.use(
     const url = error.config?.url || '';
     
     // Only clear localStorage on a definitive 401 that isn't a login attempt.
-    // Avoid triggering full page reloads to prevent loop cascades.
     if (status === 401 && !url.includes('/auth/login') && !url.includes('/auth/register')) {
       if (localStorage.getItem('user')) {
         localStorage.removeItem('user');
-        // Dispatch custom event so React context can sync immediately without reload
         window.dispatchEvent(new Event('auth:unauthorized'));
       }
     }
+
+    // If CSRF token is invalid, refresh it for the next attempt
+    if (status === 403 && error.response.data?.message?.includes('CSRF')) {
+      csrfToken = null; 
+    }
+
     return Promise.reject(error);
   }
 );
+
 
 export default api;
 
@@ -157,8 +201,9 @@ export const getAllOrders = async (params = {}) => {
   return data;
 };
 
-export const updateOrderStatus = async (id, status) => {
-  const { data } = await api.patch(`/orders/${id}/status`, { status });
+export const updateOrderStatus = async (id, statusData) => {
+  const payload = typeof statusData === 'object' ? statusData : { status: statusData };
+  const { data } = await api.patch(`/orders/${id}/status`, payload);
   return data;
 };
 
