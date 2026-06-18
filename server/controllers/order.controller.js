@@ -271,6 +271,11 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
     // Acquire lock on user to prevent concurrent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(userId, { $set: { updatedAt: new Date() } }, { session });
 
+    if (appliedCouponCode) {
+      const validItems = cart.items.filter((item) => item.product);
+      await calculateCouponDiscount(appliedCouponCode, subtotal, validItems, userId, session);
+    }
+
     const validItems = cart.items.filter((item) => item.product);
     await deductProductStock(validItems, session);
 

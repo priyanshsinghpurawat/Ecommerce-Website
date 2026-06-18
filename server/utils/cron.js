@@ -64,11 +64,11 @@ export const initInventoryCron = () => {
     }
   });
 
-  // 2. Self-Ping Job (Every 14 minutes)
+  // 2. Self-Ping Job (Every 14 minutes) — keeps Render free tier awake
   cron.schedule('*/14 * * * *', async () => {
+    if (!ENV.SERVER_URL) return;
     try {
-      // Use localhost for internal ping, or a real URL if needed
-      const url = `http://127.0.0.1:${ENV.PORT}/api/v1/health`;
+      const url = `${ENV.SERVER_URL}/api/v1/health`;
       await axios.get(url);
       console.log(`[Cron] Self-ping successful.`);
     } catch (error) {

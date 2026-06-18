@@ -129,9 +129,11 @@ export const computeCartSubtotal = (items = []) => {
   return subtotal;
 };
 
-export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], userId = null) => {
+export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], userId = null, session = null) => {
   const uppercaseCode = code.trim().toUpperCase();
-  const coupon = await Coupon.findOne({ code: uppercaseCode });
+  let couponQuery = Coupon.findOne({ code: uppercaseCode });
+  if (session) couponQuery = couponQuery.session(session);
+  const coupon = await couponQuery;
 
   if (!coupon) throw new ApiError(404, `Coupon code '${uppercaseCode}' is invalid.`);
   if (!coupon.isActive) throw new ApiError(400, `Coupon code '${uppercaseCode}' is inactive.`);
@@ -143,21 +145,25 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
   }
 
   if (userId && coupon.perUserLimit !== null) {
-    const userCouponUsage = await Order.countDocuments({
+    let usageQuery = Order.countDocuments({
       user: userId,
       coupon: coupon._id,
       status: { $ne: 'cancelled' }
     });
+    if (session) usageQuery = usageQuery.session(session);
+    const userCouponUsage = await usageQuery;
     if (userCouponUsage >= coupon.perUserLimit) {
       throw new ApiError(400, `You have already used this coupon.`);
     }
   }
 
   if (userId && coupon.newUsersOnly) {
-    const userOrderCount = await Order.countDocuments({
+    let orderCountQuery = Order.countDocuments({
       user: userId,
       status: { $ne: 'cancelled' }
     });
+    if (session) orderCountQuery = orderCountQuery.session(session);
+    const userOrderCount = await orderCountQuery;
     if (userOrderCount > 0) {
       throw new ApiError(400, `This coupon is only valid for your first order.`);
     }

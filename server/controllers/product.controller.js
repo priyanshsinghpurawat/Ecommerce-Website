@@ -38,7 +38,11 @@ export const createProduct = asyncHandler(async (req, res) => {
       image: coverUrl || (galleryUrls[0] ?? undefined),
       images: galleryUrls,
       variants,
-      ...ProductService.parseProductMeta(req.body)
+      ...(({ rating, reviewCount, ...safe }) => {
+        // Only admins may seed rating/reviewCount (mirrors updateProduct guard)
+        if (req.user.role === 'admin') return { ...safe, rating, reviewCount };
+        return safe;
+      })(ProductService.parseProductMeta(req.body))
     });
 
     const populated = await ProductRepository.findById(product._id, [

@@ -56,9 +56,14 @@ export const createCheckout = asyncHandler(async (req, res) => {
     // Acquire lock on user to prevent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
 
+    if (built.appliedCouponCode) {
+      const validItems = built.cart.items.filter(item => item.product);
+      await calculateCouponDiscount(built.appliedCouponCode, built.subtotal, validItems, req.user._id, session);
+    }
+
     let appliedCouponId = null;
     if (built.appliedCouponCode) {
-      const couponDoc = await Coupon.findOne({ code: built.appliedCouponCode });
+      const couponDoc = await Coupon.findOne({ code: built.appliedCouponCode }).session(session);
       if (couponDoc) {
         appliedCouponId = couponDoc._id;
       }

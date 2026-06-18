@@ -46,18 +46,13 @@ const authLimiter = rateLimit({
 });
 
 const configuredOrigins = ENV.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
-const isDev = ENV.NODE_ENV !== 'production';
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (isDev && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-      return callback(null, true);
-    }
     if (configuredOrigins?.includes(origin)) {
       return callback(null, true);
     }
-
     callback(new Error(`CORS blocked origin: ${origin}`));
   },
   credentials: true

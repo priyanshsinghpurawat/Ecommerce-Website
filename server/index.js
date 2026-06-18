@@ -31,9 +31,7 @@ const startServer = async () => {
     // Handle process-level errors
     process.on('unhandledRejection', (reason, promise) => {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      if (ENV.NODE_ENV === 'production') {
-        process.exit(1);
-      }
+      process.exit(1);
     });
 
     process.on('uncaughtException', (error) => {
