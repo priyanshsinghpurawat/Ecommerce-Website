@@ -15,5 +15,4 @@ Welcome to the MensVibe documentation. This index serves as a central hub for al
 *   **Database Seeding**: Use `npm run seed` from the root or `server` directory. Supports CSV import via `--csv` flag.
 
 ## 🔗 API Reference
-*   **Postman Collection**: [`postman_collection.json`](./postman_collection.json) (Import this into Postman or Insomnia)
 *   *OpenAPI/Swagger documentation coming soon.*

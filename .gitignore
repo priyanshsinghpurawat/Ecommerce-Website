@@ -1,11 +1,9 @@
 # Dependency directories
 node_modules/
-jspm_packages/
 
 # Build outputs
 dist/
 build/
-.wrangler/
 client/dist/
 
 # Environment files
@@ -13,7 +11,6 @@ client/dist/
 .env.*
 !.env.example
 *.env
-
 # Operating System files
 .DS_Store
 Thumbs.db
@@ -33,16 +30,6 @@ yarn-error.log*
 pnpm-debug.log*
 .eslintcache
 
-# Project-specific internal docs
-Gemini.md
-GEMINI.md
-dev.md
-delegation.md
-MEMORY.md
-MEMORY_*.md
-finalplaningformv.md
-finalplaningformv_*.md
-
 
 # Testing and Coverage
 coverage/
@@ -56,7 +43,6 @@ coverage/
 
 # Server specific
 server/public/
-server/playground/
 
 .gemini/
 .agents/
@@ -64,11 +50,7 @@ gha-creds-*.json
 skills-lock.json
 
 # Temporary logs & debug scripts
-priyansh_singh_Report_extracted.txt
-top\ change.txt
-server/scripts/debug_products.js
 server/scripts/dev-tools.js
-server/scripts/test_dotenv_loading.js
 
 # Heavy files and reports
 docs/
