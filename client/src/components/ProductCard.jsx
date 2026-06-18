@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, Star } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -11,6 +11,8 @@ export const ProductCard = ({ product, activeColor }) => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const isWishlisted = isInWishlist(product._id);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -41,6 +43,7 @@ export const ProductCard = ({ product, activeColor }) => {
     e.preventDefault();
     if (!isAuthenticated) {
       toast.error('Sign in to save items.');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     setWishlistLoading(true);
@@ -68,6 +71,7 @@ export const ProductCard = ({ product, activeColor }) => {
     e.stopPropagation();
     if (!isAuthenticated) {
       toast.error('Sign in to shop.');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     setAddingToCart(true);

@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
     const cached = localStorage.getItem('user');
-    
+
     if (cached) {
       try {
         setUser(JSON.parse(cached));
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const body = await authService.me();
         if (!isMounted) return;
-        
+
         const fresh = unwrapData(body);
         if (fresh) {
           setUser(fresh);
