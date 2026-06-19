@@ -18,7 +18,7 @@ export const SellerOrders = () => {
     if (showLoading) setLoading(true);
     try {
       const res = await getAllOrders({ seller: user._id });
-      setOrders(res.data || []);
+      setOrders(res.data?.orders || res.data || []);
     } catch {
       toast.error('Failed to load orders');
     } finally {

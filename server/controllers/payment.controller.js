@@ -6,7 +6,7 @@ import { Product } from '../models/product.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
-import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber } from '../utils/helpers.js';
+import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber, calculateCouponDiscount } from '../utils/helpers.js';
 import { ENV } from '../config/env.js';
 
 const isRazorpayConfigured = () => {
@@ -69,12 +69,46 @@ export const createCheckout = asyncHandler(async (req, res) => {
       }
     }
 
-    for (const item of built.orderItems) {
-      const updated = await Product.findOneAndUpdate(
-        { _id: item.product, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity } },
-        { new: true, session }
+    const sortedOrderItems = [...built.orderItems].sort((a, b) => 
+      a.product.toString().localeCompare(b.product.toString())
+    );
+
+    for (const item of sortedOrderItems) {
+      const product = await Product.findById(item.product);
+      const hasVariants = product && product.variants && product.variants.length > 0;
+      const matchingVariant = hasVariants && product.variants.find(
+        v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
       );
+
+      let updated;
+      if (matchingVariant) {
+        updated = await Product.findOneAndUpdate(
+          {
+            _id: item.product,
+            variants: {
+              $elemMatch: {
+                size: item.size || '',
+                color: item.color || '',
+                stock: { $gte: item.quantity }
+              }
+            }
+          },
+          {
+            $inc: {
+              "variants.$.stock": -item.quantity,
+              stock: -item.quantity
+            }
+          },
+          { new: true, session }
+        );
+      } else {
+        updated = await Product.findOneAndUpdate(
+          { _id: item.product, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
+          { new: true, session }
+        );
+      }
+
       if (!updated) {
         throw new ApiError(400, `Insufficient stock for "${item.title}". It may have just sold out.`);
       }
@@ -169,13 +203,39 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   const signatureBuffer = Buffer.from(razorpay_signature, 'hex');
 
   if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
-    // Signature failed — release the reserved stock and mark order failed
-    for (const item of order.items) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
+    // Signature failed — atomically release reserved stock and mark order failed
+    const restoreSession = await mongoose.startSession();
+    restoreSession.startTransaction();
+    try {
+      const bulkOps = order.items.map(item => ({
+        updateOne: {
+          filter: {
+            _id: item.product,
+            ...(item.size || item.color ? { "variants.size": item.size || '', "variants.color": item.color || '' } : {})
+          },
+          update: {
+            $inc: {
+              ...(item.size || item.color ? { "variants.$.stock": item.quantity } : {}),
+              stock: item.quantity
+            }
+          }
+        }
+      }));
+
+      if (bulkOps.length > 0) {
+        await Product.bulkWrite(bulkOps, { session: restoreSession });
+      }
+
+      order.paymentStatus = 'failed';
+      order.status = 'cancelled';
+      await order.save({ session: restoreSession });
+      await restoreSession.commitTransaction();
+    } catch (restoreErr) {
+      await restoreSession.abortTransaction();
+      throw restoreErr;
+    } finally {
+      restoreSession.endSession();
     }
-    order.paymentStatus = 'failed';
-    order.status = 'cancelled';
-    await order.save();
     throw new ApiError(400, 'Payment verification failed');
   }
 

@@ -39,7 +39,7 @@ export const AdminProducts = () => {
     // Fetch vendor registry for assignments
     const loadVendors = async () => {
       const res = await getVendors();
-      if (res?.success) setVendors(res.data || []);
+      if (res?.success) setVendors(res.data?.vendors || res.data || []);
     };
     loadVendors();
   }, [fetchProducts, fetchCategories, page, search, sort, sellerId]);

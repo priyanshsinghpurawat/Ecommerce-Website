@@ -50,9 +50,9 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
   
   const query = {};
   
-  // Search by code
   if (search) {
-    query.code = { $regex: search, $options: 'i' };
+    const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.code = { $regex: escapedSearch, $options: 'i' };
   }
   
   // Filter by status

@@ -83,10 +83,14 @@ export const AdminLayout = () => {
                   }`
                 }
               >
-                <Icon className={`h-[18px] w-[18px] transition-transform duration-300 group-hover:scale-110`} />
-                {link.label}
-                {({ isActive }) => isActive && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-brand-primary rounded-l-full shadow-[0_0_10px_rgba(193,255,0,0.5)]" />
+                {({ isActive }) => (
+                  <>
+                    <Icon className="h-[18px] w-[18px] transition-transform duration-300 group-hover:scale-110" />
+                    {link.label}
+                    {isActive && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-brand-primary rounded-l-full shadow-[0_0_10px_rgba(193,255,0,0.5)]" />
+                    )}
+                  </>
                 )}
               </NavLink>
             );

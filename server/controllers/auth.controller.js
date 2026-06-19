@@ -28,7 +28,13 @@ export const googleLogin = asyncHandler(async (req, res) => {
       audience: ENV.GOOGLE_CLIENT_ID
     });
 
-    const { name, email, picture, sub: googleId } = ticket.getPayload();
+    const payload = ticket.getPayload();
+    const { name, email, picture, sub: googleId, email_verified } = payload;
+
+    // Reject accounts with unverified emails to prevent hijacking
+    if (!email_verified) {
+      throw new ApiError(401, 'Google account email is not verified.');
+    }
 
     let user = await User.findOne({ email });
 

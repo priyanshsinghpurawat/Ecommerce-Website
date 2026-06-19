@@ -18,6 +18,15 @@ import {
 const GST_TAX_RATE = 0.18;
 const VALID_ORDER_STATUSES = ['confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'];
 
+// State machine: defines which transitions are allowed from each status
+const VALID_TRANSITIONS = {
+  confirmed:        ['shipped', 'cancelled'],
+  partially_shipped:['shipped', 'cancelled'],
+  shipped:          ['delivered', 'cancelled'],
+  delivered:        [],                        // terminal state
+  cancelled:        ['confirmed'],             // reinstatement (requires stock check)
+};
+
 /* -------------------------------------------------------------------------- */
 /*                                 CONTROLLERS                                */
 /* -------------------------------------------------------------------------- */
@@ -88,8 +97,11 @@ export const getOrderById = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 export const getAllOrders = asyncHandler(async (req, res) => {
-  const { status, search } = req.query;
+  const { status, search, page = 1, limit = 50 } = req.query;
   const sellerId = req.user.role === 'seller' ? req.user._id.toString() : req.query.seller;
+  const pageNum = Math.max(1, Number(page));
+  const limitNum = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (pageNum - 1) * limitNum;
   
   const query = buildOrderQuery({ status, search });
 
@@ -98,13 +110,26 @@ export const getAllOrders = asyncHandler(async (req, res) => {
     query['items.product'] = { $in: sellerProducts };
   }
 
-  const orders = await Order.find(query)
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 });
+  const [orders, total] = await Promise.all([
+    Order.find(query)
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Order.countDocuments(query)
+  ]);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, orders, 'All orders retrieved successfully'));
+    .json(new ApiResponse(200, {
+      orders,
+      pagination: {
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        currentPage: pageNum,
+        limit: limitNum
+      }
+    }, 'All orders retrieved successfully'));
 });
 
 /**
@@ -193,7 +218,7 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 async function fetchAndValidateUserCart(userId) {
   const cart = await Cart.findOne({ user: userId }).populate({
     path: 'items.product',
-    select: 'title price discountedPrice image stock seller'
+    select: 'title price discountedPrice image stock seller variants'
   });
 
   if (!cart || cart.items.length === 0) {
@@ -320,17 +345,50 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
 }
 
 async function deductProductStock(items, session) {
-  for (const item of items) {
-    const updatedProduct = await Product.findOneAndUpdate(
-      { _id: item.product._id, stock: { $gte: item.quantity } },
-      { $inc: { stock: -item.quantity } },
-      { new: true, session }
+  const sortedItems = [...items].sort((a, b) => 
+    a.product._id.toString().localeCompare(b.product._id.toString())
+  );
+
+  for (const item of sortedItems) {
+    const product = item.product;
+    const hasVariants = product.variants && product.variants.length > 0;
+    const matchingVariant = hasVariants && product.variants.find(
+      v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
     );
+
+    let updatedProduct;
+    if (matchingVariant) {
+      updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: product._id,
+          variants: {
+            $elemMatch: {
+              size: item.size || '',
+              color: item.color || '',
+              stock: { $gte: item.quantity }
+            }
+          }
+        },
+        {
+          $inc: {
+            "variants.$.stock": -item.quantity,
+            stock: -item.quantity
+          }
+        },
+        { new: true, session }
+      );
+    } else {
+      updatedProduct = await Product.findOneAndUpdate(
+        { _id: product._id, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true, session }
+      );
+    }
 
     if (!updatedProduct) {
       throw new ApiError(
         400,
-        `Insufficient stock for "${item.product.title}". It might have just sold out.`
+        `Insufficient stock for "${product.title}". It might have just sold out.`
       );
     }
   }
@@ -381,8 +439,20 @@ function validateOrderStatus(status) {
   }
 }
 
+function assertValidTransition(oldStatus, newStatus) {
+  if (oldStatus === newStatus) return; // no-op is fine
+  const allowed = VALID_TRANSITIONS[oldStatus];
+  if (!allowed || !allowed.includes(newStatus)) {
+    throw new ApiError(
+      400,
+      `Invalid status transition: '${oldStatus}' → '${newStatus}'. Allowed: ${(allowed || []).join(', ') || 'none (terminal state)'}`
+    );
+  }
+}
+
 async function transitionOrderStatus(order, newStatus) {
   const oldStatus = order.status;
+  assertValidTransition(oldStatus, newStatus);
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
     await restoreStockForOrder(order);
@@ -400,21 +470,60 @@ async function transitionOrderStatus(order, newStatus) {
 
 async function transitionOrderItemStatus(order, item, newStatus, trackingNumber) {
   const oldStatus = item.status;
+  assertValidTransition(oldStatus, newStatus);
+
+  const product = await Product.findById(item.product);
+  const hasVariants = product && product.variants && product.variants.length > 0;
+  const matchingVariant = hasVariants && product.variants.find(
+    v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
+  );
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: item.quantity, soldCount: -item.quantity }
-    });
+    if (matchingVariant) {
+      await Product.findOneAndUpdate(
+        { _id: item.product, "variants.size": item.size || '', "variants.color": item.color || '' },
+        { $inc: { "variants.$.stock": item.quantity, stock: item.quantity, soldCount: -item.quantity } }
+      );
+    } else {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity, soldCount: -item.quantity }
+      });
+    }
   }
 
   if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
-    const product = await Product.findById(item.product);
-    if (!product || product.stock < item.quantity) {
+    let updated;
+    if (matchingVariant) {
+      updated = await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          variants: {
+            $elemMatch: {
+              size: item.size || '',
+              color: item.color || '',
+              stock: { $gte: item.quantity }
+            }
+          }
+        },
+        {
+          $inc: {
+            "variants.$.stock": -item.quantity,
+            stock: -item.quantity,
+            soldCount: item.quantity
+          }
+        },
+        { new: true }
+      );
+    } else {
+      updated = await Product.findOneAndUpdate(
+        { _id: item.product, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity, soldCount: item.quantity } },
+        { new: true }
+      );
+    }
+    if (!updated) {
       throw new ApiError(400, `Cannot reinstate item. Product "${item.title}" is out of stock.`);
     }
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: -item.quantity, soldCount: item.quantity }
-    });
   }
 
   item.status = newStatus;
@@ -439,27 +548,98 @@ function recalculateRootOrderStatus(order) {
 }
 
 async function restoreStockForOrder(order) {
-  for (const item of order.items) {
+  const sortedItems = [...order.items].sort((a, b) => 
+    a.product.toString().localeCompare(b.product.toString())
+  );
+
+  for (const item of sortedItems) {
     if (item.status !== 'cancelled') {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: item.quantity, soldCount: -item.quantity }
-      });
+      const product = await Product.findById(item.product);
+      const hasVariants = product && product.variants && product.variants.length > 0;
+      const matchingVariant = hasVariants && product.variants.find(
+        v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
+      );
+
+      if (matchingVariant) {
+        await Product.findOneAndUpdate(
+          { _id: item.product, "variants.size": item.size || '', "variants.color": item.color || '' },
+          { $inc: { "variants.$.stock": item.quantity, stock: item.quantity, soldCount: -item.quantity } }
+        );
+      } else {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity, soldCount: -item.quantity }
+        });
+      }
       item.status = 'cancelled';
     }
   }
 }
 
 async function reDeductStockForOrder(order) {
-  for (const item of order.items) {
+  const sortedItems = [...order.items].sort((a, b) => 
+    a.product.toString().localeCompare(b.product.toString())
+  );
+
+  for (const item of sortedItems) {
     const product = await Product.findById(item.product);
-    if (!product || product.stock < item.quantity) {
+    const hasVariants = product && product.variants && product.variants.length > 0;
+    const matchingVariant = hasVariants && product.variants.find(
+      v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
+    );
+
+    let updated;
+    if (matchingVariant) {
+      updated = await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          variants: {
+            $elemMatch: {
+              size: item.size || '',
+              color: item.color || '',
+              stock: { $gte: item.quantity }
+            }
+          }
+        },
+        {
+          $inc: {
+            "variants.$.stock": -item.quantity,
+            stock: -item.quantity,
+            soldCount: item.quantity
+          }
+        },
+        { new: true }
+      );
+    } else {
+      updated = await Product.findOneAndUpdate(
+        { _id: item.product, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity, soldCount: item.quantity } },
+        { new: true }
+      );
+    }
+
+    if (!updated) {
+      // Rollback any items already deducted in this loop
+      const deductedItems = sortedItems.slice(0, sortedItems.indexOf(item));
+      for (const prev of deductedItems) {
+        const prevProduct = await Product.findById(prev.product);
+        const prevHasVariants = prevProduct && prevProduct.variants && prevProduct.variants.length > 0;
+        const prevMatchingVariant = prevHasVariants && prevProduct.variants.find(
+          v => (v.size || '') === (prev.size || '') && (v.color || '') === (prev.color || '')
+        );
+
+        if (prevMatchingVariant) {
+          await Product.findOneAndUpdate(
+            { _id: prev.product, "variants.size": prev.size || '', "variants.color": prev.color || '' },
+            { $inc: { "variants.$.stock": prev.quantity, stock: prev.quantity, soldCount: -prev.quantity } }
+          );
+        } else {
+          await Product.findByIdAndUpdate(prev.product, {
+            $inc: { stock: prev.quantity, soldCount: -prev.quantity }
+          });
+        }
+      }
       throw new ApiError(400, `Cannot reinstate order. Product "${item.title}" is out of stock.`);
     }
-  }
-  for (const item of order.items) {
-    await Product.findByIdAndUpdate(item.product, {
-      $inc: { stock: -item.quantity, soldCount: item.quantity }
-    });
   }
 }
 

@@ -30,7 +30,6 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('user');
-      localStorage.removeItem('token');
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -69,11 +68,8 @@ export const AuthProvider = ({ children }) => {
     if (!payload?.user) {
       throw new Error('Server returned an incomplete login response.');
     }
-    const { user: userData, token } = payload;
+    const { user: userData } = payload;
     localStorage.setItem('user', JSON.stringify(userData));
-    if (token) {
-      localStorage.setItem('token', token);
-    }
     setUser(userData);
     setIsAuthenticated(true);
     return { success: true, user: userData };
@@ -113,7 +109,6 @@ export const AuthProvider = ({ children }) => {
       /* ignore — clear local state regardless */
     }
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
     setUser(null);
     setIsAuthenticated(false);
   };

@@ -408,9 +408,22 @@ export const Navbar = () => {
                 </div>
               </div>
             ) : (
-              <Link to="/login" className="hidden sm:flex items-center gap-2 rounded-xl bg-app-text px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-app-bg hover:bg-brand-primary hover:text-black transition-all shadow-xl">
-                Enter Vibe
-              </Link>
+              <div className="hidden sm:flex items-center gap-3">
+                <Link
+                  to="/login"
+                  className="px-5 py-2.5 text-[9px] font-black uppercase tracking-widest text-app-text bg-white/[0.02] border border-white/10 rounded-xl hover:border-brand-primary/50 transition-all duration-300 relative group/btn active:scale-95"
+                >
+                  <div className="absolute inset-0 bg-brand-primary/5 rounded-xl blur-sm opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 -z-10" />
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-5 py-2.5 text-[9px] font-black uppercase tracking-widest text-black bg-brand-primary rounded-xl hover:bg-brand-primary/90 hover:scale-105 transition-all duration-300 relative group/sign active:scale-95 shadow-[0_4px_20px_rgba(193,255,0,0.2)]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] rounded-xl blur-md opacity-30 group-hover/sign:opacity-60 transition-opacity duration-300 -z-10" />
+                  Sign
+                </Link>
+              </div>
             )}
 
             {/* Mobile Menu Toggle */}

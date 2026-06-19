@@ -9,7 +9,12 @@ import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
  * @access  Private/Admin
  */
 export const getVendors = asyncHandler(async (req, res) => {
-  const vendorsWithStats = await User.aggregate([
+  const { page = 1, limit = 50 } = req.query;
+  const pageNum = Math.max(1, Number(page));
+  const limitNum = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [result] = await User.aggregate([
     {
       $match: { role: 'seller' }
     },
@@ -17,74 +22,94 @@ export const getVendors = asyncHandler(async (req, res) => {
       $sort: { createdAt: -1 }
     },
     {
-      $project: {
-        password: 0
-      }
-    },
-    {
-      $lookup: {
-        from: 'products',
-        localField: '_id',
-        foreignField: 'seller',
-        as: 'products'
-      }
-    },
-    {
-      $addFields: {
-        productIds: '$products._id',
-        categoryIds: '$products.category'
-      }
-    },
-    {
-      $lookup: {
-        from: 'categories',
-        localField: 'categoryIds',
-        foreignField: '_id',
-        as: 'categoryDocs'
-      }
-    },
-    {
-      $addFields: {
-        categories: {
-          $reduce: {
-            input: '$categoryDocs.name',
-            initialValue: [],
-            in: {
-              $cond: [
-                { $in: ['$$this', '$$value'] },
-                '$$value',
-                { $concatArrays: ['$$value', ['$$this']] }
-              ]
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [
+          { $skip: skip },
+          { $limit: limitNum },
+          {
+            $project: {
+              password: 0
+            }
+          },
+          {
+            $lookup: {
+              from: 'products',
+              localField: '_id',
+              foreignField: 'seller',
+              as: 'products'
+            }
+          },
+          {
+            $addFields: {
+              productIds: '$products._id',
+              categoryIds: '$products.category'
+            }
+          },
+          {
+            $lookup: {
+              from: 'categories',
+              localField: 'categoryIds',
+              foreignField: '_id',
+              as: 'categoryDocs'
+            }
+          },
+          {
+            $addFields: {
+              categories: {
+                $reduce: {
+                  input: '$categoryDocs.name',
+                  initialValue: [],
+                  in: {
+                    $cond: [
+                      { $in: ['$$this', '$$value'] },
+                      '$$value',
+                      { $concatArrays: ['$$value', ['$$this']] }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            $lookup: {
+              from: 'orders',
+              localField: 'productIds',
+              foreignField: 'items.product',
+              as: 'matchingOrders'
+            }
+          },
+          {
+            $addFields: {
+              totalOrders: { $size: '$matchingOrders' }
+            }
+          },
+          {
+            $project: {
+              products: 0,
+              productIds: 0,
+              categoryIds: 0,
+              categoryDocs: 0,
+              matchingOrders: 0
             }
           }
-        }
-      }
-    },
-    {
-      $lookup: {
-        from: 'orders',
-        localField: 'productIds',
-        foreignField: 'items.product',
-        as: 'matchingOrders'
-      }
-    },
-    {
-      $addFields: {
-        totalOrders: { $size: '$matchingOrders' }
-      }
-    },
-    {
-      $project: {
-        products: 0,
-        productIds: 0,
-        categoryIds: 0,
-        categoryDocs: 0,
-        matchingOrders: 0
+        ]
       }
     }
   ]);
 
-  return res.status(200).json(new ApiResponse(200, vendorsWithStats, 'Vendors retrieved successfully'));
+  const total = result.metadata[0]?.total || 0;
+  const vendors = result.data;
+
+  return res.status(200).json(new ApiResponse(200, {
+    vendors,
+    pagination: {
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      limit: limitNum
+    }
+  }, 'Vendors retrieved successfully'));
 });
 
 /**
@@ -204,36 +229,61 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const usersWithOrders = await User.aggregate([
+  const { page = 1, limit = 50 } = req.query;
+  const pageNum = Math.max(1, Number(page));
+  const limitNum = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [result] = await User.aggregate([
     {
       $sort: { createdAt: -1 }
     },
     {
-      $project: {
-        password: 0
-      }
-    },
-    {
-      $lookup: {
-        from: 'orders',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'orders'
-      }
-    },
-    {
-      $addFields: {
-        totalOrders: { $size: '$orders' }
-      }
-    },
-    {
-      $project: {
-        orders: 0
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [
+          { $skip: skip },
+          { $limit: limitNum },
+          {
+            $project: {
+              password: 0
+            }
+          },
+          {
+            $lookup: {
+              from: 'orders',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'orders'
+            }
+          },
+          {
+            $addFields: {
+              totalOrders: { $size: '$orders' }
+            }
+          },
+          {
+            $project: {
+              orders: 0
+            }
+          }
+        ]
       }
     }
   ]);
 
-  return res.status(200).json(new ApiResponse(200, usersWithOrders, 'Users retrieved successfully'));
+  const total = result.metadata[0]?.total || 0;
+  const users = result.data;
+
+  return res.status(200).json(new ApiResponse(200, {
+    users,
+    pagination: {
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      limit: limitNum
+    }
+  }, 'Users retrieved successfully'));
 });
 
 /**
@@ -249,9 +299,22 @@ export const updateUserRole = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid role');
   }
 
+  // Prevent admin from changing their own role
+  if (id === req.user._id.toString()) {
+    throw new ApiError(400, 'You cannot change your own role');
+  }
+
   const user = await User.findById(id).select('-password');
   if (!user) {
     throw new ApiError(404, 'User not found');
+  }
+
+  // If demoting an admin, ensure at least one other admin remains
+  if (user.role === 'admin' && role !== 'admin') {
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    if (adminCount <= 1) {
+      throw new ApiError(400, 'Cannot demote the last admin. Promote another user first.');
+    }
   }
 
   user.role = role;
@@ -307,9 +370,9 @@ export const updateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  if (name) user.name = name.trim();
-  if (phone !== undefined) user.phone = phone.trim();
-  if (avatar !== undefined) user.avatar = avatar.trim();
+  if (name && typeof name === 'string') user.name = name.trim();
+  if (phone !== undefined) user.phone = typeof phone === 'string' ? phone.trim() : '';
+  if (avatar !== undefined) user.avatar = typeof avatar === 'string' ? avatar.trim() : '';
 
   await user.save();
   const updated = await User.findById(user._id).select('-password');

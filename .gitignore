@@ -55,3 +55,7 @@ server/scripts/dev-tools.js
 # Heavy files and reports
 docs/
 screenshots/
+
+# TestSprite test folders and secrets
+
+**/testsprite_tests/

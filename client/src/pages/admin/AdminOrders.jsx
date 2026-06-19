@@ -23,7 +23,7 @@ export const AdminOrders = () => {
     if (showLoading) setLoading(true);
     try {
       const res = await getAllOrders({ search, status, seller: sellerId });
-      if (res?.success) setOrders(res.data || []);
+      if (res?.success) setOrders(res.data?.orders || res.data || []);
     } catch {
       toast.error('Failed to load orders.');
     } finally {

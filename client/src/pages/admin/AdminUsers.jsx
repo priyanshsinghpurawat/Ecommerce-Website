@@ -19,7 +19,7 @@ export const AdminUsers = () => {
     setLoading(true);
     try {
       const res = await getAllUsers();
-      if (res?.success) setUsers(res.data || []);
+      if (res?.success) setUsers(res.data?.users || res.data || []);
     } catch {
       toast.error('Failed to load users.');
     } finally {

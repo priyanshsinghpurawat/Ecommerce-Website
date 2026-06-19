@@ -12,6 +12,7 @@ export default defineConfig({
     drop: ['console', 'debugger'], // Strips console logs and debuggers from prod builds
   },
   server: {
+    host: true,
     port: 5173,
     strictPort: false,
     proxy: {
@@ -20,5 +21,9 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  preview: {
+    host: true,
+    port: 5173,
   },
 })

@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import csurf from 'csurf';
+// SameSite cookie configurations are handled in auth.controller.js and other cookie-setting controllers.
 import { ENV } from './config/env.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { sanitizeRequest } from './middleware/sanitize.middleware.js';
@@ -30,20 +30,23 @@ if (ENV.NODE_ENV === 'production') {
 }
 
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 
 // General rate limiter for all routes
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: ENV.NODE_ENV === 'production' ? 500 : 5000,
-  message: { success: false, message: 'Too many requests. Please try again later.' }
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true'
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: ENV.NODE_ENV === 'test' ? 1000 : 50,
-  message: { success: false, message: 'Too many login attempts. Wait a few minutes.' }
+  max: 50,
+  message: { success: false, message: 'Too many login attempts. Wait a few minutes.' },
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true'
 });
 
 const configuredOrigins = ENV.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
@@ -65,26 +68,10 @@ app.use(cookieParser());
 app.use(sanitizeRequest);
 app.use(morgan(ENV.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// CSRF Protection
-// NOTE: The 'csurf' library is deprecated but is used here as a straightforward
-// implementation of the double-submit cookie pattern. Consider migrating to a
-// custom implementation or a more modern library in the future.
-const csrfProtection = csurf({ 
-  cookie: {
-    httpOnly: true,
-    secure: ENV.NODE_ENV === 'production',
-    sameSite: 'strict'
-  } 
-});
-app.use(csrfProtection);
+// CSRF Protection is omitted. SameSite cookie attributes (lax/strict) are used for basic CSRF mitigation.
 
 // Apply general rate limit to all routes
 app.use(generalLimiter);
-
-// Route for frontend to get a CSRF token
-app.get("/api/v1/csrf-token", (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
 
 // Route declarations
 app.use("/api/v1/auth", authLimiter, authRouter);

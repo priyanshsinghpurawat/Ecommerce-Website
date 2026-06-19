@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Coupon } from '../models/coupon.model.js';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
@@ -49,8 +50,8 @@ export const slugify = (text) => {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 };
 
 export function normalizeIndianPhone(input) {
@@ -174,7 +175,7 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
     throw new ApiError(400, `Minimum purchase of ₹${coupon.minCartAmount} required.`);
   }
 
-  let discountAmount = 0;
+  let discountAmount;
   let applicableTotal = cartTotalNum;
   let applicableItems = cartItems;
 
@@ -212,7 +213,7 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
     discountAmount = coupon.discountValue;
   }
 
-  discountAmount = Math.min(discountAmount, cartTotalNum);
+  discountAmount = Math.min(discountAmount, applicableTotal);
   return {
     code: coupon.code,
     discountType: coupon.discountType,
@@ -290,4 +291,5 @@ export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }
   };
 };
 
-export const generateOrderNumber = () => `BL-${Date.now().toString(36).toUpperCase()}`;
+export const generateOrderNumber = () =>
+  `BL-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`.toUpperCase();

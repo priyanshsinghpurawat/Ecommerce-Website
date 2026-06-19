@@ -13,7 +13,7 @@ export const AdminVendors = () => {
     setLoading(true);
     try {
       const res = await getVendors();
-      if (res?.success) setVendors(res.data || []);
+      if (res?.success) setVendors(res.data?.vendors || res.data || []);
     } catch {
       toast.error('Failed to load vendors.');
     } finally {

@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "testsprite_tests/*",
+    "testsprite_tests/**/*",
+    "*.log",
+    "tmp/*"
+  ]
+}

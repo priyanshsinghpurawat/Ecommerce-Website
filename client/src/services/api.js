@@ -39,13 +39,10 @@ const getCsrfToken = async () => {
 // --- Interceptors ---
 
 api.interceptors.request.use(async (config) => {
-  // 1. Attach Bearer token for cross-origin fallback
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // Auth is handled exclusively via httpOnly cookies (withCredentials: true).
+  // No Bearer token — localStorage tokens are vulnerable to XSS.
 
-  // 2. Attach CSRF token for state-changing requests
+  // Attach CSRF token for state-changing requests
   const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
   if (config.method && stateChangingMethods.includes(config.method.toUpperCase())) {
     const token = await getCsrfToken();

@@ -16,7 +16,7 @@ before(async () => {
 
 after(async () => {
   await disconnectTestDb();
-});
+}, 30000);
 
 beforeEach(async () => {
   await clearCollections();
