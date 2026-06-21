@@ -421,9 +421,8 @@ export const Navbar = () => {
                   className="px-5 py-2.5 text-[9px] font-black uppercase tracking-widest text-black bg-brand-primary rounded-xl hover:bg-brand-primary/90 hover:scale-105 transition-all duration-300 relative group/sign active:scale-95 shadow-[0_4px_20px_rgba(193,255,0,0.2)]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] rounded-xl blur-md opacity-30 group-hover/sign:opacity-60 transition-opacity duration-300 -z-10" />
-                  Sign
-                </Link>
-              </div>
+                  Sign Up
+                </Link>              </div>
             )}
 
             {/* Mobile Menu Toggle */}

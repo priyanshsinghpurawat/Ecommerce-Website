@@ -1,6 +1,5 @@
 import { describe, it, beforeAll as before, afterAll as after, beforeEach } from 'vitest';
 import assert from 'node:assert/strict';
-import mongoose from 'mongoose';
 import request from 'supertest';
 import { app } from '../app.js';
 import { User } from '../models/user.model.js';
@@ -39,7 +38,7 @@ async function getToken(email, role = 'user') {
 
 describe('Security & RBAC Deep-Dive', () => {
   it('should prevent a seller from deleting another seller\'s product', async () => {
-    const seller1Token = await getToken('seller1@test.com', 'seller');
+    await getToken('seller1@test.com', 'seller');
     const seller2Token = await getToken('seller2@test.com', 'seller');
     const seller1Id = (await User.findOne({ email: 'seller1@test.com' }))._id;
 
@@ -77,7 +76,7 @@ describe('Security & RBAC Deep-Dive', () => {
   });
 
   it('should prevent a user from viewing another user\'s order', async () => {
-    const user1Token = await getToken('u1@test.com', 'user');
+    await getToken('u1@test.com', 'user');
     const user2Token = await getToken('u2@test.com', 'user');
     const user1Id = (await User.findOne({ email: 'u1@test.com' }))._id;
 

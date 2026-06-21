@@ -1,6 +1,14 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
+if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+  process.env.JWT_SECRET = 'test-jwt-secret-key-must-be-at-least-32-chars-long';
+  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://test';
+  process.env.PORT = '3000';
+  process.env.CORS_ORIGIN = 'http://localhost:3000';
+}
+
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('production'),
   PORT: z.string().transform(Number).default('3000'),

@@ -56,7 +56,7 @@ export const uploadAny = () => (req, res, next) => {
               )
             );
           }
-        } catch (error) {
+        } catch {
           return next(new ApiError(400, `Failed to analyze file signature for "${file.originalname}".`));
         }
       }

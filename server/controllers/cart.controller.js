@@ -2,7 +2,7 @@ import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse, normalizeImageUrl } from '../utils/helpers.js';
 
-const mapCartForResponse = (cart, req) => {
+const mapCartForResponse = (cart) => {
   const obj = cart.toObject ? cart.toObject() : cart;
   return {
     ...obj,
@@ -48,7 +48,7 @@ export const getCart = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(cart, req), "Cart retrieved successfully"));
+    .json(new ApiResponse(200, mapCartForResponse(cart), "Cart retrieved successfully"));
 });
 
 /**
@@ -113,7 +113,7 @@ export const addToCart = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Item added to cart"));
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart), "Item added to cart"));
 });
 
 /**
@@ -171,7 +171,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Cart item quantity updated successfully"));
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart), "Cart item quantity updated successfully"));
 });
 
 /**
@@ -199,7 +199,7 @@ export const removeFromCart = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Item removed from cart successfully"));
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart), "Item removed from cart successfully"));
 });
 
 /**
@@ -220,5 +220,5 @@ export const clearCart = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, mapCartForResponse(populatedCart, req), "Cart cleared successfully"));
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart), "Cart cleared successfully"));
 });

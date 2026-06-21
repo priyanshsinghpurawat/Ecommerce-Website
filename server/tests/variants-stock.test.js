@@ -8,7 +8,6 @@ import { Category } from '../models/category.model.js';
 import { Subcategory } from '../models/subcategory.model.js';
 import { Product } from '../models/product.model.js';
 import { Coupon } from '../models/coupon.model.js';
-import { Order } from '../models/order.model.js';
 import { connectTestDb, disconnectTestDb, clearCollections } from './helpers.js';
 
 before(async () => {
@@ -219,7 +218,7 @@ describe('Variant Stock & Coupon Cap Integration Tests', () => {
     });
 
     // Create flat discount coupon of 50 restricted to Seller A
-    const coupon = await Coupon.create({
+    await Coupon.create({
       code: 'FLAT50A',
       discountType: 'flat',
       discountValue: 50,

@@ -55,6 +55,9 @@ server/scripts/dev-tools.js
 # Heavy files and reports
 docs/
 screenshots/
+Artifacts/
+AUDIT_SUMMARY.txt/
+
 
 # TestSprite test folders and secrets
 

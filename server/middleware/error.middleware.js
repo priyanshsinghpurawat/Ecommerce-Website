@@ -3,6 +3,7 @@ import { ApiError } from '../utils/helpers.js';
 
 import { ENV } from '../config/env.js';
 
+// eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
   let error = err;
 

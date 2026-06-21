@@ -29,7 +29,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { name, email, picture, sub: googleId, email_verified } = payload;
+    const { name, email, picture, email_verified } = payload;
 
     // Reject accounts with unverified emails to prevent hijacking
     if (!email_verified) {
@@ -57,13 +57,13 @@ export const googleLogin = asyncHandler(async (req, res) => {
     const safeUser = await User.findById(user._id).select('-password');
 
     return sendAuthResponse(res, 200, safeUser, token, 'Welcome back via Google.');
-  } catch (error) {
+  } catch {
     throw new ApiError(401, 'Google authentication failed. Please try again.');
   }
 });
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
   if (existingUser) {

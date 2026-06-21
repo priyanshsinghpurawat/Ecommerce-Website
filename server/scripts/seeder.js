@@ -575,50 +575,50 @@ const importFromCSV = async (csvPath, adminUser) => {
         subCache.set(`${catId}_${subcategory.trim().toLowerCase()}`, subId);
       }
 
-let product = await Product.findOne({ title: title.trim(), seller: adminUser._id });
+      let product = await Product.findOne({ title: title.trim(), seller: adminUser._id });
 
-const variant = (variant_color || variant_size) ? {
-  color: variant_color ? variant_color.trim() : '',
-  size: variant_size ? variant_size.trim() : '',
-  stock: variant_stock ? Number(variant_stock) : 0,
-  price: variant_price ? Number(variant_price) : null,
-} : null;
+      const variant = (variant_color || variant_size) ? {
+        color: variant_color ? variant_color.trim() : '',
+        size: variant_size ? variant_size.trim() : '',
+        stock: variant_stock ? Number(variant_stock) : 0,
+        price: variant_price ? Number(variant_price) : null,
+      } : null;
 
-if (product) {
-  product.price = Number(price);
-  if (variant) {
-    const existingVarIndex = product.variants.findIndex(v => v.color === variant.color && v.size === variant.size);
-    if (existingVarIndex >= 0) {
-      product.variants[existingVarIndex].stock = variant.stock;
-    } else {
-      product.variants.push(variant);
+      if (product) {
+        product.price = Number(price);
+        if (variant) {
+          const existingVarIndex = product.variants.findIndex(v => v.color === variant.color && v.size === variant.size);
+          if (existingVarIndex >= 0) {
+            product.variants[existingVarIndex].stock = variant.stock;
+          } else {
+            product.variants.push(variant);
+          }
+        }
+        await product.save();
+        updatedCount++;
+      } else {
+        await Product.create({
+          title: title.trim(),
+          description: description || 'Imported from CSV',
+          price: Number(price),
+          discountedPrice: discountedPrice ? Number(discountedPrice) : null,
+          category: catId,
+          subcategory: subId,
+          stock: stock ? Number(stock) : 10,
+          badge: badge || '',
+          seller: adminUser._id,
+          gender: 'men',
+          image: image || '',
+          variants: variant ? [variant] : []
+        });
+        createdCount++;
+      }
+    } catch (err) {
+      errors.push(`Row ${index + 2}: ${err.message}`);
     }
   }
-  await product.save();
-  updatedCount++;
-} else {
-  await Product.create({
-    title: title.trim(),
-    description: description || 'Imported from CSV',
-    price: Number(price),
-    discountedPrice: discountedPrice ? Number(discountedPrice) : null,
-    category: catId,
-    subcategory: subId,
-    stock: stock ? Number(stock) : 10,
-    badge: badge || '',
-    seller: adminUser._id,
-    gender: 'men',
-    image: image || '',
-    variants: variant ? [variant] : []
-  });
-  createdCount++;
-}
-    } catch (err) {
-  errors.push(`Row ${index + 2}: ${err.message}`);
-}
-  }
-console.log(`CSV Import Result: ${createdCount} created, ${updatedCount} updated. Errors: ${errors.length}`);
-if (errors.length) console.log('Sample errors:', errors.slice(0, 5));
+  console.log(`CSV Import Result: ${createdCount} created, ${updatedCount} updated. Errors: ${errors.length}`);
+  if (errors.length) console.log('Sample errors:', errors.slice(0, 5));
 };
 
 /**
@@ -673,7 +673,7 @@ const seed = async () => {
     ]);
 
     console.log('Creating demo users...');
-    const adminUser = await User.create({
+    await User.create({
       name: 'Vibe Admin',
       email: 'admin@mensvibe.in',
       password: 'StrongP@ss123!',
@@ -693,7 +693,7 @@ const seed = async () => {
 
     const sellerUser = await User.create({
       name: 'Vibe Seller',
-      brandName: 'MensVibe Originals',
+      brandName: 'MensVibe',
       email: 'seller@mensvibe.in',
       password: 'StrongP@ss123!',
       role: 'seller',
