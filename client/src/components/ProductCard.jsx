@@ -83,11 +83,10 @@ export const ProductCard = ({ product, activeColor }) => {
     }
     setAddingToCart(false);
   };
-};
 
-return (
-  <div className="group flex flex-col bg-app-bg overflow-hidden animate-in fade-in duration-500">
-    <div
+  return (
+    <div className="group flex flex-col bg-app-bg overflow-hidden animate-in fade-in duration-500">
+      <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
