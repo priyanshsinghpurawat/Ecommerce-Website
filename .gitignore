@@ -60,5 +60,8 @@ AUDIT_SUMMARY.txt/
 
 
 # TestSprite test folders and secrets
-
 **/testsprite_tests/
+
+# Jest example files
+jest-example/
+
