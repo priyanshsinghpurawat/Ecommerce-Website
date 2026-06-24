@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getProducts } from '../services/api.js';
 import { ProductCard } from '../components/ProductCard.jsx';
@@ -13,7 +13,6 @@ export const StreetDrip = () => {
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeHotspot, setActiveHotspot] = useState(null);
-  const [hotspotProducts, setHotspotProducts] = useState({});
 
   // Fetch all street drip products for the grid
   useEffect(() => {
@@ -31,38 +30,7 @@ export const StreetDrip = () => {
     loadProducts();
   }, []);
 
-  // Fetch specific products for interactive hotspots to get their real DB IDs and live prices
-  useEffect(() => {
-    const loadHotspotProducts = async () => {
-      // These names must exactly match the seeder titles
-      const titles = [
-        'superman vintage black T-shirt',
-        'Black Slim Denim',
-        'Dark Grey Men Cargo',
-        'Heavyweight Sand Hoodie',
-        'Vintage Plaid Overshirt'
-      ];
-      
-      const mapped = {};
-      await Promise.all(
-        titles.map(async (title) => {
-          try {
-            const res = await getProducts({ search: title, limit: 1 });
-            const prod = res?.data?.products?.[0];
-            if (prod) {
-              mapped[title] = prod;
-            }
-          } catch (e) {
-            console.error('Failed to fetch hotspot product:', title);
-          }
-        })
-      );
-      setHotspotProducts(mapped);
-    };
-    loadHotspotProducts();
-  }, []);
-
-  const slides = [
+  const slides = useMemo(() => [
     {
       id: 1,
       image: '/assets/hero_casual.png',
@@ -77,7 +45,7 @@ export const StreetDrip = () => {
           productTitle: 'Vintage Plaid Overshirt',
           label: 'Plaid Overshirt',
           description: 'Relaxed Fit Outerwear',
-          hardcodedLink: '/product/6a27ed6aad7d78cd89ec2266'
+          keywords: ['plaid', 'overshirt', 'shirt', 'vintage']
         },
         {
           id: 'tshirt',
@@ -86,7 +54,7 @@ export const StreetDrip = () => {
           productTitle: 'superman vintage black T-shirt',
           label: 'Oversized Layer',
           description: 'Heavyweight Cotton',
-          hardcodedLink: '/product/6a27ebfaad7d78cd89ec2128'
+          keywords: ['superman', 'vintage', 't-shirt', 'tee', 'black']
         },
         {
           id: 'pants',
@@ -95,7 +63,7 @@ export const StreetDrip = () => {
           productTitle: 'Dark Grey Men Cargo',
           label: 'Utility Cargo Pants',
           description: 'Reinforced Multi-Pocket',
-          hardcodedLink: '/product/6a27e842ad7d78cd89ec1f43'
+          keywords: ['cargo', 'grey', 'pant']
         }
       ]
     },
@@ -112,7 +80,8 @@ export const StreetDrip = () => {
           cy: 380,
           productTitle: 'Heavyweight Sand Hoodie',
           label: 'Heavyweight Hoodie',
-          description: '400 GSM Double-Layered Fleece'
+          description: '400 GSM Double-Layered Fleece',
+          keywords: ['hoodie', 'sand', 'heavyweight', 'fleece']
         },
         {
           id: 'jeans',
@@ -120,11 +89,48 @@ export const StreetDrip = () => {
           cy: 700,
           productTitle: 'Black Slim Denim',
           label: 'Patchwork Jeans',
-          description: 'Raw Edge Distressing'
+          description: 'Raw Edge Distressing',
+          keywords: ['denim', 'jean', 'black', 'patchwork']
         }
       ]
     }
-  ];
+  ], []);
+
+  // Dynamically map hotspots to available products
+  const hotspotProducts = useMemo(() => {
+    if (!products || products.length === 0) return {};
+    
+    const mapped = {};
+    const usedIds = new Set();
+
+    const allHotspots = slides.flatMap(s => s.hotspots);
+
+    allHotspots.forEach(spot => {
+      // 1. Try to find exact match by title first
+      let match = products.find(p => p.title.toLowerCase() === spot.productTitle.toLowerCase() && !usedIds.has(p._id));
+      
+      // 2. Try keyword match
+      if (!match && spot.keywords) {
+        match = products.find(p => {
+          if (usedIds.has(p._id)) return false;
+          const titleLower = p.title.toLowerCase();
+          return spot.keywords.some(kw => titleLower.includes(kw));
+        });
+      }
+
+      // 3. Fallback to any available product not yet used
+      if (!match) {
+        match = products.find(p => !usedIds.has(p._id));
+      }
+
+      if (match) {
+        mapped[spot.id] = match;
+        usedIds.add(match._id);
+      }
+    });
+
+    return mapped;
+  }, [products, slides]);
 
   const handlePrevSlide = () => {
     setActiveHotspot(null);
@@ -160,7 +166,7 @@ export const StreetDrip = () => {
           {/* Interactive hotspot dots — percentage-based positioning */}
           {slides[currentSlide].hotspots.map((spot) => {
             const isActive = activeHotspot === spot.id;
-            const matchedProd = hotspotProducts[spot.productTitle];
+            const matchedProd = hotspotProducts[spot.id];
             const leftPct = `${spot.cx / 10}%`;
             const topPct  = `${spot.cy / 10}%`;
             return (
@@ -171,7 +177,7 @@ export const StreetDrip = () => {
               >
                 {/* Pulsing dot wrapped in a Link for direct redirection */}
                 <Link
-                  to={matchedProd ? `/product/${matchedProd.slug || matchedProd._id}` : (spot.hardcodedLink || '#')}
+                  to={matchedProd ? `/product/${matchedProd.slug || matchedProd._id}` : '#grid-anchor'}
                   onMouseEnter={() => setActiveHotspot(spot.id)}
                   onMouseLeave={() => setActiveHotspot(null)}
                   className="relative flex items-center justify-center w-8 h-8 focus:outline-none"
@@ -213,7 +219,7 @@ export const StreetDrip = () => {
                               )}
                             </>
                           ) : (
-                            <span className="text-xs text-white/40">Loading…</span>
+                            <span className="text-xs text-white/40">{loading ? 'Loading...' : 'Coming Soon'}</span>
                           )}
                         </div>
                       </div>
@@ -261,7 +267,7 @@ export const StreetDrip = () => {
             {/* Wardrobe Items List */}
             <div className="space-y-4">
               {slides[currentSlide].hotspots.map((spot) => {
-                const matchedProd = hotspotProducts[spot.productTitle];
+                const matchedProd = hotspotProducts[spot.id];
                 const isActive = activeHotspot === spot.id;
                 return (
                   <div
@@ -306,14 +312,14 @@ export const StreetDrip = () => {
                             )}
                           </>
                         ) : (
-                          "Loading..."
+                          <span className="text-white/40">{loading ? 'Loading...' : 'Coming Soon'}</span>
                         )}
                       </p>
                     </div>
 
                     {/* View Action Link */}
                     <Link
-                      to={matchedProd ? `/product/${matchedProd.slug || matchedProd._id}` : (spot.hardcodedLink || '#')}
+                      to={matchedProd ? `/product/${matchedProd.slug || matchedProd._id}` : '#grid-anchor'}
                       className={`h-8 w-8 rounded-full flex items-center justify-center hover:scale-110 transition-all flex-shrink-0 ${
                         isActive ? 'bg-[#c1ff00] text-black' : 'bg-white/10 text-white hover:bg-white/20'
                       }`}

@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 
 const statusColors = {
   pending: 'bg-amber-50 text-amber-700 border-amber-100',
-  confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  confirmed: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
   shipped: 'bg-blue-50 text-blue-700 border-blue-100',
   delivered: 'bg-surface-50 text-app-text border-surface-100',
   cancelled: 'bg-red-50 text-red-600 border-red-100'

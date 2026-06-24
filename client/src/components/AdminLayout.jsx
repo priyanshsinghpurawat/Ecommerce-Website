@@ -19,6 +19,7 @@ import {
   Plus,
   Users
 } from 'lucide-react';
+import { Logo } from './Logo.jsx';
 
 export const AdminLayout = () => {
   const { user, logoutUser } = useAuth();
@@ -49,10 +50,8 @@ export const AdminLayout = () => {
         {/* Brand / Logo */}
         <div className="h-[80px] flex items-center px-8 border-b border-white/5 bg-[#121214]/50 backdrop-blur-xl">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary text-xs font-black text-black shadow-[0_0_20px_rgba(193,255,0,0.3)] group-hover:scale-110 transition-transform">
-                MV
-              </span>
+            <div className="relative group-hover:scale-110 transition-transform">
+              <Logo className="h-10 w-10" />
               <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[#121214] animate-pulse" />
             </div>
             <div className="flex flex-col">

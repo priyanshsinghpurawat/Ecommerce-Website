@@ -25,7 +25,7 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
       />
       
       {/* Modal Card with premium glassmorphism styling */}
-      <div className="relative w-full max-w-lg transform overflow-hidden rounded-3xl border border-white/10 bg-[#121212]/95 p-5 text-left align-middle shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95">
+      <div className="relative w-full max-w-lg transform overflow-hidden rounded-3xl p-5 text-left align-middle shadow-2xl glass-modal transition-all duration-300 animate-in fade-in zoom-in-95">
         
         {/* Header Section */}
         <div className="flex items-center justify-between border-b border-surface-100/55 pb-3">

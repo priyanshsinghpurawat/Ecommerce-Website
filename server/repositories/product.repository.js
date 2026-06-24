@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Product } from '../models/product.model.js';
 
 export class ProductRepository {
@@ -7,6 +8,17 @@ export class ProductRepository {
 
   static async findById(id, populateOpts = [], lean = false) {
     let query = Product.findById(id);
+    for (const pop of populateOpts) {
+      query = query.populate(pop);
+    }
+    if (lean) query = query.lean();
+    return await query;
+  }
+
+  static async findByIdOrSlug(idOrSlug, populateOpts = [], lean = false) {
+    const isObjectId = mongoose.Types.ObjectId.isValid(idOrSlug);
+    const filter = isObjectId ? { _id: idOrSlug } : { slug: idOrSlug };
+    let query = Product.findOne(filter);
     for (const pop of populateOpts) {
       query = query.populate(pop);
     }

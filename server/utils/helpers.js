@@ -23,12 +23,65 @@ export class ApiError extends Error {
   }
 }
 
+// Subclasses of ApiError for specific domains
+export class ValidationError extends ApiError {
+  constructor(message = "Validation failed", errors = []) {
+    super(400, message, errors);
+  }
+}
+
+export class NotFoundError extends ApiError {
+  constructor(message = "Resource not found") {
+    super(404, message);
+  }
+}
+
+export class UnauthorizedError extends ApiError {
+  constructor(message = "Unauthorized request") {
+    super(401, message);
+  }
+}
+
+export class ForbiddenError extends ApiError {
+  constructor(message = "Access forbidden") {
+    super(403, message);
+  }
+}
+
+export class ConflictError extends ApiError {
+  constructor(message = "Conflict detected") {
+    super(409, message);
+  }
+}
+
 export class ApiResponse {
   constructor(statusCode, data, message = "Success") {
     this.statusCode = statusCode;
     this.data = data;
     this.message = message;
     this.success = statusCode < 400;
+  }
+
+  static success(res, data, message = "Success", statusCode = 200) {
+    return res.status(statusCode).json(new ApiResponse(statusCode, data, message));
+  }
+
+  static created(res, data, message = "Resource created successfully") {
+    return res.status(201).json(new ApiResponse(201, data, message));
+  }
+
+  static paginated(res, data, page, limit, total, message = "Success") {
+    const pages = Math.ceil(total / limit);
+    const payload = {
+      items: data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages
+      }
+    };
+    return res.status(200).json(new ApiResponse(200, payload, message));
   }
 }
 
@@ -95,7 +148,7 @@ export function normalizeImageUrl(image) {
   return PLACEHOLDER;
 }
 
-export function mapProductForResponse(product) {
+export function mapProductForResponse(product, req = null) {
   if (!product) return product;
   const obj = product.toObject ? product.toObject() : { ...product };
   obj.image = normalizeImageUrl(obj.image);

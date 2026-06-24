@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories, getProducts } from '../services/api.js';
+import { getSubcategories } from '../services/api.js';
 import * as productService from '../services/api.js';
 import { HeroCarousel } from '../components/HeroCarousel.jsx';
 import { ProductShowcase } from '../components/ProductShowcase.jsx';
@@ -24,14 +24,6 @@ export const Home = () => {
   const [pants, setPants] = useState([]);
   const [saleProducts, setSaleProducts] = useState([]);
   const [loadingSections, setLoadingSections] = useState(true);
-
-  const checkedShirts = useMemo(
-    () =>
-      products.filter((p) =>
-        /check|plaid|gingham|tartan/i.test(p.title)
-      ),
-    [products]
-  );
 
   useEffect(() => {
     fetchProducts({ page: 1, limit: 12, sort: 'latest' });
@@ -98,45 +90,7 @@ export const Home = () => {
         <HeroCarousel />
       </div>
 
-      {/* Trending subcategory chips — Powerlook-style nav */}
-      <motion.section 
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={fadeInUp}
-        className="px-0 space-y-4"
-      >
-        <div className="flex items-center gap-2">
-          <Flame className="h-4 w-4 text-brand-primary" />
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] gradient-primary gradient-text">
-            Trending now
-          </h2>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-          <Link
-            to="/shop?sort=latest"
-            className="shrink-0 flex items-center gap-2 rounded-2xl border border-app-text bg-app-text px-6 py-3 text-[10px] font-black uppercase tracking-widest text-app-bg hover:opacity-90 transition-all shadow-lg shadow-app-text/10"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-brand-primary" />
-            New arrivals
-          </Link>
-          {featuredSubs.map((sub) => (
-            <Link
-              key={sub._id}
-              to={`/shop?subcategory=${sub._id}`}
-              className="shrink-0 flex items-center gap-2 rounded-2xl border border-border-base bg-surface-100 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-app-text hover:border-brand-primary hover:text-brand-primary transition-all shadow-sm"
-            >
-              {sub.name}
-            </Link>
-          ))}
-          <Link
-            to="/shop"
-            className="shrink-0 flex items-center gap-2 rounded-2xl border-2 border-dashed border-border-base px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted hover:border-brand-primary hover:text-brand-primary transition-all"
-          >
-            Explore All
-          </Link>
-        </div>
-      </motion.section>
+
 
 
 
@@ -273,11 +227,11 @@ export const Home = () => {
       {/* Infinite Scrolling Brand Ethos Marquee */}
       <div className="w-full overflow-hidden bg-white/[0.02] dark:bg-black/[0.1] py-8 border-y border-white/5 select-none -mx-4 md:mx-0">
         <div className="animate-marquee whitespace-nowrap text-2xl md:text-4xl font-black uppercase tracking-[0.3em] italic flex gap-4">
-          <span className="text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.15)]">
-            MENSVIBE STUDIO · <span className="text-brand-primary [-webkit-text-stroke:0]">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary [-webkit-text-stroke:0]">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
+          <span className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] animate-pulse">
+            MENSVIBE STUDIO · <span className="text-brand-primary drop-shadow-none">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary drop-shadow-none">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
           </span>
-          <span className="text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.15)]">
-            MENSVIBE STUDIO · <span className="text-brand-primary [-webkit-text-stroke:0]">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary [-webkit-text-stroke:0]">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
+          <span className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] animate-pulse">
+            MENSVIBE STUDIO · <span className="text-brand-primary drop-shadow-none">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary drop-shadow-none">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;
           </span>
         </div>
       </div>

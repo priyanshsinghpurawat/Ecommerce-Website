@@ -94,7 +94,7 @@ export const ProductCard = ({ product, activeColor }) => {
       }}
       className="relative block aspect-[3/4] overflow-hidden bg-app-card rounded-2xl border border-transparent transition-all group-hover:border-brand-primary/30 group-hover:shadow-2xl group-hover:shadow-brand-primary/5"
     >
-      <Link to={`/product/${product._id}`} className="block h-full w-full">
+      <Link to={`/product/${product.slug || product._id}`} className="block h-full w-full">
         <img
           src={resolveImageUrl(displayImage, 600)}
           alt={product.title}
@@ -137,15 +137,21 @@ export const ProductCard = ({ product, activeColor }) => {
         )}
       </div>
 
-      {/* Action HUD */}
-      <div className="absolute right-3 top-3 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+      {/* Wishlist Heart — stays visible when wishlisted, hover-reveal otherwise */}
+      <div className={`absolute right-3 top-3 flex flex-col gap-2 z-20 transition-all duration-300 ${
+        isWishlisted ? 'opacity-100 translate-x-0' : 'opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0'
+      }`}>
         <button
           type="button"
           onClick={handleWishlist}
           disabled={wishlistLoading}
-          className={`p-2.5 rounded-2xl bg-black/60 backdrop-blur-md text-white border border-white/10 transition-all hover:bg-red-500 active:scale-90 ${wishlistLoading ? 'opacity-50' : ''}`}
+          className={`p-2.5 rounded-2xl backdrop-blur-md border transition-all active:scale-90 ${
+            isWishlisted
+              ? 'bg-red-500 text-white border-red-400/30 shadow-lg shadow-red-500/25'
+              : 'bg-black/60 text-white border-white/10 hover:bg-red-500'
+          } ${wishlistLoading ? 'opacity-50' : ''}`}
         >
-          <Heart className={`h-4 w-4 transition-colors ${isWishlisted ? 'fill-white' : ''}`} />
+          <Heart className={`h-4 w-4 transition-colors ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
       </div>
 
@@ -201,7 +207,7 @@ export const ProductCard = ({ product, activeColor }) => {
         </div>
       )}
 
-      <Link to={`/product/${product._id}`}>
+      <Link to={`/product/${product.slug || product._id}`}>
         <h3 className="text-[12px] font-black uppercase tracking-tight text-app-text leading-tight line-clamp-1 hover:text-brand-primary transition-colors">
           {product.title}
         </h3>
@@ -217,7 +223,7 @@ export const ProductCard = ({ product, activeColor }) => {
           )}
         </div>
         {showOriginalPrice && (
-          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+          <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-2 py-0.5 rounded-md">
             SAVE ₹{(product.price - product.discountedPrice).toLocaleString()}
           </span>
         )}

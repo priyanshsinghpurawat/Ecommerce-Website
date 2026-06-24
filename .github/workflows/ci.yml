@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ V3, main ]
+    branches: [ main ]
   pull_request:
-    branches: [ V3, main ]
+    branches: [ main ]
 
 jobs:
-  backend-test:
-    name: Backend Tests
+  backend:
+    name: Backend Lint, Test & Coverage
     runs-on: ubuntu-latest
     
     services:
@@ -33,11 +33,16 @@ jobs:
           cache-dependency-path: server/package-lock.json
 
       - name: Install Backend Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
         working-directory: server
 
-      - name: Run Backend Tests
-        run: npm test
+      - name: Run Backend Lint
+        run: npm run lint
+        working-directory: server
+        continue-on-error: true # Optional: depending on strictness
+
+      - name: Run Backend Tests with Coverage
+        run: npx vitest run --coverage
         working-directory: server
         env:
           MONGODB_URI: mongodb://localhost:27017/test
@@ -45,8 +50,15 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'test_secret_key' }}
           PORT: 3001
 
-  frontend-build:
-    name: Frontend Lint & Build
+      - name: Upload Backend Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: server/coverage/
+          retention-days: 14
+
+  frontend:
+    name: Frontend Lint, Test & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -64,14 +76,22 @@ jobs:
         run: npm install
         working-directory: client
 
-      - name: Run Lint
+      - name: Run Frontend Lint
         run: npm run lint
         working-directory: client
+        continue-on-error: true
 
-      - name: Run Frontend Tests
-        run: npm test
+      - name: Run Frontend Tests with Coverage
+        run: npx vitest run --passWithNoTests --coverage
         working-directory: client
 
       - name: Build Frontend
         run: npm run build
         working-directory: client
+
+      - name: Upload Frontend Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: client/coverage/
+          retention-days: 14

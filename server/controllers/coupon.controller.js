@@ -4,7 +4,7 @@ import { asyncHandler, ApiError, ApiResponse, calculateCouponDiscount, computeCa
 
 /**
  * @desc    Create a new coupon (Admin Only)
- * @route   POST /api/v1/coupons
+ * @route   POST /api/v3/coupons
  * @access  Private/Admin
  */
 export const createCoupon = asyncHandler(async (req, res) => {
@@ -42,7 +42,7 @@ export const createCoupon = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get all coupons (Admin Only)
- * @route   GET /api/v1/coupons
+ * @route   GET /api/v3/coupons
  * @access  Private/Admin
  */
 export const getAllCoupons = asyncHandler(async (req, res) => {
@@ -69,7 +69,8 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
   const coupons = await Coupon.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
 
   const totalCoupons = await Coupon.countDocuments(query);
 
@@ -88,7 +89,7 @@ export const getAllCoupons = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update an existing coupon (Admin Only)
- * @route   PUT /api/v1/coupons/:id
+ * @route   PUT /api/v3/coupons/:id
  * @access  Private/Admin
  */
 export const updateCoupon = asyncHandler(async (req, res) => {
@@ -140,7 +141,7 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Delete coupon (Admin Only)
- * @route   DELETE /api/v1/coupons/:id
+ * @route   DELETE /api/v3/coupons/:id
  * @access  Private/Admin
  */
 export const deleteCoupon = asyncHandler(async (req, res) => {
@@ -165,7 +166,7 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Apply coupon and calculate discounts (Private/User)
- * @route   POST /api/v1/coupons/apply
+ * @route   POST /api/v3/coupons/apply
  * @access  Private
  */
 export const applyCoupon = asyncHandler(async (req, res) => {

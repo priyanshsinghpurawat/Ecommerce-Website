@@ -5,7 +5,7 @@ import { getCache, setCache, clearCacheByPattern } from '../utils/cache.js';
 
 /**
  * @desc    Create a new category (Admin Only)
- * @route   POST /api/v1/categories
+ * @route   POST /api/v3/categories
  * @access  Private/Admin
  */
 export const createCategory = asyncHandler(async (req, res) => {
@@ -34,7 +34,7 @@ export const createCategory = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get all categories (Public)
- * @route   GET /api/v1/categories
+ * @route   GET /api/v3/categories
  * @access  Public
  */
 export const getAllCategories = asyncHandler(async (req, res) => {
@@ -47,7 +47,7 @@ export const getAllCategories = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, cachedData, "Categories retrieved successfully (cached)"));
   }
 
-  const categories = await Category.find({}).sort({ createdAt: -1 });
+  const categories = await Category.find({}).sort({ createdAt: -1 }).lean();
 
   // Cache categories for 60 seconds
   await setCache(cacheKey, categories, 60);
@@ -59,13 +59,13 @@ export const getAllCategories = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get category details by slug (Public)
- * @route   GET /api/v1/categories/:slug
+ * @route   GET /api/v3/categories/:slug
  * @access  Public
  */
 export const getCategoryBySlug = asyncHandler(async (req, res) => {
   const { slug } = req.params;
 
-  const category = await Category.findOne({ slug });
+  const category = await Category.findOne({ slug }).lean();
   if (!category) {
     throw new ApiError(404, `Category with slug '${slug}' not found.`);
   }
@@ -77,7 +77,7 @@ export const getCategoryBySlug = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update category (Admin Only)
- * @route   PUT /api/v1/categories/:id
+ * @route   PUT /api/v3/categories/:id
  * @access  Private/Admin
  */
 export const updateCategory = asyncHandler(async (req, res) => {
@@ -107,7 +107,7 @@ export const updateCategory = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Delete category (Admin Only)
- * @route   DELETE /api/v1/categories/:id
+ * @route   DELETE /api/v3/categories/:id
  * @access  Private/Admin
  */
 export const deleteCategory = asyncHandler(async (req, res) => {

@@ -23,13 +23,13 @@ beforeEach(async () => {
 
 async function getToken(email, role = 'user') {
   const password = 'User1P@ss303!';
-  await request(app).post('/api/v1/auth/register').send({
+  await request(app).post('/api/v3/auth/register').send({
     name: 'Test User',
     email,
     password
   });
   await User.findOneAndUpdate({ email }, { role });
-  const res = await request(app).post('/api/v1/auth/login').send({
+  const res = await request(app).post('/api/v3/auth/login').send({
     email,
     password
   });
@@ -57,7 +57,7 @@ describe('Security & RBAC Deep-Dive', () => {
 
     // Seller 2 tries to delete Seller 1's product
     await request(app)
-      .delete(`/api/v1/products/${product._id}`)
+      .delete(`/api/v3/products/${product._id}`)
       .set('Authorization', `Bearer ${seller2Token}`)
       .expect(403);
 
@@ -70,7 +70,7 @@ describe('Security & RBAC Deep-Dive', () => {
     const userToken = await getToken('user@test.com', 'user');
     
     await request(app)
-      .get('/api/v1/orders/analytics')
+      .get('/api/v3/orders/analytics')
       .set('Authorization', `Bearer ${userToken}`)
       .expect(403);
   });
@@ -92,7 +92,7 @@ describe('Security & RBAC Deep-Dive', () => {
 
     // User 2 tries to view User 1's order
     await request(app)
-      .get(`/api/v1/orders/${order._id}`)
+      .get(`/api/v3/orders/${order._id}`)
       .set('Authorization', `Bearer ${user2Token}`)
       .expect(403);
   });
@@ -102,7 +102,7 @@ describe('Security & RBAC Deep-Dive', () => {
     const user2 = await User.create({ name: 'U2', email: 'u2@test.com', password: 'Password123!', role: 'user' });
 
     await request(app)
-      .patch(`/api/v1/users/${user2._id}/role`)
+      .patch(`/api/v3/users/${user2._id}/role`)
       .set('Authorization', `Bearer ${user1Token}`)
       .send({ role: 'admin' })
       .expect(403);
@@ -116,7 +116,7 @@ describe('Security & RBAC Deep-Dive', () => {
     const seller = await User.create({ name: 'S', email: 's@test.com', password: 'Password123!', role: 'seller' });
 
     await request(app)
-      .get(`/api/v1/users/vendors/${seller._id}`)
+      .get(`/api/v3/users/vendors/${seller._id}`)
       .set('Authorization', `Bearer ${userToken}`)
       .expect(403);
   });

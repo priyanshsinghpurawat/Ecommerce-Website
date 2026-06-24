@@ -16,13 +16,14 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).default('3000'),
   MONGODB_URI: z.string().optional(),
   MONGODB_URI_TEST: z.string().optional(),
-  JWT_SECRET: z.string().optional(),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   COOKIE_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
+  SERVER_URL: z.string().url().optional(),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
@@ -75,4 +76,11 @@ export const ENV = parsed.success
       CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+      SERVER_URL: process.env.SERVER_URL,
     };
+
+// Production startup guard — prevent silent failures with missing critical secrets
+if (process.env.NODE_ENV === 'production' && !ENV.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET is required in production. Set it in server/.env');
+  process.exit(1);
+}

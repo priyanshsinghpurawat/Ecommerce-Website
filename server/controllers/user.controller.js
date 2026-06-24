@@ -5,7 +5,7 @@ import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 
 /**
  * @desc    Get all vendors (Admin)
- * @route   GET /api/v1/users/vendors
+ * @route   GET /api/v3/users/vendors
  * @access  Private/Admin
  */
 export const getVendors = asyncHandler(async (req, res) => {
@@ -114,7 +114,7 @@ export const getVendors = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Toggle vendor active status (Admin)
- * @route   PATCH /api/v1/users/vendors/:id/status
+ * @route   PATCH /api/v3/users/vendors/:id/status
  * @access  Private/Admin
  */
 export const toggleVendorStatus = asyncHandler(async (req, res) => {
@@ -133,23 +133,24 @@ export const toggleVendorStatus = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get detailed vendor profile (Admin)
- * @route   GET /api/v1/users/vendors/:id
+ * @route   GET /api/v3/users/vendors/:id
  * @access  Private/Admin
  */
 export const getVendorProfile = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const vendor = await User.findById(id).select('-password');
+  const vendor = await User.findById(id).select('-password').lean();
   
   if (!vendor || vendor.role !== 'seller') {
     throw new ApiError(404, 'Vendor not found');
   }
 
-  const products = await Product.find({ seller: id }).populate('category subcategory');
+  const products = await Product.find({ seller: id }).populate('category subcategory').lean();
   const productIds = products.map(p => p._id);
   
   const orders = await Order.find({ "items.product": { $in: productIds } })
     .populate('user', 'name email')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
   
   const activeOrdersCount = orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
   
@@ -188,7 +189,7 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
   const productsWithStats = products.map(p => {
     const stats = productStats[p._id.toString()] || { revenue: 0, units: 0 };
     return {
-      ...p.toObject(),
+      ...p,
       revenue: stats.revenue,
       unitsSold: stats.units
     };
@@ -225,7 +226,7 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get all users (Admin)
- * @route   GET /api/v1/users
+ * @route   GET /api/v3/users
  * @access  Private/Admin
  */
 export const getAllUsers = asyncHandler(async (req, res) => {
@@ -288,7 +289,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update user role (Admin)
- * @route   PATCH /api/v1/users/:id/role
+ * @route   PATCH /api/v3/users/:id/role
  * @access  Private/Admin
  */
 export const updateUserRole = asyncHandler(async (req, res) => {
@@ -325,17 +326,17 @@ export const updateUserRole = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get current user profile
- * @route   GET /api/v1/users/me
+ * @route   GET /api/v3/users/me
  * @access  Private
  */
 export const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password');
+  const user = await User.findById(req.user._id).select('-password').lean();
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
   // Data Normalization (Transition from singular address to addresses array)
-  const userData = user.toObject();
+  const userData = user;
   if ((!userData.addresses || userData.addresses.length === 0) && userData.address) {
     const legacyAddr = userData.address;
     if (legacyAddr.street || legacyAddr.city) {
@@ -359,7 +360,7 @@ export const getProfile = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update profile info (name, phone, avatar)
- * @route   PUT /api/v1/users/me
+ * @route   PUT /api/v3/users/me
  * @access  Private
  */
 export const updateProfile = asyncHandler(async (req, res) => {
@@ -382,7 +383,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Add new address to address book
- * @route   POST /api/v1/users/addresses
+ * @route   POST /api/v3/users/addresses
  * @access  Private
  */
 export const addAddress = asyncHandler(async (req, res) => {
@@ -416,7 +417,7 @@ export const addAddress = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update existing address
- * @route   PUT /api/v1/users/addresses/:id
+ * @route   PUT /api/v3/users/addresses/:id
  * @access  Private
  */
 export const updateAddress = asyncHandler(async (req, res) => {
@@ -443,7 +444,7 @@ export const updateAddress = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Delete address from book
- * @route   DELETE /api/v1/users/addresses/:id
+ * @route   DELETE /api/v3/users/addresses/:id
  * @access  Private
  */
 export const deleteAddress = asyncHandler(async (req, res) => {
@@ -470,7 +471,7 @@ export const deleteAddress = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Set default address
- * @route   PATCH /api/v1/users/addresses/:id/default
+ * @route   PATCH /api/v3/users/addresses/:id/default
  * @access  Private
  */
 export const setDefaultAddress = asyncHandler(async (req, res) => {
@@ -493,11 +494,11 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get user wishlist
- * @route   GET /api/v1/users/wishlist
+ * @route   GET /api/v3/users/wishlist
  * @access  Private
  */
 export const getWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('wishlist');
+  const user = await User.findById(req.user._id).populate('wishlist').lean();
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
@@ -506,7 +507,7 @@ export const getWishlist = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Add product to wishlist
- * @route   POST /api/v1/users/wishlist
+ * @route   POST /api/v3/users/wishlist
  * @access  Private
  */
 export const addToWishlist = asyncHandler(async (req, res) => {
@@ -532,7 +533,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Remove product from wishlist
- * @route   DELETE /api/v1/users/wishlist/:productId
+ * @route   DELETE /api/v3/users/wishlist/:productId
  * @access  Private
  */
 export const removeFromWishlist = asyncHandler(async (req, res) => {

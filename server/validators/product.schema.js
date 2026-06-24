@@ -30,5 +30,5 @@ export const productBodySchema = z.object({
 });
 
 export const productIdParamSchema = z.object({
-  id: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid product id')
+  id: z.string().min(1, 'Product identifier is required')
 });

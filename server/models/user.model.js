@@ -76,6 +76,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ name: 'text', email: 'text' });
+userSchema.index({ role: 1, createdAt: -1 });
 
 // Hash password before saving to DB
 userSchema.pre("save", async function (next) {

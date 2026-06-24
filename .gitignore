@@ -43,7 +43,6 @@ coverage/
 
 # Server specific
 server/public/
-
 .gemini/
 .agents/
 gha-creds-*.json
@@ -56,12 +55,16 @@ server/scripts/dev-tools.js
 docs/
 screenshots/
 Artifacts/
-AUDIT_SUMMARY.txt/
+AUDIT_SUMMARY.txt
+progressreport.md
 
+
+docker-compose.yml
+.dockerignore
+Dockerfile
 
 # TestSprite test folders and secrets
 **/testsprite_tests/
 
 # Jest example files
-jest-example/
-
+jest-tests/

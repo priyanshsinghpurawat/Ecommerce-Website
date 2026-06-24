@@ -1,11 +1,11 @@
-/** Default shipping for checkout (Jaipur) — profile fields override when set */
+/** Default shipping for checkout — profile addresses override these when set */
 export const DEFAULT_SHIPPING = {
   fullName: '',
   phone: '',
-  street: 'Malviya Nagar, Near GT Bazaar',
-  city: 'Jaipur',
-  state: 'Rajasthan',
-  zipCode: '302017',
+  street: '',
+  city: '',
+  state: '',
+  zipCode: '',
   country: 'India'
 };
 

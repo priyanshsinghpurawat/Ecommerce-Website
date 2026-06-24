@@ -1,57 +1,13 @@
 /**
  * Shared HTTP client. Auth uses httpOnly cookie (withCredentials: true).
- * Includes CSRF protection via double-submit cookie pattern.
+ * SameSite cookie attributes (lax in dev, none+secure in prod) provide CSRF protection.
  */
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v3',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
-});
-
-// --- CSRF Token Handling ---
-let csrfToken = null;
-let isFetchingToken = false;
-let tokenPromise = null;
-
-const getCsrfToken = async () => {
-  if (csrfToken) return csrfToken;
-  if (isFetchingToken) return tokenPromise;
-
-  isFetchingToken = true;
-  tokenPromise = api.get('/csrf-token')
-    .then(res => {
-      csrfToken = res.data.csrfToken;
-      return csrfToken;
-    })
-    .catch(err => {
-      console.error("Failed to fetch CSRF token", err);
-      return null;
-    })
-    .finally(() => {
-      isFetchingToken = false;
-    });
-
-  return tokenPromise;
-};
-
-// --- Interceptors ---
-
-api.interceptors.request.use(async (config) => {
-  // Auth is handled exclusively via httpOnly cookies (withCredentials: true).
-  // No Bearer token — localStorage tokens are vulnerable to XSS.
-
-  // Attach CSRF token for state-changing requests
-  const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
-  if (config.method && stateChangingMethods.includes(config.method.toUpperCase())) {
-    const token = await getCsrfToken();
-    if (token) {
-      config.headers['X-CSRF-Token'] = token;
-    }
-  }
-  
-  return config;
 });
 
 api.interceptors.response.use(
@@ -66,11 +22,6 @@ api.interceptors.response.use(
         localStorage.removeItem('user');
         window.dispatchEvent(new Event('auth:unauthorized'));
       }
-    }
-
-    // If CSRF token is invalid, refresh it for the next attempt
-    if (status === 403 && error.response.data?.message?.includes('CSRF')) {
-      csrfToken = null; 
     }
 
     return Promise.reject(error);

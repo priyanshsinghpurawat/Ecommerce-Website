@@ -12,7 +12,6 @@ import {
   CreditCard, 
   Loader2,
   Lock,
-  Sparkles,
   Tag,
   Ticket,
   X
@@ -45,7 +44,8 @@ export const Cart = () => {
     loading, 
     updateQuantity, 
     removeFromCart, 
-    clearCart 
+    clearCart,
+    clearLocalCart
   } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -58,6 +58,9 @@ export const Cart = () => {
   const [phoneError, setPhoneError] = useState('');
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
   const [shipping, setShipping] = useState({ ...DEFAULT_SHIPPING });
+
+  // State to track which item is currently being updated to render loaders
+  const [updatingItemId, setUpdatingItemId] = useState(null);
 
   const shippingFields = useMemo(() => [
     { key: 'fullName', label: 'Full name', type: 'text' },
@@ -106,7 +109,9 @@ export const Cart = () => {
     const newQty = currentQty + amount;
     if (newQty < 1) return;
     
+    setUpdatingItemId(itemId);
     const res = await updateQuantity(itemId, newQty);
+    setUpdatingItemId(null);
     if (!res.success) {
       toast.error(res.error || 'Failed to update quantity.');
     }
@@ -175,7 +180,7 @@ export const Cart = () => {
       });
       if (res?.success) {
         toast.success('Order placed! Pay when your delivery arrives.');
-        await clearCart();
+        clearLocalCart();
         navigate(`/orders/${res.data._id}`);
       } else {
         toast.error(res?.message || 'Could not place order.');
@@ -229,7 +234,7 @@ export const Cart = () => {
             });
             if (verified?.success) {
               toast.success('Payment verified! Order confirmed.');
-              await clearCart();
+              clearLocalCart();
               navigate(`/orders/${pay.orderId}`);
             } else {
               toast.error('Payment verification failed.');
@@ -363,14 +368,14 @@ export const Cart = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-app-text">Your bag</h1>
-          <p className="text-sm text-app-text/55">Review items before checkout.</p>
+          <h1 className="text-3xl font-black uppercase tracking-tight text-app-text">Your bag</h1>
+          <p className="text-xs font-bold text-app-text/40 uppercase tracking-widest">Review items before checkout.</p>
         </div>
         <Link
           to="/shop"
-          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-app-text/50 hover:text-app-text transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-app-text/50 hover:text-brand-primary transition-colors self-start sm:self-auto"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-4 w-4" />
           Continue Shopping
         </Link>
       </div>
@@ -394,353 +399,361 @@ export const Cart = () => {
           </div>
           <Link
             to="/shop"
-            className="rounded-2xl bg-brand-primary px-10 py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-all shadow-lg shadow-brand-primary/20"
+            className="rounded-2xl bg-brand-primary px-10 py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-all shadow-lg shadow-brand-primary/20 cursor-pointer"
           >
             Start Shopping
           </Link>
-          <Link to="/shop?sort=latest" className="text-[10px] font-bold uppercase text-app-text/40 hover:text-brand-primary tracking-wider transition-colors">
+          <Link to="/shop?sort=latest" className="text-xs font-bold uppercase text-app-text/40 hover:text-brand-primary tracking-wider transition-colors">
             See new arrivals →
           </Link>
         </motion.div>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Cart Table Container */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="overflow-hidden rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-surface-100 bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-app-text/45">
-                      <th className="px-6 py-4">Item Details</th>
-                      <th className="px-6 py-4 text-center">Quantity</th>
-                      <th className="px-6 py-4 text-right">Unit Price</th>
-                      <th className="px-6 py-4 text-right">Subtotal</th>
-                      <th className="px-6 py-4 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-surface-100/40 text-xs font-semibold text-app-text">
-                    <AnimatePresence initial={false}>
-                      {cart.items.map((item) => {
-                        const prod = item.product;
-                        if (!prod) return null;
+            {/* Cart Table Container */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="overflow-hidden rounded-3xl border border-white/10 bg-surface-50/40 shadow-soft backdrop-blur-md">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-surface-100 bg-surface-50/30 text-xs font-black uppercase tracking-wider text-app-text/50">
+                        <th className="px-6 py-4">Item Details</th>
+                        <th className="px-6 py-4 text-center">Quantity</th>
+                        <th className="px-6 py-4 text-right">Unit Price</th>
+                        <th className="px-6 py-4 text-right">Subtotal</th>
+                        <th className="px-6 py-4 text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-surface-100/40 text-xs font-bold text-app-text">
+                      <AnimatePresence initial={false}>
+                        {cart.items.map((item) => {
+                          const prod = item.product;
+                          if (!prod) return null;
 
-                        const hasDiscount = prod.discountedPrice !== null && prod.discountedPrice !== undefined;
-                        const unitPrice = hasDiscount ? prod.discountedPrice : prod.price;
-                        const itemSubtotal = unitPrice * item.quantity;
+                          const hasDiscount = prod.discountedPrice !== null && prod.discountedPrice !== undefined;
+                          const unitPrice = hasDiscount ? prod.discountedPrice : prod.price;
+                          const itemSubtotal = unitPrice * item.quantity;
 
-                        return (
-                          <motion.tr 
-                            key={item._id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={ITEM_EXIT}
-                            transition={{ duration: 0.3 }}
-                            className="hover:bg-surface-50/20 transition-all align-middle"
-                          >
-                            {/* Product Info */}
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-4">
-                                <Link to={`/product/${prod._id}`} className="block w-[56px] h-[56px] flex-shrink-0">
-                                  <img 
-                                    src={resolveImageUrl(prod.image)} 
-                                    alt={prod.title} 
-                                    style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', objectFit: 'cover' }}
-                                    className="rounded-xl bg-surface-50 border border-white shadow-sm" 
-                                  />
-                                </Link>
-                                <div className="truncate max-w-[180px]">
-                                  <Link to={`/product/${prod._id}`} className="font-extrabold uppercase text-[11px] text-app-text hover:text-brand-primary transition-colors block truncate">
-                                    {prod.title}
+                          return (
+                            <motion.tr 
+                              key={item._id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={ITEM_EXIT}
+                              transition={{ duration: 0.3 }}
+                              className="hover:bg-surface-50/20 transition-all align-middle"
+                            >
+                              {/* Product Info */}
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                  <Link to={`/product/${prod.slug || prod._id}`} className="block w-[60px] h-[60px] flex-shrink-0">
+                                    <img 
+                                      src={resolveImageUrl(prod.image)} 
+                                      alt={prod.title} 
+                                      style={{ width: '60px', height: '60px', minWidth: '60px', minHeight: '60px', objectFit: 'cover' }}
+                                      className="rounded-xl bg-surface-50 border border-white/10 shadow-sm" 
+                                    />
                                   </Link>
-                                  <span className="text-[9px] font-bold text-app-text/40 uppercase block mt-0.5">
-                                    {prod.category?.name || 'Unassigned'}
-                                  </span>
-                                  {(item.color || item.size) ? (
-                                    <span className="text-[9px] font-bold text-brand-primary/80 uppercase block mt-0.5">
-                                      {[item.color, item.size].filter(Boolean).join(' / ')}
+                                  <div className="truncate max-w-[180px]">
+                                    <Link to={`/product/${prod.slug || prod._id}`} className="font-black uppercase text-xs text-app-text hover:text-brand-primary transition-colors block truncate leading-tight">
+                                      {prod.title}
+                                    </Link>
+                                    <span className="text-xs font-bold text-app-text/45 uppercase block mt-1 tracking-wide">
+                                      {prod.category?.name || 'Unassigned'}
                                     </span>
-                                  ) : null}
+                                    {(item.color || item.size) ? (
+                                      <span className="text-xs font-bold text-brand-primary uppercase block mt-1 tracking-wider">
+                                        {[item.color, item.size].filter(Boolean).join(' / ')}
+                                      </span>
+                                    ) : null}
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
+                              </td>
 
-                            {/* Quantity Controls */}
-                            <td className="px-6 py-4 text-center">
-                              <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
+                              {/* Quantity Controls with dynamic spinners */}
+                              <td className="px-6 py-4 text-center">
+                                <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
+                                  {updatingItemId === item._id ? (
+                                    <div className="flex items-center justify-center px-4 py-0.5">
+                                      <Loader2 className="h-4.5 w-4.5 animate-spin text-brand-primary" />
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <button
+                                        onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
+                                        disabled={item.quantity <= 1 || updatingItemId !== null}
+                                        className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                        title="Decrease Quantity"
+                                      >
+                                        <Minus className="h-3.5 w-3.5" />
+                                      </button>
+                                      <span className="text-xs font-extrabold px-1.5 font-mono">{item.quantity}</span>
+                                      <button
+                                        onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
+                                        disabled={updatingItemId !== null}
+                                        className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                        title="Increase Quantity"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Unit Price */}
+                              <td className="px-6 py-4 text-right font-mono font-bold text-app-text/75 text-xs">
+                                ₹{unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </td>
+
+                              {/* Subtotal */}
+                              <td className="px-6 py-4 text-right font-mono font-black text-app-text text-xs">
+                                ₹{itemSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </td>
+
+                              {/* Actions */}
+                              <td className="px-6 py-4 text-center">
                                 <button
-                                  onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
-                                  disabled={item.quantity <= 1}
-                                  className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                  title="Decrease Quantity"
+                                  onClick={() => handleRemove(item._id)}
+                                  disabled={updatingItemId !== null}
+                                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm mx-auto disabled:opacity-40 cursor-pointer"
+                                  title="Remove Item"
                                 >
-                                  <Minus className="h-3 w-3" />
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
-                                <span className="text-xs font-extrabold px-1 font-mono">{item.quantity}</span>
-                                <button
-                                  onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
-                                  className="text-app-text/50 hover:text-app-text transition-colors"
-                                  title="Increase Quantity"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </button>
-                              </div>
-                            </td>
-
-                            {/* Unit Price */}
-                            <td className="px-6 py-4 text-right font-mono font-bold text-app-text/75">
-                              ₹{unitPrice.toFixed(2)}
-                            </td>
-
-                            {/* Subtotal */}
-                            <td className="px-6 py-4 text-right font-mono font-extrabold text-app-text">
-                              ₹{itemSubtotal.toFixed(2)}
-                            </td>
-
-                            {/* Actions */}
-                            <td className="px-6 py-4 text-center">
-                              <button
-                                onClick={() => handleRemove(item._id)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm mx-auto"
-                                title="Remove Item"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </tbody>
-                </table>
+                              </td>
+                            </motion.tr>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              {/* Clear Cart Button */}
+              <button
+                onClick={() => { clearCart(); toast.success('Shopping bag cleared.'); }}
+                className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-red-400 hover:text-red-500 border border-red-500/20 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition-all self-start cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Empty Bag
+              </button>
             </div>
 
-            {/* Clear Cart Button */}
-            <button
-              onClick={() => { clearCart(); toast.success('Shopping bag cleared.'); }}
-              className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-red-400 hover:text-red-500 border border-red-100 hover:bg-red-50/30 px-3.5 py-2 rounded-xl transition-all self-start"
-            >
-              <Trash2 className="h-3 w-3" />
-              Empty Bag
-            </button>
-          </div>
+            {/* Billing Order Summary Panel */}
+            <div className="rounded-3xl border border-white/10 bg-surface-50/40 p-6 shadow-soft backdrop-blur-md space-y-6">
+              <h3 className="text-xs font-black uppercase tracking-wider text-app-text pb-2.5 border-b border-surface-100/50">
+                Order Summary
+              </h3>
 
-          {/* Billing Order Summary Panel */}
-          <div className="rounded-3xl border border-white/60 bg-surface-50/40 p-6 shadow-soft backdrop-blur-md space-y-6">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-app-text pb-2.5 border-b border-surface-100/50">
-              Order Summary
-            </h3>
+              <div className="space-y-3 font-sans text-xs">
+                <div className="flex justify-between text-app-text/60">
+                  <span>Subtotal</span>
+                  <span className="font-mono font-bold">₹{cartTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-brand-primary">
+                  <span>Shipping</span>
+                  <span className="text-brand-primary font-black uppercase text-xs">Free Shipping</span>
+                </div>
+                <div className="flex justify-between text-app-text/60">
+                  <span>Taxes (GST 18%)</span>
+                  <span className="font-mono text-app-text/40">₹{billData.gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                </div>
 
-            <div className="space-y-3 font-sans text-xs">
-              <div className="flex justify-between text-app-text/60">
-                <span>Subtotal</span>
-                <span className="font-mono font-bold">₹{cartTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-app-text/60">
-                <span>Shipping</span>
-                <span className="text-emerald-600 font-bold uppercase text-[10px]">Free Shipping</span>
-              </div>
-              <div className="flex justify-between text-app-text/60">
-                <span>Taxes (GST 18%)</span>
-                <span className="font-mono text-app-text/40">₹{billData.gstAmount.toFixed(2)}</span>
-              </div>
+                {appliedCoupon ? (
+                  <div className="flex justify-between items-center text-brand-primary font-semibold animate-in fade-in duration-200">
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      Discount ({appliedCoupon.code})
+                    </span>
+                    <span className="font-mono font-bold">- ₹{appliedCoupon.discountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                ) : null}
+                
+                <div className="h-px bg-surface-100/50 my-2" />
 
-              {appliedCoupon ? (
-                <div className="flex justify-between items-center text-emerald-600 font-semibold animate-in fade-in duration-200">
-                  <span className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" />
-                    Discount ({appliedCoupon.code})
+                <div className="flex justify-between text-app-text font-black pb-1">
+                  <span className="uppercase text-xs tracking-wider font-black text-app-text">Total</span>
+                  <span className="font-mono text-sm text-brand-primary font-black">
+                    ₹{billData.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
-                  <span className="font-mono font-bold">- ₹{appliedCoupon.discountAmount.toFixed(2)}</span>
                 </div>
-              ) : null}
-              
-              <div className="h-px bg-surface-100/50 my-2" />
-
-              <div className="flex justify-between text-app-text font-extrabold pb-1">
-                <span className="uppercase text-[10px] tracking-wider font-extrabold text-app-text">Total</span>
-                <span className="font-mono text-sm text-app-text">
-                  ₹{billData.grandTotal.toFixed(2)}
-                </span>
               </div>
-            </div>
 
-            {/* Promo Codes */}
-            <div className="pt-4 border-t border-surface-100/50 space-y-3">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-app-text/65">
-                Apply Promo Code
-              </label>
+              {/* Promo Codes */}
+              <div className="pt-4 border-t border-surface-100/50 space-y-3">
+                <label className="block text-xs font-black uppercase tracking-wider text-app-text/65">
+                  Apply Promo Code
+                </label>
 
-              {!appliedCoupon ? (
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="ENTER CODE"
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          applySuggestedCoupon(couponInput);
-                        }
-                      }}
-                      className="flex-1 uppercase rounded-xl border border-surface-100 bg-surface-50/70 px-3 py-2 text-xs font-mono focus:outline-none focus:border-brand-primary"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => applySuggestedCoupon(couponInput)}
-                      disabled={applyingCoupon || !couponInput.trim()}
-                      className="rounded-xl bg-app-text px-4 py-2 text-[10px] font-black uppercase tracking-wider text-black hover:opacity-90 disabled:opacity-50 transition-all"
-                    >
-                      {applyingCoupon ? '...' : 'Apply'}
-                    </button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {SUGGESTED_COUPONS.map((c) => (
+                {!appliedCoupon ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="ENTER CODE"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            applySuggestedCoupon(couponInput);
+                          }
+                        }}
+                        className="flex-1 uppercase rounded-xl border border-surface-100 bg-surface-50/70 px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-brand-primary text-white"
+                      />
                       <button
-                        key={c.code}
                         type="button"
-                        disabled={applyingCoupon}
-                        onClick={() => applySuggestedCoupon(c.code)}
-                        className="flex items-center gap-1.5 rounded-lg border border-surface-100 bg-surface-50/50 px-2.5 py-1.5 hover:border-brand-primary transition-colors disabled:opacity-50"
+                        onClick={() => applySuggestedCoupon(couponInput)}
+                        disabled={applyingCoupon || !couponInput.trim()}
+                        className="rounded-xl bg-brand-primary px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
                       >
-                        <Ticket className="h-3 w-3 text-brand-primary" />
-                        <span className="font-mono text-[10px] font-bold">{c.code}</span>
+                        {applyingCoupon ? '...' : 'Apply'}
                       </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/40 p-2.5 animate-in zoom-in-95 duration-200">
-                  <div className="flex items-center gap-2 text-emerald-700">
-                    <Ticket className="h-4 w-4 text-emerald-600 animate-pulse" />
-                    <div>
-                      <p className="font-mono text-xs font-bold leading-none">{appliedCoupon.code}</p>
-                      <p className="text-[9px] text-emerald-600/70 font-sans mt-0.5">
-                        {appliedCoupon.discountType === 'percentage' 
-                          ? `${appliedCoupon.discountValue}% Off applied`
-                          : `₹${appliedCoupon.discountValue} Off applied`
-                        }
-                      </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTED_COUPONS.map((c) => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          disabled={applyingCoupon}
+                          onClick={() => applySuggestedCoupon(c.code)}
+                          className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1.5 hover:border-brand-primary transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          <Ticket className="h-3.5 w-3.5 text-brand-primary" />
+                          <span className="font-mono text-xs font-bold">{c.code}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-primary/20 bg-brand-primary/5 p-2.5 animate-in zoom-in-95 duration-200">
+                    <div className="flex items-center gap-2 text-brand-primary">
+                      <Ticket className="h-4 w-4 text-brand-primary animate-pulse" />
+                      <div>
+                        <p className="font-mono text-xs font-bold leading-none">{appliedCoupon.code}</p>
+                        <p className="text-xs text-brand-primary/70 font-sans mt-1">
+                          {appliedCoupon.discountType === 'percentage' 
+                            ? `${appliedCoupon.discountValue}% Off applied`
+                            : `₹${appliedCoupon.discountValue} Off applied`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="rounded-lg bg-brand-primary/10 p-1.5 text-brand-primary hover:bg-red-500 hover:text-black transition-all cursor-pointer"
+                      title="Remove Coupon"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+                {couponError ? (
+                  <p className="text-xs font-bold text-red-500 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {couponError}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Guarantee / Security info */}
+              <div className="rounded-2xl bg-surface-50/40 border border-white/10 p-3.5 flex items-start gap-3">
+                <Lock className="h-4 w-4 text-app-text/45 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-app-text">Secure Checkout</p>
+                  <p className="text-[10px] text-app-text/40 font-sans leading-relaxed mt-0.5">
+                    Your transaction is secure. SSL-encrypted checkout details are configured natively.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={handleProceedCheckout}
+                  disabled={checkoutLoading || updatingItemId !== null}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-primary py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 disabled:opacity-50 transition-colors shadow-lg shadow-brand-primary/10 cursor-pointer"
+                >
+                  {checkoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-black" />
+                  ) : (
+                    <>
+                      <ShoppingBag className="h-4 w-4 text-black" />
+                      <span className="text-black">{showCheckout ? 'Place order (Cash on Delivery)' : 'Proceed to Checkout'}</span>
+                    </>
+                  )}
+                </button>
+                {showCheckout && razorpayEnabled ? (
                   <button
                     type="button"
-                    onClick={handleRemoveCoupon}
-                    className="rounded-lg bg-emerald-100/50 p-1 text-emerald-700 hover:bg-red-50 hover:text-red-500 transition-all"
-                    title="Remove Coupon"
+                    onClick={() => {
+                      if (!validateShippingForm()) return;
+                      handleRazorpayCheckout();
+                    }}
+                    disabled={checkoutLoading || updatingItemId !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-3 font-sans text-xs font-black uppercase tracking-widest text-app-text hover:bg-white/10 disabled:opacity-50 cursor-pointer"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <CreditCard className="h-4 w-4" />
+                    Pay online (Razorpay)
                   </button>
-                </div>
-              )}
-              {couponError ? (
-                <p className="text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 duration-200">
-                  {couponError}
-                </p>
-              ) : null}
-            </div>
-
-
-
-            {/* Guarantee / Security info */}
-            <div className="rounded-2xl bg-surface-50/40 border border-white/60 p-3.5 flex items-start gap-3">
-              <Lock className="h-4 w-4 text-app-text/45 mt-0.5" />
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-app-text">Secure Checkout</p>
-                <p className="text-[8px] text-app-text/40 font-sans leading-relaxed">
-                  Your transaction is secure. SSL-encrypted checkout details are configured natively.
-                </p>
+                ) : null}
               </div>
             </div>
-
-            <div className="space-y-2">
-              <button
-                onClick={handleProceedCheckout}
-                disabled={checkoutLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-app-text py-3.5 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover disabled:opacity-50 transition-colors shadow-lg shadow-app-text/20"
-              >
-                {checkoutLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <ShoppingBag className="h-4 w-4" />
-                    {showCheckout ? 'Place order (Cash on Delivery)' : 'Proceed to Checkout'}
-                  </>
-                )}
-              </button>
-              {showCheckout && razorpayEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!validateShippingForm()) return;
-                    handleRazorpayCheckout();
-                  }}
-                  disabled={checkoutLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-200 bg-surface-50/80 py-3 font-sans text-[10px] font-bold uppercase tracking-wider text-app-text hover:bg-surface-50 disabled:opacity-50"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Pay online (Razorpay)
-                </button>
-              ) : null}
-            </div>
           </div>
-        </div>
 
-        {/* ── Step 2: Shipping Address (decoupled, full-width) ── */}
-        {showCheckout ? (
-          <motion.div
-            initial={SHIPPING_INITIAL}
-            animate={SHIPPING_ANIMATION}
-            className="rounded-3xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md p-6 space-y-5"
-          >
-            <div className="flex items-center gap-3 pb-2 border-b border-surface-100/50">
-              <div className="h-6 w-6 rounded-full bg-brand-primary flex items-center justify-center text-black text-[10px] font-black">2</div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-app-text">Shipping Address</h3>
-              <Link to="/profile" className="ml-auto text-[9px] font-bold text-app-text/40 hover:text-brand-primary underline transition-colors">
-                Edit in profile
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {shippingFields.map(({ key, label, type, maxLength }) => (
-                <div key={key} className={key === 'street' ? 'sm:col-span-2' : ''}>
-                  <label className="text-[9px] font-black uppercase tracking-widest text-app-text/50 block mb-1">{label}</label>
-                  <input
-                    type={type}
-                    inputMode={key === 'phone' ? 'numeric' : undefined}
-                    maxLength={maxLength}
-                    value={shipping[key]}
-                    onChange={(e) => {
-                      const value = key === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value;
-                      setShipping((s) => ({ ...s, [key]: value }));
-                      if (key === 'phone') setPhoneError('');
-                    }}
-                    className={`w-full rounded-xl border bg-surface-50/70 px-4 py-2.5 text-xs focus:outline-none focus:border-brand-primary transition-colors ${
-                      key === 'phone' && phoneError ? 'border-red-300' : 'border-surface-100'
-                    }`}
-                  />
-                  {key === 'phone' && phoneError ? (
-                    <p className="mt-1 text-[9px] font-bold text-red-500">{phoneError}</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        ) : null}
+          {/* ── Step 2: Shipping Address (decoupled, full-width) ── */}
+          {showCheckout ? (
+            <motion.div
+              initial={SHIPPING_INITIAL}
+              animate={SHIPPING_ANIMATION}
+              className="rounded-3xl border border-white/10 bg-surface-50/40 shadow-soft backdrop-blur-md p-6 space-y-5"
+            >
+              <div className="flex items-center gap-3 pb-2 border-b border-surface-100/50">
+                <div className="h-6 w-6 rounded-full bg-brand-primary flex items-center justify-center text-black text-xs font-black">2</div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-app-text">Shipping Address</h3>
+                <Link to="/profile" className="ml-auto text-xs font-bold text-app-text/40 hover:text-brand-primary underline transition-colors">
+                  Edit in profile
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {shippingFields.map(({ key, label, type, maxLength }) => (
+                  <div key={key} className={key === 'street' ? 'sm:col-span-2' : ''}>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-app-text/50 block mb-1">{label}</label>
+                    <input
+                      type={type}
+                      inputMode={key === 'phone' ? 'numeric' : undefined}
+                      maxLength={maxLength}
+                      value={shipping[key]}
+                      onChange={(e) => {
+                        const value = key === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value;
+                        setShipping((s) => ({ ...s, [key]: value }));
+                        if (key === 'phone') setPhoneError('');
+                      }}
+                      className={`w-full rounded-xl border bg-surface-50/70 px-4 py-2.5 text-xs focus:outline-none focus:border-brand-primary transition-colors text-white ${
+                        key === 'phone' && phoneError ? 'border-red-300' : 'border-white/5'
+                      }`}
+                    />
+                    {key === 'phone' && phoneError ? (
+                      <p className="mt-1 text-xs font-bold text-red-500">{phoneError}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : null}
 
-        {/* Upsell: Frequently Bought Together */}
-        {!showCheckout && cart?.items?.length > 0 ? (
-          <div className="pt-8 border-t border-surface-100/50">
-            <FrequentlyBoughtTogether 
-              productId={cart.items[0].product?._id} 
-              title="Add to your bag?"
-              subtitle="Customers who bought items in your bag also loved these."
-            />
-          </div>
-        ) : null}
+          {/* Upsell: Frequently Bought Together */}
+          {!showCheckout && cart?.items?.length > 0 ? (
+            <div className="pt-8 border-t border-surface-100/50">
+              <FrequentlyBoughtTogether 
+                productId={cart.items[0].product?._id} 
+                title="Add to your bag?"
+                subtitle="Customers who bought items in your bag also loved these."
+              />
+            </div>
+          ) : null}
         </>
       )}
     </div>

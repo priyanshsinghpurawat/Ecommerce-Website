@@ -1,22 +1,22 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2, ArrowRight } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2 } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useCategories } from '../hooks/useCategories.js';
 import { getSubcategories, getProducts } from '../services/api.js';
 import { resolveImageUrl } from '../utils/helpers.js';
-import { FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 import { motion } from 'framer-motion';
+import { Logo } from './Logo.jsx';
 
-// Hoisted motion variants for better performance
+// Hoisted motion animation definitions
 const HEART_ANIMATION = { scale: [1, 1.3, 0.9, 1] };
 const CART_ANIMATION = { scale: [1, 1.25, 0.95, 1] };
 const SPRING_TRANSITION = { duration: 0.35, ease: 'easeOut' };
 
-// Mobile Accordion Component - Memoized to prevent unnecessary re-renders
+// Mobile Category Accordion component
 const MobileCategoryAccordion = React.memo(({ category, onClose }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -56,12 +56,6 @@ const MobileCategoryAccordion = React.memo(({ category, onClose }) => {
 
 MobileCategoryAccordion.displayName = 'MobileCategoryAccordion';
 
-/**
- * NAVBAR COMPONENT
- * 
- * Handles sticky top layout, debounced global autosuggest search,
- * user authentication profile links, and the new Category Mega Menu.
- */
 export const Navbar = () => {
   const { user, isAuthenticated, logoutUser } = useAuth();
   const { cartItemsCount } = useCart();
@@ -70,7 +64,6 @@ export const Navbar = () => {
   const { categories, fetchCategories } = useCategories();
   const navigate = useNavigate();
 
-  // Local State
   const [subcategories, setSubcategories] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -82,7 +75,6 @@ export const Navbar = () => {
   const menuRef = useRef(null);
   const searchRef = useRef(null);
 
-  // Fetch data on mount
   useEffect(() => {
     getSubcategories()
       .then((res) => setSubcategories(res?.data || []))
@@ -90,7 +82,6 @@ export const Navbar = () => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Click outside menus to close
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -104,7 +95,6 @@ export const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced Autosuggest Query
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
       setSuggestions([]);
@@ -128,7 +118,6 @@ export const Navbar = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Group subcategories by parent category ID
   const categoriesWithSubs = useMemo(() => {
     return categories.map(cat => {
       const subs = subcategories.filter(sub => {
@@ -166,28 +155,22 @@ export const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 glass shadow-nav transition-all duration-300">
       <div className="border-b border-black/5 dark:border-white/5">
-        <div className="w-full px-2 md:px-4 h-14 flex items-center justify-between gap-4">
+        <div className="w-full px-4 h-14 flex items-center justify-between gap-4">
 
-          {/* 1. LOGO SECTION (Absolute Viewport Left) */}
-          <Link to="/" className="flex items-center gap-1.5 shrink-0 group relative">
-            <div className="relative">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-brand-primary to-[#00a8cc] text-[15px] font-black text-black group-hover:scale-110 group-hover:rotate-[10deg] transition-all duration-500 shadow-lg group-hover:shadow-brand-primary/50 z-10 relative">
-                M
-              </span>
-              {/* Animated Glow Backdrop */}
-              <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] opacity-0 group-hover:opacity-40 blur-xl transition-all duration-500 rounded-full scale-150" />
-            </div>
+          {/* 1. 3D BADGE MONOGRAM LOGO SECTION */}
+          <Link to="/" className="flex items-center gap-2.5 shrink-0 group relative">
+            {/* 3D-stacked monogram badge */}
+            <Logo className="h-9 w-9 shrink-0 transform group-hover:-translate-y-[1px] group-hover:rotate-[2deg] transition-all duration-300" />
 
-            <div className="flex flex-col -gap-1">
-              <span className="text-[16px] uppercase tracking-widest bg-gradient-to-r from-brand-primary to-[#00a8cc] bg-clip-text text-transparent transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(0,168,204,0.4)] group-hover:brightness-110">
-                <span className="font-black">Mens</span><span className="font-light">Vibe</span>
-              </span>
-              <div className="h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-brand-primary to-[#00a8cc] transition-all duration-500 rounded-full" />
+            {/* Bebas Neue Font branding next to badge */}
+            <div className="flex items-baseline font-bebas text-[22px] tracking-wider leading-none select-none">
+              <span className="text-white font-normal">MENS</span>
+              <span className="text-brand-primary font-black ml-0.5">VIBE</span>
             </div>
           </Link>
 
-          {/* 2. MAIN NAVIGATION (Desktop - Centered) */}
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center px-8">
+          {/* 2. MAIN HORIZONTAL NAVIGATION ROW (Desktop - Centered) */}
+          <nav className="hidden lg:flex items-center gap-1.5 flex-1 justify-center px-4">
             {searchOpen ? (
               <div ref={searchRef} className="relative flex-1 max-w-sm mx-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <form onSubmit={handleSearchSubmit}>
@@ -220,7 +203,7 @@ export const Navbar = () => {
                   </div>
                 </form>
 
-                {/* Suggestions Dropdown */}
+                {/* Search suggestions dropdown */}
                 {suggestions.length > 0 ? (
                   <div className="absolute left-0 right-0 mt-2 rounded-2xl bg-black/90 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden z-50 py-2 divide-y divide-white/5">
                     <div className="px-4 py-1.5 text-[8px] font-black uppercase tracking-wider text-brand-primary">
@@ -265,49 +248,53 @@ export const Navbar = () => {
                 ) : null}
               </div>
             ) : (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                {/* Shop Nav Item */}
                 <NavLink
                   to="/shop"
                   className={({ isActive }) =>
-                    `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-brand-primary underline underline-offset-4' : 'text-app-text/55 hover:text-app-text'
-                    }`
+                    `px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-brand-primary' : 'text-app-text/55 hover:text-app-text'}`
                   }
                 >
                   Shop
                 </NavLink>
 
+                {/* Street Drip Premium Lightning Capsule Pill */}
                 <NavLink
                   to="/street-drip"
-                  className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1 transition-all group/drip"
+                  className={({ isActive }) =>
+                    `px-4 py-1.5 text-[10px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1 rounded-full bg-brand-primary text-black shadow-lg shadow-brand-primary/15 transition-all hover:scale-105 active:scale-95 duration-200 mx-1.5`
+                  }
                 >
-                  {({ isActive }) => (
-                    <>
-                      <Zap className={`h-3 w-3 transition-colors ${isActive ? 'text-brand-primary' : 'text-app-text/55 group-hover/drip:text-brand-primary'}`} />
-                      <span className={`transition-all ${isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-[#00a8cc]' : 'text-app-text/55 group-hover/drip:text-transparent group-hover/drip:bg-clip-text group-hover/drip:bg-gradient-to-r group-hover/drip:from-brand-primary group-hover/drip:to-[#00a8cc]'}`}>
-                        Street Drip
-                      </span>
-                    </>
-                  )}
+                  <Zap className="h-3 w-3 fill-black text-black" />
+                  Street Drip
                 </NavLink>
 
-                {/* Flat quicklinks to subcategories */}
-                {subcategories.slice(0, 3).map((sub) => (
-                  <NavLink
-                    key={sub._id}
-                    to={`/shop?subcategory=${sub._id}`}
-                    className={({ isActive }) =>
-                      `px-3 py-2 text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'
-                      }`
-                    }
-                  >
-                    {sub.name}
-                  </NavLink>
-                ))}
+                {/* Flat subcategory quicklinks */}
+                {subcategories.slice(0, 3).map((sub) => {
+                  const isJeans = sub.name?.toLowerCase().includes('jean');
+                  return (
+                    <NavLink
+                      key={sub._id}
+                      to={`/shop?subcategory=${sub._id}`}
+                      className={({ isActive }) =>
+                        `px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 ${isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'}`
+                      }
+                    >
+                      <span>{sub.name}</span>
+                      {isJeans && (
+                        <span className="bg-brand-primary text-black text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md leading-none shadow-md">
+                          NEW
+                        </span>
+                      )}
+                    </NavLink>
+                  );
+                })}
               </div>
             )}
           </nav>
 
-          {/* 3. ACTION ICONS */}
+          {/* 3. ACTION ICONS & USER PROFILES */}
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
             {!searchOpen ? (
               <button
@@ -356,14 +343,14 @@ export const Navbar = () => {
               ) : null}
             </Link>
 
-            {/* AUTH SECTION */}
+            {/* AUTH ACTIONS OR PROFILE INITIAL AVATAR */}
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
-                {/* Admin/Seller Quick Access Button */}
+                {/* Admin/Seller Quick Dashboard button */}
                 {(user?.role === 'admin' || user?.role === 'seller') ? (
                   <Link
                     to={user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard'}
-                    className="hidden md:flex items-center gap-2   px-4 py-1.5 rounded-xl bg-brand-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-brand-primary/20"
+                    className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-xl bg-brand-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-brand-primary/20"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     {user.role === 'admin' ? 'Admin Console' : 'Vendor Station'}
@@ -373,11 +360,17 @@ export const Navbar = () => {
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 bg-app-text/5 border border-surface-100 hover:bg-app-text/10 transition-all active:scale-95"
+                    className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 bg-app-text/5 border border-surface-100 hover:bg-app-text/10 transition-all active:scale-95 cursor-pointer"
                   >
-                    <div className="h-7 w-7 rounded-full bg-app-text text-brand-primary flex items-center justify-center overflow-hidden border border-white/10">
-                      {user?.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : <User className="h-3.5 w-3.5" />}
-                    </div>
+                    {user?.avatar ? (
+                      <div className="h-7 w-7 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                        <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="h-7 w-7 rounded-full bg-brand-primary text-black flex items-center justify-center font-black text-xs border border-brand-primary/20 uppercase">
+                        {user?.name ? user.name[0] : 'M'}
+                      </div>
+                    )}
                     <ChevronDown className={`h-3 w-3 text-app-text/40 transition-transform duration-300 ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
@@ -393,13 +386,13 @@ export const Navbar = () => {
                         <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-brand-primary hover:bg-white/5 rounded-2xl transition-all">
                           <User className="h-3.5 w-3.5" /> Account Details
                         </Link>
-                        <Link to="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-brand-primary hover:bg-white/5 rounded-2xl transition-all">
+                        <Link to="/profile?tab=orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-brand-primary hover:bg-white/5 rounded-2xl transition-all">
                           <Package className="h-3.5 w-3.5" /> Purchase History
                         </Link>
                       </div>
 
                       <div className="p-2 border-t border-white/5 bg-white/5">
-                        <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors">
+                        <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors cursor-pointer">
                           <LogOut className="h-3.5 w-3.5" /> Sign Out
                         </button>
                       </div>
@@ -422,7 +415,8 @@ export const Navbar = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] rounded-xl blur-md opacity-30 group-hover/sign:opacity-60 transition-opacity duration-300 -z-10" />
                   Sign Up
-                </Link>              </div>
+                </Link>
+              </div>
             )}
 
             {/* Mobile Menu Toggle */}
@@ -433,8 +427,6 @@ export const Navbar = () => {
         </div>
       </div>
 
-
-
       {/* MOBILE MENU */}
       {mobileOpen ? (
         <div className="lg:hidden border-b border-surface-100 bg-black/95 backdrop-blur-3xl px-4 py-6 flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -442,12 +434,12 @@ export const Navbar = () => {
             <Link to="/shop" onClick={() => setMobileOpen(false)} className="rounded-xl bg-brand-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
               Catalog
             </Link>
-            <Link to="/street-drip" onClick={() => setMobileOpen(false)} className="rounded-xl bg-gradient-to-r from-brand-primary to-[#00a8cc] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
+            <Link to="/street-drip" onClick={() => setMobileOpen(false)} className="rounded-xl bg-brand-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-xl">
               Street Drip
             </Link>
           </div>
 
-          {/* Mobile Accordions */}
+          {/* Mobile Categories Accordion */}
           <div className="space-y-3">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-primary mb-2">Shop Categories</p>
             {categoriesWithSubs.map((cat) => (

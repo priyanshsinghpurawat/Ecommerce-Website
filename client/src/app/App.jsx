@@ -9,6 +9,7 @@ import { AuthProvider } from '../context/AuthContext.jsx';
 import { ThemeProvider } from '../context/ThemeContext.jsx';
 import { CartProvider } from '../context/CartContext.jsx';
 import { WishlistProvider } from '../context/WishlistContext.jsx';
+import { SocketProvider } from '../context/SocketContext.jsx';
 
 // Component Layouts
 import { Layout } from '../components/Layout.jsx';
@@ -30,6 +31,7 @@ const OrderDetail = lazy(() => import('../pages/OrderDetail.jsx').then(m => ({ d
 const Profile = lazy(() => import('../pages/Profile.jsx').then(m => ({ default: m.Profile })));
 const Wishlist = lazy(() => import('../pages/Wishlist.jsx').then(m => ({ default: m.Wishlist })));
 const NotFound = lazy(() => import('../pages/NotFound.jsx').then(m => ({ default: m.NotFound })));
+const AboutUs = lazy(() => import('../pages/AboutUs.jsx').then(m => ({ default: m.AboutUs })));
 
 // Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
@@ -70,9 +72,10 @@ function App() {
         <ScrollToTop />
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                {/* Global Toast Alert Notifications */}
+            <SocketProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  {/* Global Toast Alert Notifications */}
                 <Toaster
                   position="top-right"
                   toastOptions={{
@@ -105,6 +108,7 @@ function App() {
                       <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                       <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
                       <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                      <Route path="about" element={<AboutUs />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>
 
@@ -146,8 +150,9 @@ function App() {
                     </Route>
                   </Routes>
                 </Suspense>
-              </WishlistProvider>
-            </CartProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

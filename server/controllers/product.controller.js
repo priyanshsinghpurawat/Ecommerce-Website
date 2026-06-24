@@ -14,7 +14,7 @@ const safeJSON = (v, fallback) => {
 
 /**
  * @desc   Create a product
- * @route  POST /api/v1/products
+ * @route  POST /api/v3/products
  * @access Private/Admin/Seller
  */
 export const createProduct = asyncHandler(async (req, res) => {
@@ -64,7 +64,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 
 /**
  * @desc   List products (search / filter / pagination / sort)
- * @route  GET /api/v1/products
+ * @route  GET /api/v3/products
  * @access Public
  */
 export const getAllProducts = asyncHandler(async (req, res) => {
@@ -102,7 +102,8 @@ export const getAllProducts = asyncHandler(async (req, res) => {
       { path: 'category', select: 'name slug' },
       { path: 'subcategory', select: 'name slug' },
       { path: 'seller', select: 'name email' }
-    ]
+    ],
+    lean: true
   });
 
   const payload = {
@@ -116,7 +117,7 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 
 /**
  * @desc   Get single product
- * @route  GET /api/v1/products/:id
+ * @route  GET /api/v3/products/:id
  * @access Public
  */
 export const getProductById = asyncHandler(async (req, res) => {
@@ -125,7 +126,7 @@ export const getProductById = asyncHandler(async (req, res) => {
   const cached = await getCache(cacheKey);
   if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Product details retrieved successfully (cached)'));
 
-  const product = await ProductRepository.findById(id, [
+  const product = await ProductRepository.findByIdOrSlug(id, [
     { path: 'category', select: 'name slug' },
     { path: 'subcategory', select: 'name slug' },
     { path: 'seller', select: 'name brandName avatar email' },
@@ -143,7 +144,7 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   if (crossSells.length < 4) {
     const fallbackCount = 8 - crossSells.length;
-    const existingIds = [id, ...crossSells.map(p => p._id)];
+    const existingIds = [product._id, ...crossSells.map(p => p._id)];
 
     const subcatFallback = await ProductRepository.find({
       subcategory: product.subcategory?._id,
@@ -158,7 +159,7 @@ export const getProductById = asyncHandler(async (req, res) => {
     
     if (crossSells.length < 4) {
       const remainingCount = 8 - crossSells.length;
-      const allIds = [id, ...crossSells.map(p => p._id)];
+      const allIds = [product._id, ...crossSells.map(p => p._id)];
       const catFallback = await ProductRepository.find({
         category: product.category?._id,
         _id: { $nin: allIds }
@@ -182,7 +183,7 @@ export const getProductById = asyncHandler(async (req, res) => {
 
 /**
  * @desc   Get frequently bought together products
- * @route  GET /api/v1/products/:id/frequently-bought-together
+ * @route  GET /api/v3/products/:id/frequently-bought-together
  * @access Public
  */
 export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
@@ -192,11 +193,15 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   const cached = await getCache(cacheKey);
   if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Frequently bought together products retrieved (cached)'));
 
+  const currentProduct = await ProductRepository.findByIdOrSlug(id, [], true);
+  if (!currentProduct) throw new ApiError(404, 'Product not found');
+  const actualId = currentProduct._id;
+
   // 1. Find orders containing this product
   const frequentCompanions = await Order.aggregate([
-    { $match: { 'items.product': new mongoose.Types.ObjectId(id) } },
+    { $match: { 'items.product': actualId } },
     { $unwind: '$items' },
-    { $match: { 'items.product': { $ne: new mongoose.Types.ObjectId(id) } } },
+    { $match: { 'items.product': { $ne: actualId } } },
     {
       $group: {
         _id: '$items.product',
@@ -232,8 +237,7 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
   // Fallback: If no frequent companions, get some from same subcategory but different from current product
   if (products.length < 4) {
-    const currentProduct = await ProductRepository.findById(id);
-    const existingIds = [id, ...products.map((p) => p._id.toString())];
+    const existingIds = [actualId.toString(), ...products.map((p) => p._id.toString())];
 
     const fallback = await ProductRepository.find(
       {
@@ -261,7 +265,7 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
 /**
  * @desc   Update product
- * @route  PUT /api/v1/products/:id
+ * @route  PUT /api/v3/products/:id
  * @access Private/Admin/Seller
  */
 export const updateProduct = asyncHandler(async (req, res) => {
@@ -344,7 +348,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
 /**
  * @desc   Delete product
- * @route  DELETE /api/v1/products/:id
+ * @route  DELETE /api/v3/products/:id
  * @access Private/Admin/Seller
  */
 export const deleteProduct = asyncHandler(async (req, res) => {

@@ -36,12 +36,34 @@ export const initInventoryCron = () => {
 
       for (const order of expiredOrders) {
         for (const item of order.items) {
-          productUpdates.push({
-            updateOne: {
-              filter: { _id: item.product },
-              update: { $inc: { stock: item.quantity } }
-            }
-          });
+          if (item.size || item.color) {
+            productUpdates.push({
+              updateOne: {
+                filter: {
+                  _id: item.product,
+                  variants: {
+                    $elemMatch: {
+                      size: item.size || '',
+                      color: item.color || ''
+                    }
+                  }
+                },
+                update: {
+                  $inc: {
+                    "variants.$.stock": item.quantity,
+                    stock: item.quantity
+                  }
+                }
+              }
+            });
+          } else {
+            productUpdates.push({
+              updateOne: {
+                filter: { _id: item.product },
+                update: { $inc: { stock: item.quantity } }
+              }
+            });
+          }
         }
         orderUpdates.push(order._id);
       }
@@ -68,7 +90,7 @@ export const initInventoryCron = () => {
   cron.schedule('*/14 * * * *', async () => {
     if (!ENV.SERVER_URL) return;
     try {
-      const url = `${ENV.SERVER_URL}/api/v1/health`;
+      const url = `${ENV.SERVER_URL}/api/v3/health`;
       await axios.get(url);
       console.log(`[Cron] Self-ping successful.`);
     } catch (error) {

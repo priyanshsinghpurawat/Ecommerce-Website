@@ -44,12 +44,12 @@ beforeEach(async () => {
  * Creates a standard user and returns their JWT token.
  */
 async function getUserToken(email = 'user@example.com') {
-  await request(app).post('/api/v1/auth/register').send({
+  await request(app).post('/api/v3/auth/register').send({
     name: 'Regular User',
     email,
     password: 'StrongP@ss123!'
   });
-  const res = await request(app).post('/api/v1/auth/login').send({
+  const res = await request(app).post('/api/v3/auth/login').send({
     email,
     password: 'StrongP@ss123!'
   });
@@ -65,9 +65,9 @@ async function getAdminToken() {
     email: 'admin@mensvibe.com',
     password: 'StrongP@ss123!'
   };
-  await request(app).post('/api/v1/auth/register').send(adminData);
+  await request(app).post('/api/v3/auth/register').send(adminData);
   await User.findOneAndUpdate({ email: adminData.email }, { role: 'admin' });
-  const res = await request(app).post('/api/v1/auth/login').send({
+  const res = await request(app).post('/api/v3/auth/login').send({
     email: adminData.email,
     password: adminData.password
   });
@@ -79,7 +79,7 @@ async function getAdminToken() {
 describe('1. Authentication & Security', () => {
   it('should register a new user and hash their password', async () => {
     const res = await request(app)
-      .post('/api/v1/auth/register')
+      .post('/api/v3/auth/register')
       .send({ name: 'Intern User', email: 'intern@test.com', password: 'StrongP@ss123!' })
       .expect(201);
 
@@ -92,11 +92,11 @@ describe('1. Authentication & Security', () => {
 
   it('should return a valid JWT token on successful login', async () => {
     await request(app)
-      .post('/api/v1/auth/register')
+      .post('/api/v3/auth/register')
       .send({ name: 'Tester', email: 'test@login.com', password: 'StrongP@ss123!' });
 
     const res = await request(app)
-      .post('/api/v1/auth/login')
+      .post('/api/v3/auth/login')
       .send({ email: 'test@login.com', password: 'StrongP@ss123!' })
       .expect(200);
 
@@ -105,23 +105,23 @@ describe('1. Authentication & Security', () => {
 
   it('should reject login with an incorrect password', async () => {
     await request(app)
-      .post('/api/v1/auth/register')
+      .post('/api/v3/auth/register')
       .send({ name: 'Tester', email: 'wrong@pass.com', password: 'StrongP@ss123!' });
 
     await request(app)
-      .post('/api/v1/auth/login')
+      .post('/api/v3/auth/login')
       .send({ email: 'wrong@pass.com', password: 'WrongP@ss123!' })
       .expect(401);
   });
 
   it('should protect /auth/me and only allow valid tokens', async () => {
     // 1. Fail without token
-    await request(app).get('/api/v1/auth/me').expect(401);
+    await request(app).get('/api/v3/auth/me').expect(401);
 
     // 2. Succeed with valid token
     const token = await getUserToken();
     const res = await request(app)
-      .get('/api/v1/auth/me')
+      .get('/api/v3/auth/me')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
@@ -136,14 +136,14 @@ describe('2. Categories & Subcategories', () => {
 
     // User fails (403 Forbidden)
     await request(app)
-      .post('/api/v1/categories')
+      .post('/api/v3/categories')
       .set('Authorization', `Bearer ${userToken}`)
       .send({ name: 'Forbidden Tier' })
       .expect(403);
 
     // Admin succeeds
     const res = await request(app)
-      .post('/api/v1/categories')
+      .post('/api/v3/categories')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'New Arrivals' })
       .expect(201);
@@ -156,7 +156,7 @@ describe('2. Categories & Subcategories', () => {
 
     // Create
     const createRes = await request(app)
-      .post('/api/v1/categories')
+      .post('/api/v3/categories')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Gadgets' })
       .expect(201);
@@ -164,18 +164,18 @@ describe('2. Categories & Subcategories', () => {
 
     // Update
     await request(app)
-      .put(`/api/v1/categories/${catId}`)
+      .put(`/api/v3/categories/${catId}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Electronic Gadgets' })
       .expect(200);
 
     // List & Verify
-    const listRes = await request(app).get('/api/v1/categories').expect(200);
+    const listRes = await request(app).get('/api/v3/categories').expect(200);
     assert.ok(listRes.body.data.some(c => c.name === 'Electronic Gadgets'));
 
     // Delete
     await request(app)
-      .delete(`/api/v1/categories/${catId}`)
+      .delete(`/api/v3/categories/${catId}`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
   });
@@ -192,11 +192,11 @@ describe('3. Product Management & Catalog', () => {
     ]);
 
     // Test Search
-    const searchRes = await request(app).get('/api/v1/products?search=shirt').expect(200);
+    const searchRes = await request(app).get('/api/v3/products?search=shirt').expect(200);
     assert.equal(searchRes.body.data.products.length, 1);
 
     // Test Pagination (Limit 1)
-    const pageRes = await request(app).get('/api/v1/products?page=1&limit=1').expect(200);
+    const pageRes = await request(app).get('/api/v3/products?page=1&limit=1').expect(200);
     assert.equal(pageRes.body.data.products.length, 1);
     assert.ok(pageRes.body.data.pagination.totalPages >= 2);
   });
@@ -204,7 +204,7 @@ describe('3. Product Management & Catalog', () => {
   it('should protect against NoSQL injection in the search field', async () => {
     // Attempting to pass an object instead of a string to search
     await request(app)
-      .get('/api/v1/products?search[$gt]=')
+      .get('/api/v3/products?search[$gt]=')
       .expect(400, 'We must block object injection to prevent security leaks');
   });
 
@@ -237,14 +237,14 @@ describe('4. Cart & Checkout (Complex Flows)', () => {
 
     // Valid add
     await request(app)
-      .post('/api/v1/cart/add')
+      .post('/api/v3/cart/add')
       .set('Authorization', `Bearer ${token}`)
       .send({ productId: product._id, quantity: 2 })
       .expect(200);
 
     // Invalid add (too many)
     await request(app)
-      .post('/api/v1/cart/add')
+      .post('/api/v3/cart/add')
       .set('Authorization', `Bearer ${token}`)
       .send({ productId: product._id, quantity: 10 })
       .expect(400);
@@ -263,11 +263,11 @@ describe('4. Cart & Checkout (Complex Flows)', () => {
     });
 
     // 1. Add to cart
-    await request(app).post('/api/v1/cart/add').set('Authorization', `Bearer ${token}`).send({ productId: product._id, quantity: 1 });
+    await request(app).post('/api/v3/cart/add').set('Authorization', `Bearer ${token}`).send({ productId: product._id, quantity: 1 });
 
     // 2. Checkout
     const orderRes = await request(app)
-      .post('/api/v1/orders')
+      .post('/api/v3/orders')
       .set('Authorization', `Bearer ${token}`)
       .send({
         shippingAddress: {
@@ -296,15 +296,15 @@ describe('4. Cart & Checkout (Complex Flows)', () => {
     const user2 = await getUserToken('u2@test.com');
 
     // Both add the same single unit to their cart
-    await request(app).post('/api/v1/cart/add').set('Authorization', `Bearer ${user1}`).send({ productId: product._id, quantity: 1 });
-    await request(app).post('/api/v1/cart/add').set('Authorization', `Bearer ${user2}`).send({ productId: product._id, quantity: 1 });
+    await request(app).post('/api/v3/cart/add').set('Authorization', `Bearer ${user1}`).send({ productId: product._id, quantity: 1 });
+    await request(app).post('/api/v3/cart/add').set('Authorization', `Bearer ${user2}`).send({ productId: product._id, quantity: 1 });
 
     const ship = { fullName: 'X', phone: '9876543210', street: 'S', city: 'C', state: 'ST', zipCode: '123456' };
 
     // Simultaneous checkout
     const [res1, res2] = await Promise.all([
-      request(app).post('/api/v1/orders').set('Authorization', `Bearer ${user1}`).send({ shippingAddress: ship }),
-      request(app).post('/api/v1/orders').set('Authorization', `Bearer ${user2}`).send({ shippingAddress: ship })
+      request(app).post('/api/v3/orders').set('Authorization', `Bearer ${user1}`).send({ shippingAddress: ship }),
+      request(app).post('/api/v3/orders').set('Authorization', `Bearer ${user2}`).send({ shippingAddress: ship })
     ]);
 
     const statuses = [res1.status, res2.status];

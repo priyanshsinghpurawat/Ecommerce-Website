@@ -96,5 +96,7 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ trackingNumber: 1 });
 orderSchema.index({ "items.product": 1 }); // Optimize vendor queries
+orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 export const Order = mongoose.model('Order', orderSchema);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getOrderById } from '../services/api.js';
 import { Loader2, ArrowLeft, MapPin } from 'lucide-react';
@@ -9,6 +9,14 @@ export const OrderDetail = () => {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Use a ref to keep track of the latest order state without triggering effect re-runs
+  const orderRef = useRef(order);
+
+  // Sync ref whenever order changes
+  useEffect(() => {
+    orderRef.current = order;
+  }, [order]);
 
   useEffect(() => {
     let active = true;
@@ -26,7 +34,15 @@ export const OrderDetail = () => {
     
     load(true);
 
+    const TERMINAL_STATES = ['delivered', 'cancelled'];
+
     const intervalId = setInterval(() => {
+      // Always read the latest order state from the ref to avoid stale closures
+      const currentOrder = orderRef.current;
+      if (currentOrder && TERMINAL_STATES.includes(currentOrder.status)) {
+        clearInterval(intervalId);
+        return;
+      }
       load(false);
     }, 5000);
 
@@ -76,9 +92,22 @@ export const OrderDetail = () => {
             Placed on {new Date(order.createdAt).toLocaleString('en-IN')}
           </p>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 h-fit">
-          {order.status}
-        </span>
+        {(() => {
+          const STATUS_CLASSES = {
+            pending: 'bg-amber-50 text-amber-700 border-amber-100',
+            confirmed: 'bg-blue-50 text-blue-700 border-blue-100',
+            partially_shipped: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+            shipped: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+            delivered: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
+            cancelled: 'bg-red-50 text-red-700 border-red-100'
+          };
+          const cls = STATUS_CLASSES[order.status] || 'bg-surface-50 text-app-text/70 border-surface-200';
+          return (
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border h-fit ${cls}`}>
+              {order.status}
+            </span>
+          );
+        })()}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -93,7 +122,7 @@ export const OrderDetail = () => {
             </thead>
             <tbody className="divide-y divide-surface-100/40">
               {order.items.map((item, idx) => (
-                <tr key={idx}>
+                <tr key={item._id || idx}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <img
@@ -129,7 +158,7 @@ export const OrderDetail = () => {
               <span className="font-mono font-bold">₹{order.subtotal.toFixed(2)}</span>
             </div>
             {order.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald-600">
+              <div className="flex justify-between text-brand-primary">
                 <span>Discount {order.couponCode ? `(${order.couponCode})` : ''}</span>
                 <span className="font-mono font-bold">- ₹{order.discountAmount.toFixed(2)}</span>
               </div>
@@ -145,7 +174,10 @@ export const OrderDetail = () => {
               <span className="font-mono">₹{order.total.toFixed(2)}</span>
             </div>
             <p className="text-[9px] text-app-text/40 uppercase">
-              Payment: {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Demo'}
+              Payment: {(() => {
+                const METHOD_LABELS = { cod: 'Cash on Delivery', razorpay: 'Razorpay / Prepaid', demo: 'Demo Payment' };
+                return METHOD_LABELS[order.paymentMethod] || order.paymentMethod;
+              })()}
             </p>
           </div>
 
@@ -166,12 +198,12 @@ export const OrderDetail = () => {
           <div className="rounded-2xl border border-white/60 bg-surface-50/40 p-5 shadow-soft">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold uppercase tracking-wider text-[10px] text-app-text">Order Status</h3>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-primary/10 border border-brand-primary/20">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand-primary"></span>
                 </span>
-                <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
+                <span className="text-[8px] font-black text-brand-primary uppercase tracking-widest">Live Sync</span>
               </div>
             </div>
             {order.status === 'cancelled' ? (
@@ -181,7 +213,10 @@ export const OrderDetail = () => {
             ) : (
               <div className="relative space-y-6">
                 <div className="absolute left-[11px] top-3 bottom-3 w-px bg-surface-200" />
-                {['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered'].map((stage, idx) => {
+                {(() => {
+                  const stages = order.paymentMethod === 'cod'
+                    ? ['confirmed', 'partially_shipped', 'shipped', 'delivered']
+                    : ['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered'];
                   const statusMap = {
                     pending: 0,
                     confirmed: 1,
@@ -190,35 +225,33 @@ export const OrderDetail = () => {
                     delivered: 4
                   };
                   const currentIndex = statusMap[order.status] ?? 0;
-                  const isCompleted = idx <= currentIndex;
-                  const isCurrent = idx === currentIndex;
-                  
-                  return (
-                    <div key={stage} className="relative flex items-start gap-4">
-                      <div className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 bg-surface-50 ${
-                        isCompleted ? 'border-brand-primary bg-brand-primary/20' : 'border-surface-200'
-                      }`}>
-                        {isCompleted && <div className="h-2 w-2 rounded-full bg-brand-primary" />}
-                      </div>
-                      <div className="pt-0.5">
-                        <p className={`text-[11px] font-black uppercase tracking-widest ${
-                          isCompleted ? 'text-app-text' : 'text-app-text/40'
-                        }`}>
-                          {stage.replace('_', ' ')}
-                        </p>
-                        {isCurrent && (
-                          <p className="text-[9px] font-bold text-app-text/50 uppercase tracking-widest mt-1">
-                            {stage === 'pending' && 'Order placed successfully'}
-                            {stage === 'confirmed' && 'Fulfillment in progress'}
-                            {stage === 'partially_shipped' && 'Some of your items have shipped'}
-                            {stage === 'shipped' && 'All items handed over to delivery partners'}
-                            {stage === 'delivered' && 'All items delivered successfully'}
+                  return stages.map((stage) => {
+                    const stageIndex = statusMap[stage];
+                    const isCompleted = stageIndex <= currentIndex;
+                    const isCurrent = stageIndex === currentIndex;
+                    return (
+                      <div key={stage} className="relative flex items-start gap-4">
+                        <div className={['relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 bg-surface-50', isCompleted ? 'border-brand-primary bg-brand-primary/20' : 'border-surface-200'].join(' ')}>
+                          {isCompleted && <div className="h-2 w-2 rounded-full bg-brand-primary" />}
+                        </div>
+                        <div className="pt-0.5">
+                          <p className={['text-[11px] font-black uppercase tracking-widest', isCompleted ? 'text-app-text' : 'text-app-text/40'].join(' ')}>
+                            {stage.replace('_', ' ')}
                           </p>
-                        )}
+                          {isCurrent && (
+                            <p className="text-[9px] font-bold text-app-text/50 uppercase tracking-widest mt-1">
+                              {stage === 'pending' && 'Order placed successfully'}
+                              {stage === 'confirmed' && 'Fulfillment in progress'}
+                              {stage === 'partially_shipped' && 'Some of your items have shipped'}
+                              {stage === 'shipped' && 'All items handed over to delivery partners'}
+                              {stage === 'delivered' && 'All items delivered successfully'}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>

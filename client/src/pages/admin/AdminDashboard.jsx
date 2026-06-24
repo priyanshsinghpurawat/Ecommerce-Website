@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getProducts, getCategories, getAllOrders, getOrderAnalytics } from '../../services/api.js';
 import StockHeatmap from '../../components/admin/StockHeatmap.jsx';
 import RevenueAnalytics from '../../components/admin/RevenueAnalytics.jsx';
-import { TrendingUp, Package } from 'lucide-react';
+import { TrendingUp, Package, Download } from 'lucide-react';
 
 /**
  * Admin Dashboard overview page with stats cards.
@@ -68,10 +68,27 @@ export const AdminDashboard = () => {
   }, []);
 
   const formatCurrency = (val) => `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+  const handleExportCSV = () => {
+    // In a real app, you might fetch with Authorization header, 
+    // but since we use cookies for auth, window.open works.
+    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v3/orders/export/csv`, '_blank');
+  };
   
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-700">
       
+      {/* Header Actions */}
+      <div className="flex justify-end">
+        <button 
+          onClick={handleExportCSV}
+          className="flex items-center gap-2 bg-brand-primary text-black px-5 py-2 rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-colors"
+        >
+          <Download className="h-4 w-4" />
+          Export Sales CSV
+        </button>
+      </div>
+
       {/* 1. Primary Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-app-card p-8 rounded-[2.5rem] border border-border-base shadow-soft group relative overflow-hidden">

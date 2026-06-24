@@ -4,16 +4,9 @@ import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
-import {
-  asyncHandler,
-  ApiError,
-  ApiResponse,
-  calculateCouponDiscount,
-  computeCartSubtotal,
-  getUnitPrice,
-  generateOrderNumber,
-  validateShippingAddress
-} from '../utils/helpers.js';
+import Papa from 'papaparse';
+import { ApiResponse, ApiError, asyncHandler, calculateCouponDiscount, computeCartSubtotal, getUnitPrice, generateOrderNumber, validateShippingAddress } from '../utils/helpers.js';
+import { getIO } from '../config/socket.js';
 
 const GST_TAX_RATE = 0.18;
 const VALID_ORDER_STATUSES = ['confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'];
@@ -33,7 +26,7 @@ const VALID_TRANSITIONS = {
 
 /**
  * @desc    Place order from cart
- * @route   POST /api/v1/orders
+ * @route   POST /api/v3/orders
  * @access  Private
  */
 export const createOrder = asyncHandler(async (req, res) => {
@@ -59,11 +52,11 @@ export const createOrder = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get logged-in user's orders
- * @route   GET /api/v1/orders/my
+ * @route   GET /api/v3/orders/my
  * @access  Private
  */
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).lean();
 
   return res
     .status(200)
@@ -72,11 +65,11 @@ export const getMyOrders = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get single order by id
- * @route   GET /api/v1/orders/:id
+ * @route   GET /api/v3/orders/:id
  * @access  Private
  */
 export const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id).populate('user', 'name email');
+  const order = await Order.findById(req.params.id).populate('user', 'name email').lean();
 
   if (!order) {
     throw new ApiError(404, 'Order not found');
@@ -93,7 +86,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get all orders (Admin)
- * @route   GET /api/v1/orders
+ * @route   GET /api/v3/orders
  * @access  Private/Admin
  */
 export const getAllOrders = asyncHandler(async (req, res) => {
@@ -115,7 +108,8 @@ export const getAllOrders = asyncHandler(async (req, res) => {
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limitNum),
+      .limit(limitNum)
+      .lean(),
     Order.countDocuments(query)
   ]);
 
@@ -134,7 +128,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update order status (Admin)
- * @route   PATCH /api/v1/orders/:id/status
+ * @route   PATCH /api/v3/orders/:id/status
  * @access  Private/Admin
  */
 export const updateOrderStatus = asyncHandler(async (req, res) => {
@@ -185,6 +179,18 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   recalculateRootOrderStatus(order);
   await order.save();
 
+  try {
+    const io = getIO();
+    io.to(order.user.toString()).emit('orderStatusUpdated', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      items: order.items
+    });
+  } catch (err) {
+    console.error('Socket emission failed:', err);
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, order, 'Order status updated successfully'));
@@ -192,7 +198,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Get order analytics for dashboard (Admin)
- * @route   GET /api/v1/orders/analytics
+ * @route   GET /api/v3/orders/analytics
  * @access  Private/Admin
  */
 export const getOrderAnalytics = asyncHandler(async (req, res) => {
@@ -210,6 +216,35 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { dailyRevenue, categoryPerformance, peakHours }, 'Analytics retrieved successfully'));
 });
 
+/**
+ * @desc    Export orders to CSV (Admin)
+ * @route   GET /api/v3/orders/export/csv
+ * @access  Private/Admin
+ */
+export const exportOrdersCSV = asyncHandler(async (req, res) => {
+  const orders = await Order.find({ status: { $ne: 'cancelled' } })
+    .populate('user', 'name email')
+    .sort({ createdAt: -1 });
+
+  const csvData = orders.map(o => ({
+    OrderNumber: o.orderNumber,
+    Date: new Date(o.createdAt).toLocaleDateString(),
+    CustomerName: o.user?.name || 'Guest',
+    CustomerEmail: o.user?.email || 'N/A',
+    Status: o.status,
+    ItemsCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
+    Subtotal: o.subtotal,
+    Tax: o.taxAmount,
+    Discount: o.discountAmount,
+    Total: o.total,
+    PaymentMethod: o.paymentMethod
+  }));
+
+  const csvString = Papa.unparse(csvData);
+  res.header('Content-Type', 'text/csv');
+  res.attachment('sales_report.csv');
+  return res.status(200).send(csvString);
+});
 
 /* -------------------------------------------------------------------------- */
 /*                               PRIVATE HELPERS                              */
@@ -415,7 +450,15 @@ async function incrementCouponUsage(couponId, session) {
 }
 
 function isAuthorizedToViewOrder(order, user) {
-  return order.user._id.toString() === user._id.toString() || user.role === 'admin';
+  if (user.role === 'admin') return true;
+  if (order.user?._id?.toString() === user._id.toString() || order.user?.toString() === user._id.toString()) return true;
+  if (user.role === 'seller') {
+    return order.items.some(item => {
+      const vendorId = typeof item.vendor === 'object' ? item.vendor?._id : item.vendor;
+      return vendorId?.toString() === user._id.toString();
+    });
+  }
+  return false;
 }
 
 function buildOrderQuery({ status, search }) {

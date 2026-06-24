@@ -5,14 +5,10 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    minify: 'esbuild',
     sourcemap: false, // Prevents easy inspection of frontend code in production
   },
-  esbuild: {
-    drop: ['console', 'debugger'], // Strips console logs and debuggers from prod builds
-  },
   server: {
-    host: true,
+    host: !!process.env.VITE_PROXY_URL,
     port: 5173,
     strictPort: false,
     proxy: {
@@ -22,8 +18,23 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      thresholds: {
+        lines: 40,
+        functions: 20,
+        branches: 40,
+        statements: 40
+      }
+    }
+  },
   preview: {
-    host: true,
+    host: !!process.env.VITE_PROXY_URL,
     port: 5173,
   },
+  optimizeDeps: {
+    exclude: ['socket.io-client']
+  }
 })

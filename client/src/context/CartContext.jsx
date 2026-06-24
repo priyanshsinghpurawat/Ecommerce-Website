@@ -138,6 +138,11 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const clearLocalCart = () => {
+    setCart(null);
+    computeAggregates([]);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -150,7 +155,8 @@ export const CartProvider = ({ children }) => {
         addToCart,
         updateQuantity,
         removeFromCart,
-        clearCart
+        clearCart,
+        clearLocalCart
       }}
     >
       {children}

@@ -86,7 +86,7 @@ export const SellerProducts = () => {
                 <div className="flex items-center justify-between border-t border-border-base pt-3">
                   <span className="font-mono font-black text-app-text">₹{p.price.toLocaleString('en-IN')}</span>
                   <Link
-                    to={`/product/${p._id}`}
+                    to={`/product/${p.slug || p._id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-[10px] font-bold uppercase text-brand-primary hover:underline"

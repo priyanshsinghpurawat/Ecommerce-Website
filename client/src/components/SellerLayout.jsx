@@ -12,6 +12,7 @@ import {
   Plus,
   Tag
 } from 'lucide-react';
+import { Logo } from './Logo.jsx';
 
 export const SellerLayout = () => {
   const { user, logoutUser } = useAuth();
@@ -37,7 +38,7 @@ export const SellerLayout = () => {
       <aside className="hidden md:flex md:w-[260px] flex-col bg-surface-100 text-app-text border-r border-border-base shadow-soft">
         <div className="h-[72px] flex items-center px-6 border-b border-border-base">
           <Link to="/" className="flex items-center gap-2 group">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md gradient-primary text-xs font-black text-black">M</span>
+            <Logo className="h-8 w-8" />
             <span className="text-sm font-black tracking-tight text-app-text uppercase">
               Mens<span className="italic text-brand-primary">Vibe</span> <span className="text-[9px] bg-brand-primary text-black px-1.5 py-0.5 rounded-full ml-1 font-black">SELLER</span>
             </span>

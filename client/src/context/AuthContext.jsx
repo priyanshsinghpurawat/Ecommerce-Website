@@ -111,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
+    window.dispatchEvent(new Event('auth:unauthorized'));
   };
 
   return (

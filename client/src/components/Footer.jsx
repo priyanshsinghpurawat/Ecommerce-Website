@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Phone, Camera, MessageSquare, Share2, Sparkles, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Logo } from './Logo.jsx';
 
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -21,15 +22,14 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         {/* Brand Section */}
         <div className="space-y-6">
-          <Link to="/" className="flex items-center gap-2 group">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary text-sm font-black text-black transition-transform group-hover:scale-110">
-              M
-            </span>
-            <span className="text-xl font-black tracking-tighter text-app-text uppercase italic">
-              Mens<span className="text-brand-primary">Vibe</span>
-            </span>
+          <Link to="/" className="flex items-center gap-3 shrink-0 group relative mb-2">
+            <Logo className="h-12 w-12 shrink-0 transform group-hover:-translate-y-[2px] group-hover:rotate-[2deg] transition-all duration-300" />
+            <div className="flex items-baseline font-bebas text-[42px] tracking-wider leading-none select-none">
+              <span className="text-app-text font-normal">MENS</span>
+              <span className="text-brand-primary font-black ml-1">VIBE</span>
+            </div>
           </Link>
-          <p className="text-xs text-app-text/60 leading-relaxed max-w-xs">
+          <p className="text-sm text-app-text/60 leading-relaxed max-w-xs font-medium">
             Redefining men's style with a curated collection of premium streetwear, sportswear, and handcrafted footwear.
             Quality-obsessed, customer-driven.
           </p>
@@ -49,21 +49,22 @@ export const Footer = () => {
         {/* Navigation */}
         <div className="grid grid-cols-2 gap-8 lg:col-span-2">
           <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-app-text mb-6">Shop Catalog</h4>
-            <ul className="space-y-3">
-              <li><Link to="/shop" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Everything</Link></li>
-              <li><Link to="/shop?sort=latest" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">New Arrivals</Link></li>
-              <li><Link to="/shop?badge=sale" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Sale & Offers</Link></li>
-              <li><Link to="/shop?category=Footwear" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Footwear</Link></li>
+            <h4 className="text-xs font-black uppercase tracking-widest text-app-text mb-6">Shop Catalog</h4>
+            <ul className="space-y-4">
+              <li><Link to="/shop" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Everything</Link></li>
+              <li><Link to="/shop?sort=latest" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">New Arrivals</Link></li>
+              <li><Link to="/shop?badge=sale" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Sale & Offers</Link></li>
+              <li><Link to="/shop?category=Footwear" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Footwear</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-app-text mb-6">Company</h4>
-            <ul className="space-y-3">
-              <li><Link to="/orders" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Track Orders</Link></li>
-              <li><Link to="/wishlist" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">My Wishlist</Link></li>
-              <li><Link to="/profile" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Account Details</Link></li>
-              <li><Link to="/login" className="text-xs text-app-text/50 hover:text-brand-primary transition-colors">Sign In</Link></li>
+            <h4 className="text-xs font-black uppercase tracking-widest text-app-text mb-6">Company</h4>
+            <ul className="space-y-4">
+              <li><Link to="/about" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">About Us</Link></li>
+              <li><Link to="/orders" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Track Orders</Link></li>
+              <li><Link to="/wishlist" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">My Wishlist</Link></li>
+              <li><Link to="/profile" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Account Details</Link></li>
+              <li><Link to="/login" className="text-sm font-medium text-app-text/60 hover:text-brand-primary transition-colors">Sign In</Link></li>
             </ul>
           </div>
         </div>
@@ -71,56 +72,56 @@ export const Footer = () => {
         {/* Newsletter & Contact */}
         <div className="space-y-6">
           <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-app-text mb-4">Newsletter</h4>
-            <p className="text-xs text-app-text/60 mb-3">Subscribe to get updates on weekly drops and offers.</p>
+            <h4 className="text-xs font-black uppercase tracking-widest text-app-text mb-4">Newsletter</h4>
+            <p className="text-sm text-app-text/60 mb-3 font-medium">Subscribe to get updates on weekly drops and offers.</p>
             <form onSubmit={handleSubscribe} className="flex gap-2">
               <input
                 type="email"
                 placeholder="Your email address"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-surface-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-brand-primary transition-colors"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-surface-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-brand-primary transition-colors shadow-inner"
               />
               <button
                 type="submit"
-                className="bg-brand-primary hover:opacity-80 text-black p-2 rounded-xl transition-all"
+                className="bg-brand-primary hover:bg-brand-primary/90 text-black px-4 rounded-xl transition-all shadow-md"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               </button>
             </form>
           </div>
 
-          <div className="space-y-3 pt-4 border-t border-surface-100/50">
+          <div className="space-y-4 pt-5 border-t border-surface-100/50">
             <div className="flex items-start gap-3">
-              <MapPin className="h-4 w-4 text-brand-primary shrink-0 mt-0.5" />
-              <p className="text-xs text-app-text/60 leading-tight">
+              <MapPin className="h-5 w-5 text-brand-primary shrink-0 mt-0.5" />
+              <p className="text-sm text-app-text/60 font-medium">
                 Design Studio, C-Scheme,<br />Jaipur, Rajasthan, 302001
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-brand-primary shrink-0" />
-              <p className="text-xs text-app-text/60">+91 141 2345678</p>
+              <Phone className="h-5 w-5 text-brand-primary shrink-0" />
+              <p className="text-sm text-app-text/60 font-medium">+91 141 2345678</p>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-surface-100/50">
-            <p className="text-[9px] font-bold uppercase text-emerald-600 mb-1 flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3" /> Exclusive Offer
+          <div className="pt-4 border-t border-surface-100/50">
+            <p className="text-sm font-black uppercase text-brand-primary mb-1 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" /> Exclusive Offer
             </p>
-            <p className="text-[11px] text-app-text/40 italic">First order? Use <span className="text-app-text font-bold not-italic">WELCOME50</span> for ₹50 off</p>
+            <p className="text-xs text-app-text/60 font-medium italic">First order? Use <span className="text-app-text font-black not-italic text-sm">WELCOME50</span> for ₹50 off</p>
           </div>
         </div>
       </div>
       
       <div className="border-t border-surface-100/50 py-8 bg-surface-50/30">
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-app-text/40 font-medium">
-            © {new Date().getFullYear()} <span className="font-bold text-app-text/60">MensVibe</span>. Crafted for the Modern Man.
+          <p className="text-xs text-app-text/50 font-medium">
+            © {new Date().getFullYear()} <span className="font-black text-app-text/80">MensVibe</span>. Crafted for the Modern Man.
           </p>
           <div className="flex items-center gap-6">
-            <Link to="#" className="text-[9px] font-bold uppercase tracking-tighter text-app-text/30 hover:text-app-text transition-colors">Privacy Policy</Link>
-            <Link to="#" className="text-[9px] font-bold uppercase tracking-tighter text-app-text/30 hover:text-app-text transition-colors">Terms of Service</Link>
-            <Link to="#" className="text-[9px] font-bold uppercase tracking-tighter text-app-text/30 hover:text-app-text transition-colors">Shipping Info</Link>
+            <Link to="#" className="text-[10px] font-black uppercase tracking-widest text-app-text/40 hover:text-brand-primary transition-colors">Privacy Policy</Link>
+            <Link to="#" className="text-[10px] font-black uppercase tracking-widest text-app-text/40 hover:text-brand-primary transition-colors">Terms of Service</Link>
+            <Link to="#" className="text-[10px] font-black uppercase tracking-widest text-app-text/40 hover:text-brand-primary transition-colors">Shipping Info</Link>
           </div>
         </div>
       </div>

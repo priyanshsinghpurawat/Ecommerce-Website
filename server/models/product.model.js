@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import slugify from 'slugify';
 
 const productSchema = new mongoose.Schema(
   {
@@ -7,6 +8,11 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product title is required"],
       trim: true,
       maxLength: [120, "Product title cannot exceed 120 characters"]
+    },
+    slug: {
+      type: String,
+      unique: true,
+      index: true
     },
     description: {
       type: String,
@@ -121,7 +127,7 @@ productSchema.index({ 'variants.color': 1 });             // Color filter
 productSchema.index({ badge: 1, createdAt: -1 });         // Badge + sort
 productSchema.index({ rating: -1, soldCount: -1 });       // Popularity sort
 
-// Mongoose validation hook for pricing logic
+// Mongoose validation hook for pricing logic and slug generation
 productSchema.pre("validate", function (next) {
   // Ensure that discountedPrice is strictly less than price
   if (this.discountedPrice !== undefined && this.discountedPrice >= this.price) {
@@ -130,6 +136,12 @@ productSchema.pre("validate", function (next) {
       `Discounted price (${this.discountedPrice}) must be strictly less than the original price (${this.price})`
     );
   }
+
+  // Generate slug if title is modified or slug is missing
+  if (this.title && (this.isModified('title') || !this.slug)) {
+    this.slug = slugify(this.title, { lower: true, strict: true });
+  }
+
   next();
 });
 

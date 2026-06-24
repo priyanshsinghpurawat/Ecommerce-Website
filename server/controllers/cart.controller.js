@@ -40,7 +40,7 @@ const getPopulatedCart = async (userId) => {
 
 /**
  * @desc    Get current user's cart
- * @route   GET /api/v1/cart
+ * @route   GET /api/v3/cart
  * @access  Private
  */
 export const getCart = asyncHandler(async (req, res) => {
@@ -53,7 +53,7 @@ export const getCart = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Add product to cart or increment its quantity
- * @route   POST /api/v1/cart/add
+ * @route   POST /api/v3/cart/add
  * @access  Private
  */
 export const addToCart = asyncHandler(async (req, res) => {
@@ -118,7 +118,7 @@ export const addToCart = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Update specific item quantity in cart
- * @route   PUT /api/v1/cart/update
+ * @route   PUT /api/v3/cart/update
  * @access  Private
  */
 export const updateCartItemQuantity = asyncHandler(async (req, res) => {
@@ -176,7 +176,7 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Remove an item from cart
- * @route   DELETE /api/v1/cart/remove/:itemId
+ * @route   DELETE /api/v3/cart/remove/:itemId
  * @access  Private
  */
 export const removeFromCart = asyncHandler(async (req, res) => {
@@ -204,7 +204,7 @@ export const removeFromCart = asyncHandler(async (req, res) => {
 
 /**
  * @desc    Clear all items in cart
- * @route   DELETE /api/v1/cart/clear
+ * @route   DELETE /api/v3/cart/clear
  * @access  Private
  */
 export const clearCart = asyncHandler(async (req, res) => {

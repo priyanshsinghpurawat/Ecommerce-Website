@@ -4,6 +4,9 @@ import { ENV } from './config/env.js';
 import connectDB from './config/db.js';
 import { connectRedis, redisClient } from './config/redis.js';
 import { app } from './app.js';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { setupSocket } from './config/socket.js';
 import { initInventoryCron } from './utils/cron.js';
 import { clearCache } from './utils/cache.js';
 
@@ -24,7 +27,17 @@ const startServer = async () => {
     // Initialize background tasks
     initInventoryCron();
 
-    const server = app.listen(ENV.PORT, () => {
+    const httpServer = createServer(app);
+    const io = new Server(httpServer, {
+      cors: {
+        origin: ENV.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || true,
+        credentials: true
+      }
+    });
+    
+    setupSocket(io);
+
+    const server = httpServer.listen(ENV.PORT, () => {
       console.log(`MensVibe API → http://localhost:${ENV.PORT} [${ENV.NODE_ENV}]`);
     });
 

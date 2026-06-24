@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=League+Spartan:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -64,6 +64,7 @@
 
   --font-sans: 'League Spartan', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-roboto: 'Roboto', 'Inter', sans-serif;
+  --font-bebas: 'Bebas Neue', sans-serif;
 }
 
 @layer base {
@@ -114,6 +115,70 @@
   :root:not(.theme-light) .glass {
     background-color: rgba(18, 18, 18, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .badge-glass {
+    background-color: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .theme-light .badge-glass {
+    background-color: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.85);
+  }
+
+  .glass-card-premium {
+    background-color: rgba(255, 255, 255, 0.03);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .theme-light .glass-card-premium {
+    background-color: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(18, 18, 18, 0.06);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .glass-input {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--color-app-text);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .theme-light .glass-input {
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .glass-input:focus {
+    border-color: var(--color-brand-primary) !important;
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 0 10px rgba(193, 255, 0, 0.08);
+    outline: none;
+  }
+
+  .theme-light .glass-input:focus {
+    background-color: rgba(0, 0, 0, 0.03);
+    box-shadow: 0 0 10px rgba(193, 255, 0, 0.05);
+  }
+
+  .glass-modal {
+    background-color: rgba(18, 18, 18, 0.85);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .theme-light .glass-modal {
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(18, 18, 18, 0.1);
   }
 
   .gradient-primary {
