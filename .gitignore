@@ -68,3 +68,6 @@ Dockerfile
 
 # Jest example files
 jest-tests/
+
+# Trunk CLI launcher
+trunk.ps1

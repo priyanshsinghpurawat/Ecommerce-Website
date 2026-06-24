@@ -47,7 +47,6 @@ jobs:
         env:
           MONGODB_URI: mongodb://localhost:27017/test
           REDIS_URL: redis://localhost:6379
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test_secret_key' }}
           PORT: 3001
 
       - name: Upload Backend Coverage Report
