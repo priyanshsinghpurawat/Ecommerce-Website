@@ -3,5 +3,9 @@ Allow: /
 Disallow: /admin/
 Disallow: /profile/
 Disallow: /orders/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /seller/
+Disallow: /api/
 
 Sitemap: https://mensvibe.in/sitemap.xml

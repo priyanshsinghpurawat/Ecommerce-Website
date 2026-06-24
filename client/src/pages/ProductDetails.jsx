@@ -16,6 +16,13 @@ import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether
 import { UrgencyNudge } from '../components/UrgencyNudge.jsx';
 
 const CLOTHING_MEASUREMENTS = {
+  // Tall Sizing (Competitor Standard)
+  MT: { chest: '42 in', length: '32.5 in', shoulder: '19.5 in', sleeve: '27 in' },
+  LT: { chest: '45 in', length: '33 in', shoulder: '20 in', sleeve: '27.5 in' },
+  XLT: { chest: '48 in', length: '33.5 in', shoulder: '21.5 in', sleeve: '28 in' },
+  '2XLT': { chest: '52 in', length: '34 in', shoulder: '22.5 in', sleeve: '28.5 in' },
+  '3XLT': { chest: '56 in', length: '34.5 in', shoulder: '23.5 in', sleeve: '29 in' },
+  // Standard Sizing (Backward Compatibility)
   XS: { chest: '40 in', length: '27 in', shoulder: '18.5 in', sleeve: '24 in' },
   S: { chest: '42 in', length: '28 in', shoulder: '19 in', sleeve: '24.5 in' },
   M: { chest: '44 in', length: '29 in', shoulder: '19.5 in', sleeve: '25 in' },
@@ -28,13 +35,42 @@ const CLOTHING_MEASUREMENTS = {
   '5XL': { chest: '56 in', length: '33 in', shoulder: '22.5 in', sleeve: '28 in' },
 };
 
+const BOTTOMS_MEASUREMENTS = {
+  // Tall Sizing (Competitor Standard, Min 34 Inseam)
+  '30x34': { waist: '30 in', inseam: '34 in', thigh: '24 in', rise: '11.5 in' },
+  '32x34': { waist: '32 in', inseam: '34 in', thigh: '25 in', rise: '12 in' },
+  '32x36': { waist: '32 in', inseam: '36 in', thigh: '25 in', rise: '12 in' },
+  '34x34': { waist: '34 in', inseam: '34 in', thigh: '26 in', rise: '12.5 in' },
+  '34x36': { waist: '34 in', inseam: '36 in', thigh: '26 in', rise: '12.5 in' },
+  '36x36': { waist: '36 in', inseam: '36 in', thigh: '27 in', rise: '13 in' },
+  '36x38': { waist: '36 in', inseam: '38 in', thigh: '27 in', rise: '13 in' },
+  '38x36': { waist: '38 in', inseam: '36 in', thigh: '28 in', rise: '13.5 in' },
+  '38x38': { waist: '38 in', inseam: '38 in', thigh: '28 in', rise: '13.5 in' },
+  // Standard Sizing (Backward Compatibility)
+  '28': { waist: '28 in', inseam: '30 in', thigh: '22 in', rise: '10.5 in' },
+  '30': { waist: '30 in', inseam: '30 in', thigh: '23 in', rise: '11 in' },
+  '32': { waist: '32 in', inseam: '32 in', thigh: '24 in', rise: '11.5 in' },
+  '34': { waist: '34 in', inseam: '32 in', thigh: '25 in', rise: '12 in' },
+  '36': { waist: '36 in', inseam: '32 in', thigh: '26 in', rise: '12.5 in' },
+  '38': { waist: '38 in', inseam: '32 in', thigh: '27 in', rise: '13 in' },
+  '40': { waist: '40 in', inseam: '32 in', thigh: '28 in', rise: '13.5 in' },
+  '42': { waist: '42 in', inseam: '32 in', thigh: '29 in', rise: '14 in' },
+  '44': { waist: '44 in', inseam: '32 in', thigh: '30 in', rise: '14.5 in' },
+};
+
 const FOOTWEAR_MEASUREMENTS = {
+  // Tall Sizing (Competitor Standard)
+  'UK 10.5': { length: '28.8 cm', sole: 'EVA Cushioned' },
+  'UK 11': { length: '29.6 cm', sole: 'EVA Cushioned' },
+  'UK 12': { length: '30.5 cm', sole: 'EVA Cushioned' },
+  'UK 13': { length: '31.3 cm', sole: 'EVA Cushioned' },
+  'UK 14': { length: '32.2 cm', sole: 'EVA Cushioned' },
+  // Standard Sizing (Backward Compatibility)
   'UK 6': { length: '25.1 cm', sole: 'EVA Cushioned' },
   'UK 7': { length: '25.9 cm', sole: 'EVA Cushioned' },
   'UK 8': { length: '26.8 cm', sole: 'EVA Cushioned' },
   'UK 9': { length: '27.6 cm', sole: 'EVA Cushioned' },
   'UK 10': { length: '28.4 cm', sole: 'EVA Cushioned' },
-  'UK 11': { length: '29.6 cm', sole: 'EVA Cushioned' },
 };
 
 export const ProductDetails = () => {
@@ -193,6 +229,15 @@ export const ProductDetails = () => {
            product.subcategory?.name?.toLowerCase().includes('sneakers');
   }, [product]);
 
+  const isBottoms = useMemo(() => {
+    if (!product) return false;
+    const subName = product.subcategory?.name?.toLowerCase() || '';
+    return subName.includes('pants') || 
+           subName.includes('jeans') || 
+           subName.includes('cargo') || 
+           subName.includes('chino');
+  }, [product]);
+
   const mainImage = useMemo(() => {
     if (selectedImage) return selectedImage;
     if (!product) return '';
@@ -235,8 +280,10 @@ export const ProductDetails = () => {
   const sizingData = useMemo(() => {
     if (!product) return { sizeOptions: [], outOfStockSizes: [] };
     let sizeOptions = isFootwear
-      ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12']
-      : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', '5XL'];
+      ? ['UK 10.5', 'UK 11', 'UK 12', 'UK 13', 'UK 14']
+      : isBottoms
+        ? ['30x34', '32x34', '32x36', '34x34', '34x36', '36x36', '38x36']
+        : ['MT', 'LT', 'XLT', '2XLT', '3XLT'];
     let outOfStockSizes = [];
 
     if (product.variants && product.variants.length > 0) {
@@ -254,7 +301,7 @@ export const ProductDetails = () => {
         .map(v => v.size);
     }
     return { sizeOptions, outOfStockSizes };
-  }, [product, isFootwear, selectedColor]);
+  }, [product, isFootwear, isBottoms, selectedColor]);
 
   const allImages = useMemo(() => {
     if (!product) return [];
@@ -274,8 +321,10 @@ export const ProductDetails = () => {
     if (!selectedSize) return null;
     return isFootwear 
       ? FOOTWEAR_MEASUREMENTS[selectedSize] 
-      : CLOTHING_MEASUREMENTS[selectedSize];
-  }, [isFootwear, selectedSize]);
+      : isBottoms
+        ? BOTTOMS_MEASUREMENTS[selectedSize]
+        : CLOTHING_MEASUREMENTS[selectedSize];
+  }, [isFootwear, isBottoms, selectedSize]);
 
   const handleCheckPincode = async (e) => {
     e.preventDefault();
@@ -594,6 +643,25 @@ export const ProductDetails = () => {
                           <span className="text-[12px] font-bold text-white tracking-tight">Regular</span>
                         </div>
                       </>
+                    ) : isBottoms ? (
+                      <>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Waist</span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.waist}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Inseam</span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.inseam}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Thigh</span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.thigh}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Rise</span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.rise}</span>
+                        </div>
+                      </>
                     ) : (
                       <>
                         <div className="flex flex-col gap-0.5">
@@ -871,7 +939,7 @@ export const ProductDetails = () => {
               <X className="h-5 w-5" />
             </button>
             <h3 className="text-sm font-black uppercase tracking-wider text-app-text mb-4">
-              Size Guide ({isFootwear ? 'Footwear' : 'Clothing'})
+              Size Guide ({isFootwear ? 'Footwear' : isBottoms ? 'Bottoms' : 'Clothing'})
             </h3>
             
             {isFootwear ? (
@@ -884,12 +952,31 @@ export const ProductDetails = () => {
                   </tr>
                 </thead>
                 <tbody className="font-sans text-app-text/75">
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 6</td><td className="py-2.5">25.1 cm</td><td className="py-2.5">US 7</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 7</td><td className="py-2.5">25.9 cm</td><td className="py-2.5">US 8</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 8</td><td className="py-2.5">26.8 cm</td><td className="py-2.5">US 9</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 9</td><td className="py-2.5">27.6 cm</td><td className="py-2.5">US 10</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 10</td><td className="py-2.5">28.4 cm</td><td className="py-2.5">US 11</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 11</td><td className="py-2.5">29.3 cm</td><td className="py-2.5">US 12</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 10.5</td><td className="py-2.5">28.8 cm</td><td className="py-2.5">US 11.5</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 11</td><td className="py-2.5">29.6 cm</td><td className="py-2.5">US 12</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 12</td><td className="py-2.5">30.5 cm</td><td className="py-2.5">US 13</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 13</td><td className="py-2.5">31.3 cm</td><td className="py-2.5">US 14</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 14</td><td className="py-2.5">32.2 cm</td><td className="py-2.5">US 15</td></tr>
+                </tbody>
+              </table>
+            ) : isBottoms ? (
+              <table className="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
+                    <th className="py-2.5">Size</th>
+                    <th className="py-2.5">Waist</th>
+                    <th className="py-2.5">Inseam</th>
+                    <th className="py-2.5">Thigh</th>
+                  </tr>
+                </thead>
+                <tbody className="font-sans text-app-text/75">
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">30x34</td><td className="py-2.5">30 in</td><td className="py-2.5">34 in</td><td className="py-2.5">24 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">32x34</td><td className="py-2.5">32 in</td><td className="py-2.5">34 in</td><td className="py-2.5">25 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">32x36</td><td className="py-2.5">32 in</td><td className="py-2.5">36 in</td><td className="py-2.5">25 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">34x34</td><td className="py-2.5">34 in</td><td className="py-2.5">34 in</td><td className="py-2.5">26 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">34x36</td><td className="py-2.5">34 in</td><td className="py-2.5">36 in</td><td className="py-2.5">26 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">36x36</td><td className="py-2.5">36 in</td><td className="py-2.5">36 in</td><td className="py-2.5">27 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">38x36</td><td className="py-2.5">38 in</td><td className="py-2.5">36 in</td><td className="py-2.5">28 in</td></tr>
                 </tbody>
               </table>
             ) : (
@@ -903,16 +990,11 @@ export const ProductDetails = () => {
                   </tr>
                 </thead>
                 <tbody className="font-sans text-app-text/75">
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XS</td><td className="py-2.5">40 in</td><td className="py-2.5">27 in</td><td className="py-2.5">24 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">S</td><td className="py-2.5">42 in</td><td className="py-2.5">28 in</td><td className="py-2.5">24.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">M</td><td className="py-2.5">44 in</td><td className="py-2.5">29 in</td><td className="py-2.5">25 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">L</td><td className="py-2.5">46 in</td><td className="py-2.5">30 in</td><td className="py-2.5">25.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XL</td><td className="py-2.5">48 in</td><td className="py-2.5">31 in</td><td className="py-2.5">26 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XXL</td><td className="py-2.5">50 in</td><td className="py-2.5">31.5 in</td><td className="py-2.5">26.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">2XL</td><td className="py-2.5">50 in</td><td className="py-2.5">31.5 in</td><td className="py-2.5">26.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">3XL</td><td className="py-2.5">52 in</td><td className="py-2.5">32 in</td><td className="py-2.5">27 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">4XL</td><td className="py-2.5">54 in</td><td className="py-2.5">32.5 in</td><td className="py-2.5">27.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">5XL</td><td className="py-2.5">56 in</td><td className="py-2.5">33 in</td><td className="py-2.5">28 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">MT</td><td className="py-2.5">42 in</td><td className="py-2.5">32.5 in</td><td className="py-2.5">27 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">LT</td><td className="py-2.5">45 in</td><td className="py-2.5">33 in</td><td className="py-2.5">27.5 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XLT</td><td className="py-2.5">48 in</td><td className="py-2.5">33.5 in</td><td className="py-2.5">28 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">2XLT</td><td className="py-2.5">52 in</td><td className="py-2.5">34 in</td><td className="py-2.5">28.5 in</td></tr>
+                  <tr className="border-b border-border"><td className="py-2.5 font-bold">3XLT</td><td className="py-2.5">56 in</td><td className="py-2.5">34.5 in</td><td className="py-2.5">29 in</td></tr>
                 </tbody>
               </table>
             )}

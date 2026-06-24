@@ -16,7 +16,6 @@ dotenv.config();
 /*                                STATIC CATALOG                               */
 /* -------------------------------------------------------------------------- */
 const catalog = [
-  // ... (keeping existing catalog data)
   {
     category: 'Clothing',
     subcategories: ['T-Shirts', 'Shirts', 'Pants', 'Jeans', 'Streetwear', 'Linen', 'cargo'],
@@ -24,7 +23,7 @@ const catalog = [
       {
         sub: 'Streetwear',
         title: 'Premium Blue Check Shirt',
-        desc: 'blue check shirt with wide pattern for streetwear.',
+        desc: 'Blue check shirt with wide pattern for streetwear, tailored with +2.5 inches torso and sleeve length for heights 6\'0" to 6\'5".',
         price: 2599,
         sale: 1299,
         stock: 10000,
@@ -33,21 +32,17 @@ const catalog = [
         rating: 0,
         reviews: 0,
         variants: [
-          { size: 'XS', color: 'Blue Check', stock: 50, sku: 'SH-BLU-XS' },
-          { size: 'S', color: 'Blue Check', stock: 100, sku: 'SH-BLU-S' },
-          { size: 'M', color: 'Blue Check', stock: 150, sku: 'SH-BLU-M' },
-          { size: 'L', color: 'Blue Check', stock: 200, sku: 'SH-BLU-L' },
-          { size: 'XL', color: 'Blue Check', stock: 150, sku: 'SH-BLU-XL' },
-          { size: 'XXL', color: 'Blue Check', stock: 100, sku: 'SH-BLU-XXL' },
-          { size: '3XL', color: 'Blue Check', stock: 50, sku: 'SH-BLU-3XL' },
-          { size: '4XL', color: 'Blue Check', stock: 30, sku: 'SH-BLU-4XL' },
-          { size: '5XL', color: 'Blue Check', stock: 20, sku: 'SH-BLU-5XL' }
+          { size: 'MT', color: 'Blue Check', stock: 50, sku: 'SH-BLU-MT' },
+          { size: 'LT', color: 'Blue Check', stock: 100, sku: 'SH-BLU-LT' },
+          { size: 'XLT', color: 'Blue Check', stock: 150, sku: 'SH-BLU-XLT' },
+          { size: '2XLT', color: 'Blue Check', stock: 100, sku: 'SH-BLU-2XLT' },
+          { size: '3XLT', color: 'Blue Check', stock: 50, sku: 'SH-BLU-3XLT' }
         ]
       },
       {
         sub: 'T-Shirts',
         title: 'Essential White Oversized Tee',
-        desc: 'Premium 240 GSM heavy cotton with a relaxed drop-shoulder fit. The ultimate street-style basic.',
+        desc: 'Premium 240 GSM heavy cotton with a relaxed drop-shoulder fit. Specifically tailored with extra torso length for tall frames 6\'0" to 6\'5".',
         price: 1499,
         sale: 999,
         stock: 50,
@@ -57,21 +52,17 @@ const catalog = [
         rating: 4.8,
         reviews: 120,
         variants: [
-          { size: 'XS', color: 'White', stock: 15, sku: 'TS-WHT-XS' },
-          { size: 'S', color: 'White', stock: 15, sku: 'TS-WHT-S' },
-          { size: 'M', color: 'White', stock: 20, sku: 'TS-WHT-M' },
-          { size: 'L', color: 'White', stock: 25, sku: 'TS-WHT-L' },
-          { size: 'XL', color: 'White', stock: 20, sku: 'TS-WHT-XL' },
-          { size: 'XXL', color: 'White', stock: 15, sku: 'TS-WHT-XXL' },
-          { size: '3XL', color: 'White', stock: 10, sku: 'TS-WHT-3XL' },
-          { size: '4XL', color: 'White', stock: 5, sku: 'TS-WHT-4XL' },
-          { size: '5XL', color: 'White', stock: 5, sku: 'TS-WHT-5XL' }
+          { size: 'MT', color: 'White', stock: 15, sku: 'TS-WHT-MT' },
+          { size: 'LT', color: 'White', stock: 15, sku: 'TS-WHT-LT' },
+          { size: 'XLT', color: 'White', stock: 20, sku: 'TS-WHT-XLT' },
+          { size: '2XLT', color: 'White', stock: 25, sku: 'TS-WHT-2XLT' },
+          { size: '3XLT', color: 'White', stock: 20, sku: 'TS-WHT-3XLT' }
         ]
       },
       {
         sub: 'T-Shirts',
         title: 'Midnight Black Graphic Tee',
-        desc: 'Soft-touch combed cotton with high-density screen print on the back.',
+        desc: 'Soft-touch combed cotton with high-density screen print on the back. Tall-engineered fit ensures it stays tucked or hangs perfectly for 6\'0" to 6\'5" heights.',
         price: 1699,
         sale: 1299,
         stock: 40,
@@ -79,21 +70,17 @@ const catalog = [
         rating: 4.5,
         reviews: 85,
         variants: [
-          { size: 'XS', color: 'Black', stock: 15, sku: 'TS-BLK-XS' },
-          { size: 'S', color: 'Black', stock: 15, sku: 'TS-BLK-S' },
-          { size: 'M', color: 'Black', stock: 20, sku: 'TS-BLK-M' },
-          { size: 'L', color: 'Black', stock: 25, sku: 'TS-BLK-L' },
-          { size: 'XL', color: 'Black', stock: 20, sku: 'TS-BLK-XL' },
-          { size: 'XXL', color: 'Black', stock: 15, sku: 'TS-BLK-XXL' },
-          { size: '3XL', color: 'Black', stock: 10, sku: 'TS-BLK-3XL' },
-          { size: '4XL', color: 'Black', stock: 5, sku: 'TS-BLK-4XL' },
-          { size: '5XL', color: 'Black', stock: 5, sku: 'TS-BLK-5XL' }
+          { size: 'MT', color: 'Black', stock: 15, sku: 'TS-BLK-MT' },
+          { size: 'LT', color: 'Black', stock: 15, sku: 'TS-BLK-LT' },
+          { size: 'XLT', color: 'Black', stock: 20, sku: 'TS-BLK-XLT' },
+          { size: '2XLT', color: 'Black', stock: 25, sku: 'TS-BLK-2XLT' },
+          { size: '3XLT', color: 'Black', stock: 20, sku: 'TS-BLK-3XLT' }
         ]
       },
       {
         sub: 'Shirts',
         title: 'Linen Resort Shirt — Sage',
-        desc: 'Breathable linen-cotton blend. Perfect for summer days and vacation vibes.',
+        desc: 'Breathable linen-cotton blend. Perfect for summer days, with longer arms and torso specifically for heights 6\'0" to 6\'5".',
         price: 2499,
         sale: 1899,
         stock: 30,
@@ -103,42 +90,34 @@ const catalog = [
         rating: 4.2,
         reviews: 45,
         variants: [
-          { size: 'XS', color: 'Sage', stock: 10, sku: 'SH-SGE-XS' },
-          { size: 'S', color: 'Sage', stock: 10, sku: 'SH-SGE-S' },
-          { size: 'M', color: 'Sage', stock: 15, sku: 'SH-SGE-M' },
-          { size: 'L', color: 'Sage', stock: 10, sku: 'SH-SGE-L' },
-          { size: 'XL', color: 'Sage', stock: 15, sku: 'SH-SGE-XL' },
-          { size: 'XXL', color: 'Sage', stock: 10, sku: 'SH-SGE-XXL' },
-          { size: '3XL', color: 'Sage', stock: 5, sku: 'SH-SGE-3XL' },
-          { size: '4XL', color: 'Sage', stock: 5, sku: 'SH-SGE-4XL' },
-          { size: '5XL', color: 'Sage', stock: 5, sku: 'SH-SGE-5XL' }
+          { size: 'MT', color: 'Sage', stock: 10, sku: 'SH-SGE-MT' },
+          { size: 'LT', color: 'Sage', stock: 10, sku: 'SH-SGE-LT' },
+          { size: 'XLT', color: 'Sage', stock: 15, sku: 'SH-SGE-XLT' },
+          { size: '2XLT', color: 'Sage', stock: 10, sku: 'SH-SGE-2XLT' },
+          { size: '3XLT', color: 'Sage', stock: 15, sku: 'SH-SGE-3XLT' }
         ]
       },
       {
         sub: 'Shirts',
         title: 'Cotton Linen: Light Mauve',
-        desc: 'Cotton Linen Shirts versatile enough for work or casual settings.',
+        desc: 'Cotton Linen Shirts versatile enough for work or casual settings, cut with extra length to fit taller profiles 6\'0" to 6\'5".',
         price: 2899,
         stock: 35,
         img: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781073624/1731995063_3156808_i9pamp.avif',
         rating: 4.7,
         reviews: 60,
         variants: [
-          { size: 'XS', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-XS' },
-          { size: 'S', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-S' },
-          { size: 'M', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-M' },
-          { size: 'L', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-L' },
-          { size: 'XL', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-XL' },
-          { size: 'XXL', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-XXL' },
-          { size: '3XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-3XL' },
-          { size: '4XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-4XL' },
-          { size: '5XL', color: 'Blue', stock: 5, sku: 'SH-OX-BLU-5XL' }
+          { size: 'MT', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-MT' },
+          { size: 'LT', color: 'Blue', stock: 10, sku: 'SH-OX-BLU-LT' },
+          { size: 'XLT', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-XLT' },
+          { size: '2XLT', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-2XLT' },
+          { size: '3XLT', color: 'Blue', stock: 15, sku: 'SH-OX-BLU-3XLT' }
         ]
       },
       {
         sub: 'Pants',
         title: 'Chino Slim Trousers',
-        desc: 'Stretch cotton-twill chinos in a modern slim fit.',
+        desc: 'Stretch cotton-twill chinos in a modern slim fit, engineered with long inseams (34"-36") specifically for heights 6\'0" to 6\'5".',
         price: 2299,
         sale: 1999,
         stock: 35,
@@ -146,21 +125,19 @@ const catalog = [
         rating: 4.4,
         reviews: 92,
         variants: [
-          { size: '28', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-28' },
-          { size: '30', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-30' },
-          { size: '32', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-32' },
-          { size: '34', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-34' },
-          { size: '36', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-36' },
-          { size: '38', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-38' },
-          { size: '40', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-40' },
-          { size: '42', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-42' },
-          { size: '44', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-44' }
+          { size: '30x34', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-3034' },
+          { size: '32x34', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-3234' },
+          { size: '32x36', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-3236' },
+          { size: '34x34', color: 'Khaki', stock: 20, sku: 'PN-CH-KH-3434' },
+          { size: '34x36', color: 'Khaki', stock: 15, sku: 'PN-CH-KH-3436' },
+          { size: '36x36', color: 'Khaki', stock: 10, sku: 'PN-CH-KH-3636' },
+          { size: '38x36', color: 'Khaki', stock: 5, sku: 'PN-CH-KH-3836' }
         ]
       },
       {
         sub: 'Pants',
         title: 'Formal office wear pants',
-        desc: 'formal office wear pants.',
+        desc: 'Formal office wear pants featuring a comfort-stretch waist and a custom 34" or 36" long inseam for taller profiles.',
         price: 3299,
         sale: 1999,
         stock: 30,
@@ -170,21 +147,19 @@ const catalog = [
         rating: 4.6,
         reviews: 110,
         variants: [
-          { size: '28', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-28' },
-          { size: '30', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-30' },
-          { size: '32', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-32' },
-          { size: '34', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-34' },
-          { size: '36', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-36' },
-          { size: '38', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-38' },
-          { size: '40', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-40' },
-          { size: '42', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-42' },
-          { size: '44', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-44' }
+          { size: '30x34', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-3034' },
+          { size: '32x34', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-3234' },
+          { size: '32x36', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-3236' },
+          { size: '34x34', color: 'Blue', stock: 15, sku: 'PN-DN-BLU-3434' },
+          { size: '34x36', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-3436' },
+          { size: '36x36', color: 'Blue', stock: 10, sku: 'PN-DN-BLU-3636' },
+          { size: '38x36', color: 'Blue', stock: 5, sku: 'PN-DN-BLU-3836' }
         ]
       },
       {
         sub: 'Jeans',
         title: 'Black Slim Denim',
-        desc: 'Clean, versatile black denim, essential for any wardrobe.',
+        desc: 'Clean, versatile black denim engineered for tall builds. Starts at W30 with minimum 34" inseam up to 36" length.',
         price: 2999,
         sale: 0,
         stock: 40,
@@ -192,21 +167,19 @@ const catalog = [
         rating: 4.5,
         reviews: 75,
         variants: [
-          { size: '28', color: 'Black', stock: 10, sku: 'PN-DN-BLK-28' },
-          { size: '30', color: 'Black', stock: 15, sku: 'PN-DN-BLK-30' },
-          { size: '32', color: 'Black', stock: 15, sku: 'PN-DN-BLK-32' },
-          { size: '34', color: 'Black', stock: 20, sku: 'PN-DN-BLK-34' },
-          { size: '36', color: 'Black', stock: 15, sku: 'PN-DN-BLK-36' },
-          { size: '38', color: 'Black', stock: 10, sku: 'PN-DN-BLK-38' },
-          { size: '40', color: 'Black', stock: 5, sku: 'PN-DN-BLK-40' },
-          { size: '42', color: 'Black', stock: 5, sku: 'PN-DN-BLK-42' },
-          { size: '44', color: 'Black', stock: 5, sku: 'PN-DN-BLK-44' }
+          { size: '30x34', color: 'Black', stock: 10, sku: 'PN-DN-BLK-3034' },
+          { size: '32x34', color: 'Black', stock: 15, sku: 'PN-DN-BLK-3234' },
+          { size: '32x36', color: 'Black', stock: 15, sku: 'PN-DN-BLK-3236' },
+          { size: '34x34', color: 'Black', stock: 20, sku: 'PN-DN-BLK-3434' },
+          { size: '34x36', color: 'Black', stock: 15, sku: 'PN-DN-BLK-3436' },
+          { size: '36x36', color: 'Black', stock: 10, sku: 'PN-DN-BLK-3636' },
+          { size: '38x36', color: 'Black', stock: 5, sku: 'PN-DN-BLK-3836' }
         ]
       },
       {
         sub: 'Streetwear',
         title: 'Urban Utility Cargo Pants',
-        desc: 'Multi-pocket design with reinforced stitching.',
+        desc: 'Multi-pocket heavy duty cotton cargos designed with an active rise and long inseams for 6\'0"-6\'5" tall frames.',
         price: 3499,
         sale: 2799,
         stock: 25,
@@ -215,21 +188,19 @@ const catalog = [
         rating: 4.9,
         reviews: 150,
         variants: [
-          { size: '28', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-28' },
-          { size: '30', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-30' },
-          { size: '32', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-32' },
-          { size: '34', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-34' },
-          { size: '36', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-36' },
-          { size: '38', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-38' },
-          { size: '40', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-40' },
-          { size: '42', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-42' },
-          { size: '44', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-44' }
+          { size: '30x34', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-3034' },
+          { size: '32x34', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-3234' },
+          { size: '32x36', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-3236' },
+          { size: '34x34', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-3434' },
+          { size: '34x36', color: 'Black', stock: 15, sku: 'PN-CRG-BLK-3436' },
+          { size: '36x36', color: 'Black', stock: 10, sku: 'PN-CRG-BLK-3636' },
+          { size: '38x36', color: 'Black', stock: 5, sku: 'PN-CRG-BLK-3836' }
         ]
       },
       {
         sub: 'Shirts',
-        title: 'Vintage Plaid Overshirt',
-        desc: 'Classic vintage plaid pattern, soft cotton blend, oversized fit.',
+        title: 'Classic Plaid Overshirt',
+        desc: 'Classic vintage plaid pattern, soft cotton blend, relaxed oversized style fit tailored with longer arms and body length.',
         price: 2499,
         sale: 1999,
         stock: 20,
@@ -238,21 +209,17 @@ const catalog = [
         rating: 4.6,
         reviews: 25,
         variants: [
-          { size: 'XS', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-XS' },
-          { size: 'S', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-S' },
-          { size: 'M', color: 'Blue Check', stock: 15, sku: 'SH-VPO-BLU-M' },
-          { size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-L' },
-          { size: 'XL', color: 'Blue Check', stock: 15, sku: 'SH-VPO-BLU-XL' },
-          { size: 'XXL', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-XXL' },
-          { size: '3XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-3XL' },
-          { size: '4XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-4XL' },
-          { size: '5XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-5XL' }
+          { size: 'MT', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-MT' },
+          { size: 'LT', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-LT' },
+          { size: 'XLT', color: 'Blue Check', stock: 15, sku: 'SH-VPO-BLU-XLT' },
+          { size: '2XLT', color: 'Blue Check', stock: 10, sku: 'SH-VPO-BLU-2XLT' },
+          { size: '3XLT', color: 'Blue Check', stock: 5, sku: 'SH-VPO-BLU-3XLT' }
         ]
       },
       {
         sub: 'Streetwear',
         title: 'Black indie shirt',
-        desc: 'unique baggy t-shirt with super oversized pattern gauge fabric in black',
+        desc: 'Unique baggy heavy cotton shirt with a street oversized pattern, scaled proportionally for tall frames.',
         price: 1999,
         sale: 1199,
         stock: 105,
@@ -263,21 +230,17 @@ const catalog = [
         rating: 4.8,
         reviews: 40,
         variants: [
-          { size: 'XS', color: 'Neon Black', stock: 5, sku: 'VT-NST-XS' },
-          { size: 'S', color: 'Neon Black', stock: 5, sku: 'VT-NST-S' },
-          { size: 'M', color: 'Neon Black', stock: 8, sku: 'VT-NST-M' },
-          { size: 'L', color: 'Neon Black', stock: 10, sku: 'VT-NST-L' },
-          { size: 'XL', color: 'Neon Black', stock: 10, sku: 'VT-NST-XL' },
-          { size: 'XXL', color: 'Neon Black', stock: 8, sku: 'VT-NST-XXL' },
-          { size: '3XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-3XL' },
-          { size: '4XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-4XL' },
-          { size: '5XL', color: 'Neon Black', stock: 5, sku: 'VT-NST-5XL' }
+          { size: 'MT', color: 'Neon Black', stock: 5, sku: 'VT-NST-MT' },
+          { size: 'LT', color: 'Neon Black', stock: 5, sku: 'VT-NST-LT' },
+          { size: 'XLT', color: 'Neon Black', stock: 8, sku: 'VT-NST-XLT' },
+          { size: '2XLT', color: 'Neon Black', stock: 10, sku: 'VT-NST-2XLT' },
+          { size: '3XLT', color: 'Neon Black', stock: 10, sku: 'VT-NST-3XLT' }
         ]
       },
       {
         sub: 'Linen',
         title: 'Premium Pink Linen Shirt',
-        desc: 'Relaxed fit, pure organic linen shirt. Light, breathable, and styled for effortless summer comfort.',
+        desc: 'Relaxed fit, pure organic linen shirt. Light, breathable, and styled with tall specifications (longer sleeves and torso).',
         price: 2999,
         sale: 1999,
         stock: 30,
@@ -285,21 +248,17 @@ const catalog = [
         extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074253/1779703404_2796734_h243zv.avif'],
         badge: 'new-arrival',
         variants: [
-          { size: 'XS', color: 'Pink', stock: 10, sku: 'LN-PNK-XS' },
-          { size: 'S', color: 'Pink', stock: 10, sku: 'LN-PNK-S' },
-          { size: 'M', color: 'Pink', stock: 15, sku: 'LN-PNK-M' },
-          { size: 'L', color: 'Pink', stock: 15, sku: 'LN-PNK-L' },
-          { size: 'XL', color: 'Pink', stock: 15, sku: 'LN-PNK-XL' },
-          { size: 'XXL', color: 'Pink', stock: 10, sku: 'LN-PNK-XXL' },
-          { size: '3XL', color: 'Pink', stock: 5, sku: 'LN-PNK-3XL' },
-          { size: '4XL', color: 'Pink', stock: 5, sku: 'LN-PNK-4XL' },
-          { size: '5XL', color: 'Pink', stock: 5, sku: 'LN-PNK-5XL' }
+          { size: 'MT', color: 'Pink', stock: 10, sku: 'LN-PNK-MT' },
+          { size: 'LT', color: 'Pink', stock: 10, sku: 'LN-PNK-LT' },
+          { size: 'XLT', color: 'Pink', stock: 15, sku: 'LN-PNK-XLT' },
+          { size: '2XLT', color: 'Pink', stock: 15, sku: 'LN-PNK-2XLT' },
+          { size: '3XLT', color: 'Pink', stock: 15, sku: 'LN-PNK-3XLT' }
         ]
       },
       {
         sub: 'Streetwear',
         title: 'Oversized Acid Wash Tee',
-        desc: 'Vintage acid wash finish with drop shoulders and a heavy vintage feel.',
+        desc: 'Vintage acid wash heavy cotton tee with drop shoulders and custom long body length for 6\'0"-6\'5" guys.',
         price: 1999,
         sale: 1499,
         stock: 45,
@@ -313,21 +272,17 @@ const catalog = [
         rating: 4.7,
         reviews: 58,
         variants: [
-          { size: 'XS', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-XS' },
-          { size: 'S', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-S' },
-          { size: 'M', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-M' },
-          { size: 'L', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-L' },
-          { size: 'XL', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-XL' },
-          { size: 'XXL', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-XXL' },
-          { size: '3XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-3XL' },
-          { size: '4XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-4XL' },
-          { size: '5XL', color: 'Grey', stock: 5, sku: 'SW-AW-GRY-5XL' }
+          { size: 'MT', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-MT' },
+          { size: 'LT', color: 'Grey', stock: 10, sku: 'SW-AW-GRY-LT' },
+          { size: 'XLT', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-XLT' },
+          { size: '2XLT', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-2XLT' },
+          { size: '3XLT', color: 'Grey', stock: 15, sku: 'SW-AW-GRY-3XLT' }
         ]
       },
       {
         sub: 'Streetwear',
         title: 'Oversize T-Shirt-Red Samurai',
-        desc: 'Red Samurai , Oversize T-Shirt for the dystopian streets.',
+        desc: 'Red Samurai graphic print, heavy knit oversized streetwear tee tailored with added height clearance.',
         price: 999,
         sale: 499,
         stock: 12,
@@ -339,21 +294,17 @@ const catalog = [
         rating: 4.9,
         reviews: 24,
         variants: [
-          { size: 'XS', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XS' },
-          { size: 'S', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-S' },
-          { size: 'M', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-M' },
-          { size: 'L', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-L' },
-          { size: 'XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XL' },
-          { size: 'XXL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XXL' },
-          { size: '3XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-3XL' },
-          { size: '4XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-4XL' },
-          { size: '5XL', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-5XL' }
+          { size: 'MT', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-MT' },
+          { size: 'LT', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-LT' },
+          { size: 'XLT', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-XLT' },
+          { size: '2XLT', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-2XLT' },
+          { size: '3XLT', color: 'Neon Black', stock: 5, sku: 'SW-TJ-NB-3XLT' }
         ]
       },
       {
         sub: 'Linen',
         title: 'Classic White Linen Shirt',
-        desc: 'Tailored from premium breathable linen. Easy regular fit with classic collar.',
+        desc: 'Tailored from premium breathable linen, regular fit with classic collar and customized long torso.',
         price: 2799,
         sale: 1899,
         stock: 25,
@@ -361,22 +312,18 @@ const catalog = [
         extraImgs: ['https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984921/mensvibe/products/1739601040_1918057.avif'],
         badge: 'limited-edition',
         variants: [
-          { size: 'XS', color: 'White', stock: 10, sku: 'LN-WHT-XS' },
-          { size: 'S', color: 'White', stock: 10, sku: 'LN-WHT-S' },
-          { size: 'M', color: 'White', stock: 15, sku: 'LN-WHT-M' },
-          { size: 'L', color: 'White', stock: 10, sku: 'LN-WHT-L' },
-          { size: 'XL', color: 'White', stock: 15, sku: 'LN-WHT-XL' },
-          { size: 'XXL', color: 'White', stock: 10, sku: 'LN-WHT-XXL' },
-          { size: '3XL', color: 'White', stock: 5, sku: 'LN-WHT-3XL' },
-          { size: '4XL', color: 'White', stock: 5, sku: 'LN-WHT-4XL' },
-          { size: '5XL', color: 'White', stock: 5, sku: 'LN-WHT-5XL' }
+          { size: 'MT', color: 'White', stock: 10, sku: 'LN-WHT-MT' },
+          { size: 'LT', color: 'White', stock: 10, sku: 'LN-WHT-LT' },
+          { size: 'XLT', color: 'White', stock: 15, sku: 'LN-WHT-XLT' },
+          { size: '2XLT', color: 'White', stock: 10, sku: 'LN-WHT-2XLT' },
+          { size: '3XLT', color: 'White', stock: 15, sku: 'LN-WHT-3XLT' }
         ]
       },
       {
         _id: '6a27ed6aad7d78cd89ec2266',
         sub: 'Shirts',
         title: 'Vintage Plaid Overshirt',
-        desc: 'Classic vintage plaid pattern, soft cotton blend, oversized fit.',
+        desc: 'Classic vintage plaid pattern, soft cotton blend, oversized fit cut for tall frames.',
         price: 999.01,
         sale: 0,
         stock: 10,
@@ -391,22 +338,18 @@ const catalog = [
         rating: 4.6,
         reviews: 25,
         variants: [
-          { size: 'XS', color: 'Blue Check', stock: 5, sku: 'SH-VPO-XS' },
-          { size: 'S', color: 'Blue Check', stock: 5, sku: 'SH-VPO-S' },
-          { size: 'M', color: 'Blue Check', stock: 8, sku: 'SH-VPO-M' },
-          { size: 'L', color: 'Blue Check', stock: 10, sku: 'SH-VPO-L' },
-          { size: 'XL', color: 'Blue Check', stock: 10, sku: 'SH-VPO-XL' },
-          { size: 'XXL', color: 'Blue Check', stock: 8, sku: 'SH-VPO-XXL' },
-          { size: '3XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-3XL' },
-          { size: '4XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-4XL' },
-          { size: '5XL', color: 'Blue Check', stock: 5, sku: 'SH-VPO-5XL' }
+          { size: 'MT', color: 'Blue Check', stock: 5, sku: 'SH-VPO-MT' },
+          { size: 'LT', color: 'Blue Check', stock: 5, sku: 'SH-VPO-LT' },
+          { size: 'XLT', color: 'Blue Check', stock: 8, sku: 'SH-VPO-XLT' },
+          { size: '2XLT', color: 'Blue Check', stock: 10, sku: 'SH-VPO-2XLT' },
+          { size: '3XLT', color: 'Blue Check', stock: 10, sku: 'SH-VPO-3XLT' }
         ]
       },
       {
         _id: '6a27ebfaad7d78cd89ec2128',
         sub: 'T-Shirts',
         title: 'superman vintage black T-shirt',
-        desc: 'genz t shirt',
+        desc: 'Gen-Z graphic tee, vintage distressed wash, styled with extra length.',
         price: 999,
         sale: 0,
         stock: 10,
@@ -420,15 +363,11 @@ const catalog = [
         rating: 4.8,
         reviews: 120,
         variants: [
-          { size: 'XS', color: 'Black', stock: 5, sku: 'TS-SUP-XS' },
-          { size: 'S', color: 'Black', stock: 5, sku: 'TS-SUP-S' },
-          { size: 'M', color: 'Black', stock: 8, sku: 'TS-SUP-M' },
-          { size: 'L', color: 'Black', stock: 10, sku: 'TS-SUP-L' },
-          { size: 'XL', color: 'Black', stock: 10, sku: 'TS-SUP-XL' },
-          { size: 'XXL', color: 'Black', stock: 8, sku: 'TS-SUP-XXL' },
-          { size: '3XL', color: 'Black', stock: 5, sku: 'TS-SUP-3XL' },
-          { size: '4XL', color: 'Black', stock: 5, sku: 'TS-SUP-4XL' },
-          { size: '5XL', color: 'Black', stock: 5, sku: 'TS-SUP-5XL' }
+          { size: 'MT', color: 'Black', stock: 5, sku: 'TS-SUP-MT' },
+          { size: 'LT', color: 'Black', stock: 5, sku: 'TS-SUP-LT' },
+          { size: 'XLT', color: 'Black', stock: 8, sku: 'TS-SUP-XLT' },
+          { size: '2XLT', color: 'Black', stock: 10, sku: 'TS-SUP-2XLT' },
+          { size: '3XLT', color: 'Black', stock: 10, sku: 'TS-SUP-3XLT' }
         ]
       },
       {
@@ -448,15 +387,13 @@ const catalog = [
         rating: 4.9,
         reviews: 150,
         variants: [
-          { size: '28', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-28' },
-          { size: '30', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-30' },
-          { size: '32', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-32' },
-          { size: '34', color: 'Grey', stock: 20, sku: 'PN-CRG-GRY-34' },
-          { size: '36', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-36' },
-          { size: '38', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-38' },
-          { size: '40', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-40' },
-          { size: '42', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-42' },
-          { size: '44', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-44' }
+          { size: '30x34', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-3034' },
+          { size: '32x34', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-3234' },
+          { size: '32x36', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-3236' },
+          { size: '34x34', color: 'Grey', stock: 20, sku: 'PN-CRG-GRY-3434' },
+          { size: '34x36', color: 'Grey', stock: 15, sku: 'PN-CRG-GRY-3436' },
+          { size: '36x36', color: 'Grey', stock: 10, sku: 'PN-CRG-GRY-3636' },
+          { size: '38x36', color: 'Grey', stock: 5, sku: 'PN-CRG-GRY-3836' }
         ]
       }
     ]
@@ -468,41 +405,49 @@ const catalog = [
       {
         sub: 'Sneakers',
         title: 'Retro Court Sneakers',
-        desc: 'Genuine leather upper with a classic silhouette. Timeless appeal.',
+        desc: 'Genuine leather upper with a classic silhouette. Available in hard-to-find sizes UK 10.5 to 14 with a comfortable, wide toe-box.',
         price: 5499,
         sale: 4499,
         stock: 15,
         img: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=2000&auto=format&fit=crop',
         variants: [
-          { size: '8', color: 'White', stock: 5, sku: 'SK-WHT-8' },
-          { size: '9', color: 'White', stock: 5, sku: 'SK-WHT-9' },
-          { size: '10', color: 'White', stock: 5, sku: 'SK-WHT-10' }
+          { size: 'UK 10.5', color: 'White', stock: 5, sku: 'SK-WHT-105' },
+          { size: 'UK 11', color: 'White', stock: 5, sku: 'SK-WHT-11' },
+          { size: 'UK 12', color: 'White', stock: 5, sku: 'SK-WHT-12' },
+          { size: 'UK 13', color: 'White', stock: 5, sku: 'SK-WHT-13' },
+          { size: 'UK 14', color: 'White', stock: 5, sku: 'SK-WHT-14' }
         ]
       },
       {
         sub: 'Boots',
         title: 'Classic Chelsea Leather Boots',
-        desc: 'Handcrafted premium leather Chelsea boots with elastic side panels and durable rubber sole.',
+        desc: 'Handcrafted premium leather Chelsea boots with elastic side panels, custom-engineered support, and extended sizes UK 10.5 to 14.',
         price: 6999,
         sale: 5999,
         stock: 20,
         img: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?q=80&w=800',
         variants: [
-          { size: 'UK 8', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-8' },
-          { size: 'UK 9', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-9' }
+          { size: 'UK 10.5', color: 'Brown', stock: 5, sku: 'BT-CHL-BRN-105' },
+          { size: 'UK 11', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-11' },
+          { size: 'UK 12', color: 'Brown', stock: 10, sku: 'BT-CHL-BRN-12' },
+          { size: 'UK 13', color: 'Brown', stock: 5, sku: 'BT-CHL-BRN-13' },
+          { size: 'UK 14', color: 'Brown', stock: 5, sku: 'BT-CHL-BRN-14' }
         ]
       },
       {
         sub: 'Sports',
         title: 'Lightweight Running Shoes',
-        desc: 'Breathable mesh upper with cushioned sole for track and road running.',
+        desc: 'Breathable mesh upper with cushioned sole for track and road running. Wide-toe box support for large sizes UK 10.5 to 14.',
         price: 3999,
         sale: 2999,
         stock: 30,
         img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800',
         variants: [
-          { size: 'UK 8', color: 'Red', stock: 15, sku: 'SH-RUN-RED-8' },
-          { size: 'UK 9', color: 'Red', stock: 15, sku: 'SH-RUN-RED-9' }
+          { size: 'UK 10.5', color: 'Red', stock: 5, sku: 'SH-RUN-RED-105' },
+          { size: 'UK 11', color: 'Red', stock: 10, sku: 'SH-RUN-RED-11' },
+          { size: 'UK 12', color: 'Red', stock: 10, sku: 'SH-RUN-RED-12' },
+          { size: 'UK 13', color: 'Red', stock: 5, sku: 'SH-RUN-RED-13' },
+          { size: 'UK 14', color: 'Red', stock: 5, sku: 'SH-RUN-RED-14' }
         ]
       }
     ]
@@ -749,8 +694,7 @@ const seed = async () => {
     for (const c of couponsData) await Coupon.create(c);
 
     console.log('--- MensVibe seed complete ---')
-    console.log('Coupons: MENSVIBE10 (Unlimited), FESTIVE500 (Limited), WELCOME50 (First Order Only)');
-    process.exit(0);
+    
   } catch (error) {
     console.error('Seed failed:', error);
     process.exit(1);
