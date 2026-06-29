@@ -58,6 +58,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
   // Transactionally reserve stock up-front to prevent overselling
   const session = await mongoose.startSession();
   session.startTransaction();
+  let committed = false;
 
   try {
     // Acquire lock on user to prevent checkout race conditions (Bug #7)
@@ -131,7 +132,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
     }], { session });
 
     await session.commitTransaction();
-    let committed = true;
+    committed = true;
     session.endSession();
 
     const razorpay = getRazorpay();
