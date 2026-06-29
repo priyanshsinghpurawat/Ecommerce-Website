@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   validateImage,
   filterValidImages,
@@ -55,6 +55,17 @@ describe('filterValidImages', () => {
 });
 
 describe('makeImageItem', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:mock-url'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('creates file item with previewUrl', () => {
     const file = new File(['dummy'], 'test.jpg', { type: 'image/jpeg' });
     const item = makeImageItem(file);
