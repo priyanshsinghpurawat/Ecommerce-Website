@@ -1,5 +1,5 @@
 import { User } from '../models/user.model.js';
-import { ProductRepository } from '../repositories/product.repository.js';
+import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 
 /**
@@ -19,10 +19,9 @@ export const getPublicVendorStore = asyncHandler(async (req, res) => {
   }
 
   // Fetch their active published products
-  const products = await ProductRepository.find(
-    { seller: vendor._id, status: 'published' },
-    { sort: { createdAt: -1 }, limit: 100 }
-  );
+  const products = await Product.find(
+    { seller: vendor._id, status: 'published' }
+  ).sort({ createdAt: -1 }).limit(100);
 
   return res.status(200).json(new ApiResponse(200, {
     vendor,

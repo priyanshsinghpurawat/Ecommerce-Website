@@ -8,7 +8,7 @@ import { Server } from 'socket.io';
 import { setupSocket } from './config/socket.js';
 import { initInventoryCron } from './utils/cron.js';
 import { clearCacheByPattern } from './utils/cache.js';
-import { logger } from './utils/logger.js';
+import logger from './config/logger.js';
 
 const startServer = async () => {
   try {

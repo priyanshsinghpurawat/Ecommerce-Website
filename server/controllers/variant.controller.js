@@ -233,6 +233,16 @@ export const bulkUpdateStock = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Updates array is required');
   }
 
+  if (req.user.role === 'seller') {
+    const variantIds = updates.map(u => u.variantId);
+    const variants = await Variant.find({ _id: { $in: variantIds } }).populate('product', 'seller');
+    for (const variant of variants) {
+      if (!variant.product || variant.product.seller.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, 'Not authorized to update stock for one or more variants');
+      }
+    }
+  }
+
   const result = await Variant.bulkUpdateStock(updates);
 
   return res

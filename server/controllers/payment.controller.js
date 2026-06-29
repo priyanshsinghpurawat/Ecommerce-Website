@@ -131,10 +131,9 @@ export const createCheckout = asyncHandler(async (req, res) => {
     }], { session });
 
     await session.commitTransaction();
+    let committed = true;
     session.endSession();
 
-    // Create Razorpay order AFTER DB commit — if this fails, the order exists
-    // and the cron job will clean it up. No phantom orders.
     const razorpay = getRazorpay();
     const amountPaise = Math.round(calculations.total * 100);
     let rzOrder;
@@ -148,10 +147,14 @@ export const createCheckout = asyncHandler(async (req, res) => {
       order.razorpayOrderId = rzOrder.id;
       await order.save();
     } catch {
-      // Razorpay failed — mark order as failed so cron restores stock
       order.paymentStatus = 'failed';
       order.status = 'cancelled';
       await order.save();
+      try {
+        await restoreStock(order.items);
+      } catch (restoreError) {
+        logger.error('Failed to restore stock after Razorpay failure', { error: restoreError.message, orderId: order._id });
+      }
       throw new ApiError(502, 'Payment gateway error. Please try again.');
     }
 
@@ -166,7 +169,9 @@ export const createCheckout = asyncHandler(async (req, res) => {
       }, 'Checkout ready')
     );
   } catch (error) {
-    await session.abortTransaction();
+    if (!committed) {
+      await session.abortTransaction();
+    }
     session.endSession();
     throw error;
   }

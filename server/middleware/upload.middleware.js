@@ -8,7 +8,7 @@ import multer from 'multer';
 import { fileTypeFromBuffer } from 'file-type';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import { ApiError } from '../utils/helpers.js';
-import { logger } from '../utils/logger.js';
+import logger from '../config/logger.js';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB

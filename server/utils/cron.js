@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { restoreStock } from '../services/order.service.js';
 import { ENV } from '../config/env.js';
-import { logger } from './logger.js';
+import logger from '../config/logger.js';
 
 /**
  * Automates the cleanup of expired pending orders.

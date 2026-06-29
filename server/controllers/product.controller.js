@@ -1,6 +1,7 @@
 import { Order } from '../models/order.model.js';
 import { Variant } from '../models/variant.model.js';
-import { ProductRepository } from '../repositories/product.repository.js';
+import mongoose from 'mongoose';
+import { Product } from '../models/product.model.js';
 import { ProductService } from '../services/product.service.js';
 import { asyncHandler, ApiError, ApiResponse, mapProductForResponse, safeJSON, getCacheHash } from '../utils/helpers.js';
 import { getCache, setCache, deleteCache, clearCacheByPattern } from '../utils/cache.js';
@@ -18,7 +19,7 @@ export const createProduct = asyncHandler(async (req, res) => {
   const { coverUrl, galleryUrls, variants } = uploaded;
 
   try {
-    const product = await ProductRepository.create({
+    const product = await Product.create({
       title,
       description,
       price: Number(price),
@@ -38,11 +39,10 @@ export const createProduct = asyncHandler(async (req, res) => {
       })(ProductService.parseProductMeta(req.body))
     });
 
-    const populated = await ProductRepository.findById(product._id, [
-      { path: 'category', select: 'name slug' },
-      { path: 'subcategory', select: 'name slug' },
-      { path: 'seller', select: 'name email' }
-    ]);
+    const populated = await Product.findById(product._id)
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({ path: 'subcategory', select: 'name slug' })
+      .populate({ path: 'seller', select: 'name email' });
 
     await ProductService.syncStandaloneFromEmbedded(product._id, variants);
     await clearCacheByPattern('products:');
@@ -98,18 +98,12 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 
   // Batch operation for better performance
   const [totalProducts, products] = await Promise.all([
-    ProductRepository.countDocuments(query),
-    ProductRepository.find(query, {
-      sort: sortOption,
-      skip,
-      limit: limitNum,
-      populate: [
-        { path: 'category', select: 'name slug' },
-        { path: 'subcategory', select: 'name slug' },
-        { path: 'seller', select: 'name email' }
-      ],
-      lean: true
-    })
+    Product.countDocuments(query),
+    Product.find(query).sort(sortOption).skip(skip).limit(limitNum)
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({ path: 'subcategory', select: 'name slug' })
+      .populate({ path: 'seller', select: 'name email' })
+      .lean()
   ]);
 
   const totalPages = Math.ceil(totalProducts / limitNum) || 1;
@@ -160,18 +154,20 @@ export const getProductById = asyncHandler(async (req, res) => {
   const cached = await getCache(cacheKey);
   if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Product details retrieved successfully (cached)'));
 
-  const product = await ProductRepository.findByIdOrSlug(id, [
-    { path: 'category', select: 'name slug' },
-    { path: 'subcategory', select: 'name slug' },
-    { path: 'seller', select: 'name brandName avatar email' },
-    {
+  const isObjectId = mongoose.Types.ObjectId.isValid(id);
+  const filter = isObjectId ? { _id: id } : { slug: id };
+  const product = await Product.findOne(filter)
+    .populate({ path: 'category', select: 'name slug' })
+    .populate({ path: 'subcategory', select: 'name slug' })
+    .populate({ path: 'seller', select: 'name brandName avatar email' })
+    .populate({
       path: 'relatedProducts',
       populate: [
         { path: 'category', select: 'name slug' },
         { path: 'subcategory', select: 'name slug' }
       ]
-    }
-  ], true);
+    })
+    .lean();
   if (!product) throw new ApiError(404, 'Product not found');
 
   let crossSells = product.relatedProducts || [];
@@ -180,28 +176,26 @@ export const getProductById = asyncHandler(async (req, res) => {
     const fallbackCount = 8 - crossSells.length;
     const existingIds = [product._id, ...crossSells.map(p => p._id)];
 
-    const subcatFallback = await ProductRepository.find({
+    const subcatFallback = await Product.find({
       subcategory: product.subcategory?._id,
       _id: { $nin: existingIds }
-    }, {
-      limit: fallbackCount,
-      populate: [{ path: 'category' }, { path: 'subcategory' }],
-      lean: true
-    });
+    }).limit(fallbackCount)
+      .populate({ path: 'category' })
+      .populate({ path: 'subcategory' })
+      .lean();
 
     crossSells = [...crossSells, ...subcatFallback];
     
     if (crossSells.length < 4) {
       const remainingCount = 8 - crossSells.length;
       const allIds = [product._id, ...crossSells.map(p => p._id)];
-      const catFallback = await ProductRepository.find({
+      const catFallback = await Product.find({
         category: product.category?._id,
         _id: { $nin: allIds }
-      }, {
-        limit: remainingCount,
-        populate: [{ path: 'category' }, { path: 'subcategory' }],
-        lean: true
-      });
+      }).limit(remainingCount)
+        .populate({ path: 'category' })
+        .populate({ path: 'subcategory' })
+        .lean();
       crossSells = [...crossSells, ...catFallback];
     }
   }
@@ -227,7 +221,8 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   const cached = await getCache(cacheKey);
   if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Frequently bought together products retrieved (cached)'));
 
-  const currentProduct = await ProductRepository.findByIdOrSlug(id, [], true);
+  const isObjectId = mongoose.Types.ObjectId.isValid(id);
+  const currentProduct = await Product.findOne(isObjectId ? { _id: id } : { slug: id }).lean();
   if (!currentProduct) throw new ApiError(404, 'Product not found');
   const actualId = currentProduct._id;
 
@@ -250,18 +245,12 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   let products = [];
 
   if (companionIds.length > 0) {
-    products = await ProductRepository.find(
-      {
-        _id: { $in: companionIds }
-      },
-      {
-        populate: [
-          { path: 'category', select: 'name slug' },
-          { path: 'subcategory', select: 'name slug' }
-        ],
-        lean: true
-      }
-    );
+    products = await Product.find({
+      _id: { $in: companionIds }
+    })
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({ path: 'subcategory', select: 'name slug' })
+      .lean();
 
     // Maintain the order from aggregation
     products.sort((a, b) => {
@@ -273,20 +262,13 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   if (products.length < 4) {
     const existingIds = [actualId.toString(), ...products.map((p) => p._id.toString())];
 
-    const fallback = await ProductRepository.find(
-      {
-        subcategory: currentProduct?.subcategory,
-        _id: { $nin: existingIds }
-      },
-      {
-        limit: 4 - products.length,
-        populate: [
-          { path: 'category', select: 'name slug' },
-          { path: 'subcategory', select: 'name slug' }
-        ],
-        lean: true
-      }
-    );
+    const fallback = await Product.find({
+      subcategory: currentProduct?.subcategory,
+      _id: { $nin: existingIds }
+    }).limit(4 - products.length)
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({ path: 'subcategory', select: 'name slug' })
+      .lean();
 
     products = [...products, ...fallback];
   }
@@ -304,7 +286,7 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
  */
 export const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const product = await ProductRepository.findById(id);
+  const product = await Product.findById(id);
   if (!product) throw new ApiError(404, 'Product not found');
 
   if (req.user.role !== 'admin' && product.seller.toString() !== req.user._id.toString()) {
@@ -363,10 +345,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
     
     await ProductService.deleteImages(toDelete);
 
-    const updated = await ProductRepository.findById(product._id, [
-      { path: 'category', select: 'name slug' },
-      { path: 'subcategory', select: 'name slug' }
-    ]);
+    const updated = await Product.findById(product._id)
+      .populate({ path: 'category', select: 'name slug' })
+      .populate({ path: 'subcategory', select: 'name slug' });
 
     await ProductService.syncStandaloneFromEmbedded(product._id, variants);
     await clearCacheByPattern('products:');
@@ -388,7 +369,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
  */
 export const deleteProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const product = await ProductRepository.findById(id);
+  const product = await Product.findById(id);
   if (!product) throw new ApiError(404, 'Product not found');
 
   if (req.user.role !== 'admin' && product.seller.toString() !== req.user._id.toString()) {
@@ -407,7 +388,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   }
   await Variant.updateMany({ product: id, deletedAt: null }, { $set: { deletedAt: new Date() } });
 
-  await ProductRepository.findByIdAndDelete(id);
+  await Product.findByIdAndDelete(id);
   await ProductService.deleteImages(imagesToDelete);
 
   await clearCacheByPattern('products:');
