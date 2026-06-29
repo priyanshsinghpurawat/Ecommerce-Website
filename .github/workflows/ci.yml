@@ -89,8 +89,8 @@ jobs:
         run: npm run lint
         working-directory: client
 
-      - name: Test with coverage
-        run: npx vitest run --passWithNoTests --coverage
+      - name: Test
+        run: npm test
         working-directory: client
 
       - name: Build
