@@ -27,10 +27,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: {
-        lines: 50,
-        functions: 20,
+        lines: 70,
+        functions: 50,
         branches: 60,
-        statements: 50
+        statements: 70
       }
     }
   },

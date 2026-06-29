@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { ENV } from './env.js';
+import logger from './logger.js';
 
 /** True when real Cloudinary credentials are set (not placeholders). */
 export function isCloudinaryConfigured() {
@@ -20,10 +21,10 @@ export function assertCloudinaryForRuntime() {
     const msg =
       'Cloudinary required: set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET in server/.env';
     if (ENV.NODE_ENV === 'production') {
-      console.error(msg);
+      logger.error(msg);
       process.exit(1);
     }
-    console.warn(` ${msg} — admin image uploads disabled until configured.`);
+    logger.warn(`${msg} — admin image uploads disabled until configured.`);
     return;
   }
 

@@ -8,6 +8,7 @@ import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
 import { asyncHandler, ApiError, ApiResponse, generateOrderNumber, calculateCouponDiscount, validateShippingAddress } from '../utils/helpers.js';
+import logger from '../config/logger.js';
 import { calculateOrderTotals, fetchAndValidateUserCart } from './order.controller.js';
 import { restoreStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
 import { ENV } from '../config/env.js';
@@ -282,7 +283,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   } catch (postErr) {
     await successSession.abortTransaction();
     // Payment is already confirmed — log and continue rather than failing the response
-    console.error('[Payment] Post-success writes failed (non-fatal):', postErr.message);
+    logger.error('[Payment] Post-success writes failed (non-fatal):', postErr.message);
   } finally {
     successSession.endSession();
   }

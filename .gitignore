@@ -1,4 +1,4 @@
-# Dependency directories
+# Dependencies
 node_modules/
 .pnp
 .pnp.js
@@ -8,9 +8,10 @@ dist/
 build/
 client/dist/
 
-# Environment files
+# Environment files (keep .env.example!)
 .env
 .env.*
+!.env.example
 *.env
 *.env.local
 *.pem
@@ -70,27 +71,13 @@ cypress/screenshots/
 
 # Server specific
 server/public/
-.gemini/
-.agents/
-gha-creds-*.json
-skills-lock.json
-testsprite_tests/
+gemini-creds-*.json
 
-# Temporary logs & debug scripts
-server/scripts/dev-tools.js
+# Personal / local scripts
+trunk.ps1
+.husky/
 
 # Heavy files and reports
 docs/
 screenshots/
 Artifacts/
-AUDIT_SUMMARY.txt
-progressreport.md
-
-
-docker-compose.yml
-.dockerignore
-Dockerfile
-
-
-
-

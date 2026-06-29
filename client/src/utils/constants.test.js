@@ -31,7 +31,7 @@ describe('SIZE_GROUPS', () => {
     expect(SIZE_GROUPS).toHaveLength(3);
   });
 
-  each(SIZE_GROUPS).it('group "$label" has sizes and types', (group) => {
+  it.each(SIZE_GROUPS)('group has sizes and types', (group) => {
     expect(group.label).toBeDefined();
     expect(Array.isArray(group.sizes)).toBe(true);
     expect(group.sizes.length).toBeGreaterThan(0);

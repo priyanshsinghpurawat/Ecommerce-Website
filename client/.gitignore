@@ -1,6 +1,7 @@
 # Environment variables — MUST never be committed
 .env
 .env.*
+!.env.example
 *.env.local
 
 # Logs
@@ -27,6 +28,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-testsprite_tests/
-
-testsprite_tests\tmp\config.json

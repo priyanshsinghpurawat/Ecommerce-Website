@@ -12,10 +12,10 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['utils/**', 'services/**', 'repositories/**', 'middleware/**', 'validators/**'],
       thresholds: {
-        lines: 50,
-        functions: 40,
-        branches: 40,
-        statements: 50
+        lines: 70,
+        functions: 60,
+        branches: 60,
+        statements: 70
       }
     }
   }

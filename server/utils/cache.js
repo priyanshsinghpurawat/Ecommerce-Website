@@ -1,6 +1,7 @@
 /** WHY: In-memory LRU cache to speed up repeated database queries. */
 import { LRUCache } from 'lru-cache';
 import { redisClient } from '../config/redis.js';
+import logger from '../config/logger.js';
 
 // Process-bound LRU cache as fallback or for local caching
 const localCache = new LRUCache({
@@ -18,7 +19,7 @@ export const getCache = async (key) => {
       return data ? JSON.parse(data) : null;
     }
   } catch (error) {
-    console.error('Redis GET Error:', error.message);
+    logger.error('Redis GET Error:', error.message);
   }
   return localCache.get(key) ?? null;
 };
@@ -38,7 +39,7 @@ export const setCache = async (key, value, ttlSeconds = 300) => {
       return;
     }
   } catch (error) {
-    console.error('Redis SET Error:', error.message);
+    logger.error('Redis SET Error:', error.message);
   }
   localCache.set(key, value, { ttl: ttlSeconds * 1000 });
 };
@@ -52,7 +53,7 @@ export const deleteCache = async (key) => {
       await redisClient.del(key);
     }
   } catch (error) {
-    console.error('Redis DEL Error:', error.message);
+    logger.error('Redis DEL Error:', error.message);
   }
   localCache.delete(key);
 };
@@ -81,7 +82,7 @@ export const clearCacheByPattern = async (pattern) => {
       await redisClient.eval(script, 0, `*${pattern}*`, 1000);
     }
   } catch (error) {
-    console.error('Redis Pattern Clear Error:', error.message);
+    logger.error('Redis Pattern Clear Error:', error.message);
   }
   
   for (const key of localCache.keys()) {
@@ -100,7 +101,7 @@ export const clearCache = async () => {
       await redisClient.flushDb();
     }
   } catch (error) {
-    console.error('Redis FLUSH Error:', error.message);
+    logger.error('Redis FLUSH Error:', error.message);
   }
   localCache.clear();
 };

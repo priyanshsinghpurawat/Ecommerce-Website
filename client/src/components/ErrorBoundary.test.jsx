@@ -27,7 +27,7 @@ describe('ErrorBoundary', () => {
     );
     expect(screen.getByText('Interface Interrupted')).toBeInTheDocument();
     expect(screen.getByText(/unexpected exception/)).toBeInTheDocument();
-    expect(screen.getByText('Test error')).toBeInTheDocument();
+    expect(screen.getByText(/Test error/)).toBeInTheDocument();
     consoleSpy.mockRestore();
   });
 

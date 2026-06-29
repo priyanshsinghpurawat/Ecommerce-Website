@@ -8,6 +8,7 @@ import { User } from '../models/user.model.js';
 import { AffiliateLink } from '../models/affiliateLink.model.js';
 import { LedgerTransaction } from '../models/ledger.model.js';
 import Papa from 'papaparse';
+import logger from '../config/logger.js';
 import { ApiResponse, ApiError, asyncHandler, calculateCouponDiscount, computeCartSubtotal, getUnitPrice, generateOrderNumber, validateShippingAddress } from '../utils/helpers.js';
 import { getIO } from '../config/socket.js';
 import { deductStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
@@ -205,7 +206,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       items: order.items
     });
   } catch (err) {
-    console.error('Socket emission failed:', err);
+    logger.error('Socket emission failed:', err.message);
   }
 
   return res
@@ -583,18 +584,6 @@ async function incrementCouponUsage(couponId, session) {
       { session }
     );
   }
-}
-
-function _isAuthorizedToViewOrder(order, user) {
-  if (user.role === 'admin') return true;
-  if (order.user?._id?.toString() === user._id.toString() || order.user?.toString() === user._id.toString()) return true;
-  if (user.role === 'seller') {
-    return order.items.some(item => {
-      const vendorId = typeof item.vendor === 'object' ? item.vendor?._id : item.vendor;
-      return vendorId?.toString() === user._id.toString();
-    });
-  }
-  return false;
 }
 
 function buildOrderQuery({ status, search }) {

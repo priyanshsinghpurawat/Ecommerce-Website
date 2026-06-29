@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import logger from '../config/logger.js';
 
 const variantSchema = new mongoose.Schema(
   {
@@ -66,17 +67,13 @@ variantSchema.index(
   { unique: true, partialFilterExpression: { deletedAt: { $exists: false } } }
 );
 
-variantSchema.pre('save', function (next) {
-  next();
-});
-
 variantSchema.post('save', async function (doc) {
   if (doc && !doc.deletedAt) {
     try {
       const Product = mongoose.model('Product');
       await Product.recalculateVariantSummary(doc.product);
     } catch (err) {
-      console.error('[Variant] Failed to recalculate product summary:', err.message);
+      logger.error('[Variant] Failed to recalculate product summary:', err.message);
     }
   }
 });
@@ -87,7 +84,7 @@ variantSchema.post('findOneAndDelete', async function (doc) {
       const Product = mongoose.model('Product');
       await Product.recalculateVariantSummary(doc.product);
     } catch (err) {
-      console.error('[Variant] Failed to recalculate product summary after delete:', err.message);
+      logger.error('[Variant] Failed to recalculate product summary after delete:', err.message);
     }
   }
 });

@@ -20,7 +20,6 @@ const migrateSlugs = async () => {
         let baseSlug = slugify(product.title, { lower: true, strict: true });
         let newSlug = baseSlug;
         let isUnique = false;
-        let attempt = 0;
 
         while (!isUnique) {
           const existing = await Product.findOne({ slug: newSlug, _id: { $ne: product._id } });

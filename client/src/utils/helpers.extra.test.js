@@ -10,7 +10,7 @@ import {
   clearCache,
   clearAllCache,
   formatCurrency
-} from '../../src/utils/helpers.js';
+} from './helpers.js';
 
 describe('validateImage', () => {
   it('returns error for null file', () => {
@@ -56,12 +56,13 @@ describe('filterValidImages', () => {
 
 describe('makeImageItem', () => {
   it('creates file item with previewUrl', () => {
-    const file = { name: 'test.jpg', size: 1000, type: 'image/jpeg' };
+    const file = new File(['dummy'], 'test.jpg', { type: 'image/jpeg' });
     const item = makeImageItem(file);
     expect(item.kind).toBe('file');
     expect(item.file).toBe(file);
     expect(item.previewUrl).toBeDefined();
     expect(item.id).toContain('test.jpg');
+    URL.revokeObjectURL(item.previewUrl);
   });
 });
 
