@@ -1,0 +1,74 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mensvibe-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mensvibe-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: mensvibe-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mensvibe-network
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/mensvibe
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - ./server/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mensvibe-network
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_PROXY_URL=http://server:5000
+    depends_on:
+      - server
+    networks:
+      - mensvibe-network
+    restart: unless-stopped
+
+networks:
+  mensvibe-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
