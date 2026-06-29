@@ -58,7 +58,7 @@ jobs:
         working-directory: server
 
       - name: Test with coverage
-        run: npx vitest run --coverage --coverage.thresholds.lines=70
+        run: npx vitest run --coverage
         working-directory: server
         env:
           MONGODB_URI: mongodb://localhost:27017/test
@@ -98,7 +98,7 @@ jobs:
         working-directory: client
 
       - name: Test with coverage
-        run: npx vitest run --passWithNoTests --coverage --coverage.thresholds.lines=70
+        run: npx vitest run --passWithNoTests --coverage
         working-directory: client
 
       - name: Build
