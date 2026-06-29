@@ -31,8 +31,8 @@ This document outlines the security measures implemented in the MensVibe applica
 - **CORS Configuration:** Strictly limited to the frontend domain via the `CORS_ORIGIN` environment variable.
 
 ## 6. Vulnerable and Outdated Components
-🟡 **Action Required:**
-- Regularly run `npm audit` and update packages to ensure dependencies (e.g., jsonwebtoken, express, mongoose) do not have known CVEs.
+✅ **Implemented:**
+- **Dependency Audit:** Regular dependency checks and version pinning. Run `npm audit` across directories to verify zero high- or critical-severity vulnerabilities.
 
 ## 7. Identification and Authentication Failures
 ✅ **Implemented:**
@@ -45,8 +45,9 @@ This document outlines the security measures implemented in the MensVibe applica
 - **Image Upload Security:** Multer and Cloudinary are configured to only accept specific MIME types (images), preventing the execution of malicious scripts disguised as images.
 
 ## 9. Security Logging and Monitoring Failures
-🟡 **Action Required:**
-- **Audit Logs:** Add comprehensive logging using tools like `winston` or `morgan` (currently using Morgan for dev) to track administrative actions and authentication failures in production.
+✅ **Implemented:**
+- **Winston & Morgan Logging:** Winston handles logging with automated transport to files (`logs/error.log` and `logs/combined.log`) in production.
+- **Production Audit Logger:** Configured global request logging middleware for all state-changing (non-GET) actions in production.
 
 ## 10. Server-Side Request Forgery (SSRF)
 ✅ **Implemented:**

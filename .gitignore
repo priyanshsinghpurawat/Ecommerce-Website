@@ -80,17 +80,17 @@ testsprite_tests/
 server/scripts/dev-tools.js
 
 # Heavy files and reports
+docs/
 screenshots/
 Artifacts/
 AUDIT_SUMMARY.txt
 progressreport.md
 
-# Vite & Vitest temp files
-*.timestamp-*
 
-# Jest example files
-jest-tests/
+docker-compose.yml
+.dockerignore
+Dockerfile
 
-# Trunk CLI launcher
-trunk.ps1
+
+
 
