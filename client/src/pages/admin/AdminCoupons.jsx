@@ -4,7 +4,7 @@ import {
   createCoupon, 
   updateCoupon, 
   deleteCoupon 
-} from '../../services/api.js';
+} from '../../services/coupon.service.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Input } from '../../components/Input.jsx';
 import { Pagination } from '../../components/Pagination.jsx';

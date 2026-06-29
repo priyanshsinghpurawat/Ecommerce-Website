@@ -1,44 +1,54 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories } from '../services/api.js';
-import * as productService from '../services/api.js';
+import { useSubcategories } from '../hooks/useSubcategories.js';
+import * as productService from '../services/product.service.js';
 import { HeroCarousel } from '../components/HeroCarousel.jsx';
 import { ProductShowcase } from '../components/ProductShowcase.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { CATEGORY_BANNERS, FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
-import { Sparkles, Flame, Zap } from 'lucide-react';
+import { Flame, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getCache, setCache } from '../utils/helpers.js';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
 };
 
+const CACHE_TTL = 60000; // 1 minute
+
+async function fetchWithCache(key, fetcher, ttl = CACHE_TTL) {
+  const cached = getCache(key);
+  if (cached) return cached;
+  const data = await fetcher();
+  setCache(key, data, ttl);
+  return data;
+}
+
 export const Home = () => {
   const { products, loading, fetchProducts } = useProducts();
   const { categories, fetchCategories } = useCategories();
-  const [subcategories, setSubcategories] = useState([]);
+  const { subcategories, fetchSubcategories } = useSubcategories();
   const [linen, setLinen] = useState([]);
   const [pants, setPants] = useState([]);
   const [saleProducts, setSaleProducts] = useState([]);
   const [loadingSections, setLoadingSections] = useState(true);
+  const fetchRef = useRef({});
 
   useEffect(() => {
     fetchProducts({ page: 1, limit: 12, sort: 'latest' });
     fetchCategories();
-    getSubcategories()
-      .then((res) => setSubcategories(res?.data || []))
-      .catch(() => setSubcategories([]));
+    fetchSubcategories();
     
     // Fetch sale products using the badge filter
-    productService.getProducts({ limit: 10, badge: 'sale' })
+    fetchWithCache('home:sale', () => productService.getProducts({ limit: 10, badge: 'sale' }))
       .then((res) => {
         setSaleProducts(res?.data?.products || []);
       })
       .catch(() => setSaleProducts([]));
-  }, [fetchProducts, fetchCategories]);
+  }, [fetchProducts, fetchCategories, fetchSubcategories]);
 
   const subBySlug = useMemo(() => {
     const map = {};
@@ -55,21 +65,26 @@ export const Home = () => {
         const linenId = subBySlug.linen?._id;
         const pantsId = subBySlug.pants?._id;
         const tasks = [];
+        
         if (linenId) {
-          tasks.push(
-            productService
-              .getProducts({ subcategory: linenId, limit: 5 })
-              .then((res) => setLinen(res?.data?.products || []))
-              .catch(() => setLinen([]))
-          );
+          const key = `home:linen:${linenId}`;
+          if (!fetchRef.current[key]) {
+            fetchRef.current[key] = fetchWithCache(key, () => 
+              productService.getProducts({ subcategory: linenId, limit: 5 })
+            ).then((res) => setLinen(res?.data?.products || []))
+              .catch(() => setLinen([]));
+            tasks.push(fetchRef.current[key]);
+          }
         }
         if (pantsId) {
-          tasks.push(
-            productService
-              .getProducts({ subcategory: pantsId, limit: 5 })
-              .then((res) => setPants(res?.data?.products || []))
-              .catch(() => setPants([]))
-          );
+          const key = `home:pants:${pantsId}`;
+          if (!fetchRef.current[key]) {
+            fetchRef.current[key] = fetchWithCache(key, () => 
+              productService.getProducts({ subcategory: pantsId, limit: 5 })
+            ).then((res) => setPants(res?.data?.products || []))
+              .catch(() => setPants([]));
+            tasks.push(fetchRef.current[key]);
+          }
         }
         await Promise.all(tasks);
       } finally {
@@ -85,16 +100,8 @@ export const Home = () => {
   ).filter(Boolean);
 
   return (
-    <div className="space-y-12 md:space-y-16 pb-6">
-      <div className="-mx-4 md:mx-0">
-        <HeroCarousel />
-      </div>
-
-
-
-
-
-
+    <div className="space-y-6 md:space-y-8 pb-6">
+      <HeroCarousel />
 
       <motion.div 
         initial="hidden"
@@ -205,7 +212,7 @@ export const Home = () => {
         className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0"
       >
         {[
-          { icon: Sparkles, label: 'Free shipping', text: 'On all orders across India' },
+          { icon: Flame, label: 'Free shipping', text: 'On all orders across India' },
           { icon: Zap, label: 'COD available', text: 'Pay when your order arrives' },
           { icon: Flame, label: 'Fresh drops', text: 'Curated weekly releases' }
         ].map(({ icon: Icon, label, text }) => (

@@ -1,5 +1,6 @@
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
+import { Variant } from '../models/variant.model.js';
 import { asyncHandler, ApiError, ApiResponse, normalizeImageUrl } from '../utils/helpers.js';
 
 const mapCartForResponse = (cart) => {
@@ -21,21 +22,36 @@ const mapCartForResponse = (cart) => {
 
 // Helper to retrieve populated cart
 const getPopulatedCart = async (userId) => {
-  let cart = await Cart.findOne({ user: userId }).populate({
-    path: 'items.product',
-    select: 'title price discountedPrice image category description stock seller',
-    populate: {
-      path: 'category',
-      select: 'name slug'
-    }
-  });
+  let cart = await Cart.findOne({ user: userId })
+    .populate({
+      path: 'items.product',
+      select: 'title price discountedPrice image category description stock seller',
+      populate: { path: 'category', select: 'name slug' }
+    })
+    .populate({
+      path: 'items.variant',
+      select: 'sku stock optionValues price images'
+    });
 
-  // If cart doesn't exist, initialize an empty one in database
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
   return cart;
+};
+
+// Read-only cart fetch — returns null if no cart exists (no write on GET)
+const getCartIfExists = async (userId) => {
+  return Cart.findOne({ user: userId })
+    .populate({
+      path: 'items.product',
+      select: 'title price discountedPrice image category description stock seller',
+      populate: { path: 'category', select: 'name slug' }
+    })
+    .populate({
+      path: 'items.variant',
+      select: 'sku stock optionValues price images'
+    });
 };
 
 /**
@@ -44,7 +60,14 @@ const getPopulatedCart = async (userId) => {
  * @access  Private
  */
 export const getCart = asyncHandler(async (req, res) => {
-  const cart = await getPopulatedCart(req.user._id);
+  let cart = await getCartIfExists(req.user._id);
+
+  // Return empty cart shape instead of creating a document on every GET
+  if (!cart) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user: req.user._id, items: [] }, "Cart retrieved successfully"));
+  }
 
   return res
     .status(200)
@@ -57,57 +80,94 @@ export const getCart = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const addToCart = asyncHandler(async (req, res) => {
-  const { productId, quantity = 1, size, color } = req.body;
+  const { productId, quantity = 1, size, color, variantId } = req.body;
 
   if (!productId) {
     throw new ApiError(400, "Product ID is required");
   }
 
-  // Verify product exists
   const product = await Product.findById(productId);
   if (!product) {
     throw new ApiError(404, "Product not found");
   }
 
-  let cart = await Cart.findOne({ user: req.user._id });
-  if (!cart) {
-    cart = await Cart.create({ user: req.user._id, items: [] });
-  }
-
-  // Check if item with SAME productId, size, AND color already exists
-  const itemIndex = cart.items.findIndex(
-    item => item.product.toString() === productId && 
-    (item.size || '') === (size || '') && 
-    (item.color || '') === (color || '')
-  );
-
-  const newQty = itemIndex > -1
-    ? cart.items[itemIndex].quantity + Number(quantity)
-    : Number(quantity);
-
-  // Stock validation
+  // Resolve variant and stock
+  let variantDoc = null;
   let availableStock = product.stock;
-  if (product.variants && product.variants.length > 0) {
-    const variant = product.variants.find(
-      v => (v.size || '') === (size || '') && (v.color || '') === (color || '')
-    );
-    if (variant) {
-      availableStock = variant.stock;
+
+  if (variantId) {
+    variantDoc = await Variant.findById(variantId);
+    if (variantDoc) {
+      availableStock = variantDoc.stock;
+    }
+  } else if (size || color) {
+    const query = { product: productId, deletedAt: null };
+    if (color) query['optionValues.Color'] = color;
+    if (size) query['optionValues.Size'] = size;
+    variantDoc = await Variant.findOne(query);
+    if (variantDoc) {
+      availableStock = variantDoc.stock;
     }
   }
 
-  if (newQty > availableStock) {
+  const qtyToAdd = Number(quantity);
+  if (qtyToAdd > availableStock) {
     throw new ApiError(400, `Only ${availableStock} units available for this selection`);
   }
 
-  if (itemIndex > -1) {
-    cart.items[itemIndex].quantity = newQty;
-  } else {
-    // Add new item with specific size and color
-    cart.items.push({ product: productId, quantity: Number(quantity), size, color });
+  const sizeVal = size || '';
+  const colorVal = color || '';
+  const variantRef = variantDoc?._id || null;
+
+  // Try to increment existing item atomically
+  let cart;
+  if (variantRef) {
+    // Match by variant ref for precision
+    cart = await Cart.findOneAndUpdate(
+      { user: req.user._id, 'items.product': productId, 'items.variant': variantRef },
+      { $inc: { 'items.$.quantity': qtyToAdd } },
+      { new: true }
+    );
   }
 
-  await cart.save();
+  // Fallback: match by product + size + color (legacy items without variant ref)
+  if (!cart) {
+    cart = await Cart.findOneAndUpdate(
+      { user: req.user._id, 'items.product': productId, 'items.size': sizeVal, 'items.color': colorVal },
+      { $inc: { 'items.$.quantity': qtyToAdd } },
+      { new: true }
+    );
+  }
+
+  // If no existing item matched, push new item
+  if (!cart) {
+    cart = await Cart.findOneAndUpdate(
+      { user: req.user._id },
+      {
+        $push: { items: { product: productId, variant: variantRef, quantity: qtyToAdd, size: sizeVal, color: colorVal } },
+        $setOnInsert: { user: req.user._id }
+      },
+      { new: true, upsert: true }
+    );
+  }
+
+  // Post-update stock validation
+  const updatedItem = cart.items.find(item =>
+    item.product.toString() === productId &&
+    (variantRef ? item.variant?.toString() === variantRef.toString() : true) &&
+    (item.size || '') === sizeVal &&
+    (item.color || '') === colorVal
+  );
+
+  if (updatedItem && updatedItem.quantity > availableStock) {
+    // Rollback
+    const rollbackFilter = variantRef
+      ? { user: req.user._id, 'items.product': productId, 'items.variant': variantRef }
+      : { user: req.user._id, 'items.product': productId, 'items.size': sizeVal, 'items.color': colorVal };
+
+    await Cart.findOneAndUpdate(rollbackFilter, { $inc: { 'items.$.quantity': -qtyToAdd } });
+    throw new ApiError(400, `Only ${availableStock} units available for this selection`);
+  }
 
   const populatedCart = await getPopulatedCart(req.user._id);
 
@@ -133,39 +193,47 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Quantity must be at least 1");
   }
 
-  const cart = await Cart.findOne({ user: req.user._id });
+  const cart = await Cart.findOne({ user: req.user._id, 'items._id': itemId });
   if (!cart) {
     throw new ApiError(404, "Cart not found");
   }
 
-  const itemIndex = cart.items.findIndex(item => item._id.toString() === itemId);
-  if (itemIndex === -1) {
+  const cartItem = cart.items.find(item => item._id.toString() === itemId);
+  if (!cartItem) {
     throw new ApiError(404, "Item not found in cart");
   }
 
-  const cartItem = cart.items[itemIndex];
   const product = await Product.findById(cartItem.product);
   if (!product) {
     throw new ApiError(404, "Product not found");
   }
 
-  // Stock validation
+  // Resolve stock
   let availableStock = product.stock;
-  if (product.variants && product.variants.length > 0) {
-    const variant = product.variants.find(
-      v => (v.size || '') === (cartItem.size || '') && (v.color || '') === (cartItem.color || '')
-    );
-    if (variant) {
-      availableStock = variant.stock;
-    }
+  if (cartItem.variant) {
+    const variant = await Variant.findById(cartItem.variant);
+    if (variant) availableStock = variant.stock;
+  } else if (cartItem.size || cartItem.color) {
+    const query = { product: product._id, deletedAt: null };
+    if (cartItem.color) query['optionValues.Color'] = cartItem.color;
+    if (cartItem.size) query['optionValues.Size'] = cartItem.size;
+    const variant = await Variant.findOne(query);
+    if (variant) availableStock = variant.stock;
   }
 
   if (quantityNum > availableStock) {
     throw new ApiError(400, `Only ${availableStock} units available for this selection`);
   }
 
-  cart.items[itemIndex].quantity = quantityNum;
-  await cart.save();
+  const updatedCart = await Cart.findOneAndUpdate(
+    { user: req.user._id, 'items._id': itemId },
+    { $set: { 'items.$.quantity': quantityNum } },
+    { new: true }
+  );
+
+  if (!updatedCart) {
+    throw new ApiError(404, "Cart not found or item removed concurrently");
+  }
 
   const populatedCart = await getPopulatedCart(req.user._id);
 
@@ -191,9 +259,10 @@ export const removeFromCart = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Cart not found");
   }
 
-  // Evict item by its unique database _id
-  cart.items = cart.items.filter(item => item._id.toString() !== itemId);
-  await cart.save();
+  await Cart.findOneAndUpdate(
+    { user: req.user._id },
+    { $pull: { items: { _id: itemId } } }
+  );
 
   const populatedCart = await getPopulatedCart(req.user._id);
 
@@ -213,8 +282,10 @@ export const clearCart = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Cart not found");
   }
 
-  cart.items = [];
-  await cart.save();
+  await Cart.findOneAndUpdate(
+    { user: req.user._id },
+    { $set: { items: [] } }
+  );
 
   const populatedCart = await getPopulatedCart(req.user._id);
 

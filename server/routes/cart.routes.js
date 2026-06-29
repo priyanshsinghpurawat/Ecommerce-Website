@@ -9,8 +9,18 @@ import {
 import { verifyJWT } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { addToCartSchema, updateCartQuantitySchema, cartItemIdParamSchema } from '../validators/cart.schema.js';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+const cartLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: 'Too many cart requests. Please try again later.' },
+  skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
+});
+
+router.use(cartLimiter);
 
 // Secure all routes in this router with JWT authentication
 router.use(verifyJWT);

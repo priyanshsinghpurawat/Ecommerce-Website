@@ -2,11 +2,15 @@ import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
+import { Variant } from '../models/variant.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
+import { AffiliateLink } from '../models/affiliateLink.model.js';
+import { LedgerTransaction } from '../models/ledger.model.js';
 import Papa from 'papaparse';
 import { ApiResponse, ApiError, asyncHandler, calculateCouponDiscount, computeCartSubtotal, getUnitPrice, generateOrderNumber, validateShippingAddress } from '../utils/helpers.js';
 import { getIO } from '../config/socket.js';
+import { deductStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
 
 const GST_TAX_RATE = 0.18;
 const VALID_ORDER_STATUSES = ['confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'];
@@ -30,7 +34,7 @@ const VALID_TRANSITIONS = {
  * @access  Private
  */
 export const createOrder = asyncHandler(async (req, res) => {
-  const { shippingAddress, couponCode, paymentMethod = 'cod' } = req.body;
+  const { shippingAddress, couponCode, paymentMethod = 'cod', attributionTag } = req.body;
 
   validateShippingAddress(shippingAddress);
 
@@ -42,7 +46,8 @@ export const createOrder = asyncHandler(async (req, res) => {
     cart,
     orderCalculations,
     shippingAddress,
-    paymentMethod
+    paymentMethod,
+    attributionTag
   });
 
   return res
@@ -56,7 +61,7 @@ export const createOrder = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).lean();
+  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(100).lean();
 
   return res
     .status(200)
@@ -69,14 +74,18 @@ export const getMyOrders = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id).populate('user', 'name email').lean();
+  const filter = { _id: req.params.id };
 
-  if (!order) {
-    throw new ApiError(404, 'Order not found');
+  if (req.user.role === 'user') {
+    filter.user = req.user._id;
+  } else if (req.user.role === 'seller') {
+    filter['items.vendor'] = req.user._id;
   }
 
-  if (!isAuthorizedToViewOrder(order, req.user)) {
-    throw new ApiError(403, 'You are not authorized to view this order');
+  const order = await Order.findOne(filter).populate('user', 'name email').lean();
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found or you are not authorized to view it');
   }
 
   return res
@@ -142,42 +151,50 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Order not found');
   }
 
-  // If user is a seller, they can only update their own items
-  if (req.user.role === 'seller') {
-    if (itemId) {
-      const item = order.items.id(itemId);
-      if (!item) throw new ApiError(404, 'Item not found in order');
-      if (item.vendor.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, 'You are not authorized to update this item');
-      }
-      await transitionOrderItemStatus(order, item, status, trackingNumber);
-    } else {
-      // Update all items belonging to this seller
-      let updatedAny = false;
-      for (const item of order.items) {
-        if (item.vendor.toString() === req.user._id.toString()) {
-          await transitionOrderItemStatus(order, item, status, trackingNumber);
-          updatedAny = true;
-        }
-      }
-      if (!updatedAny) throw new ApiError(403, 'No items found for this vendor in this order');
-    }
-  } else if (req.user.role === 'admin') {
-    // Admin can update specific item or whole order
-    if (itemId) {
-      const item = order.items.id(itemId);
-      if (!item) throw new ApiError(404, 'Item not found in order');
-      await transitionOrderItemStatus(order, item, status, trackingNumber);
-    } else {
-      await transitionOrderStatus(order, status);
-    }
-  } else {
-    throw new ApiError(403, 'You are not authorized to update order status');
-  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Recalculate root order status
-  recalculateRootOrderStatus(order);
-  await order.save();
+  try {
+    // If user is a seller, they can only update their own items
+    if (req.user.role === 'seller') {
+      if (itemId) {
+        const item = order.items.id(itemId);
+        if (!item) throw new ApiError(404, 'Item not found in order');
+        if (item.vendor.toString() !== req.user._id.toString()) {
+          throw new ApiError(403, 'You are not authorized to update this item');
+        }
+        await transitionOrderItemStatus(order, item, status, trackingNumber, session);
+      } else {
+        let updatedAny = false;
+        for (const item of order.items) {
+          if (item.vendor.toString() === req.user._id.toString()) {
+            await transitionOrderItemStatus(order, item, status, trackingNumber, session);
+            updatedAny = true;
+          }
+        }
+        if (!updatedAny) throw new ApiError(403, 'No items found for this vendor in this order');
+      }
+    } else if (req.user.role === 'admin') {
+      if (itemId) {
+        const item = order.items.id(itemId);
+        if (!item) throw new ApiError(404, 'Item not found in order');
+        await transitionOrderItemStatus(order, item, status, trackingNumber, session);
+      } else {
+        await transitionOrderStatus(order, status, session);
+      }
+    } else {
+      throw new ApiError(403, 'You are not authorized to update order status');
+    }
+
+    recalculateRootOrderStatus(order);
+    await order.save({ session });
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 
   try {
     const io = getIO();
@@ -217,6 +234,122 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Request a return for an order item (Customer)
+ * @route   POST /api/v3/orders/:id/items/:itemId/return
+ * @access  Private
+ */
+export const requestReturn = asyncHandler(async (req, res) => {
+  const { id, itemId } = req.params;
+  const { reason } = req.body;
+
+  if (!reason) throw new ApiError(400, 'Return reason is required');
+
+  const order = await Order.findOne({ _id: id, user: req.user._id });
+  if (!order) throw new ApiError(404, 'Order not found');
+
+  const item = order.items.id(itemId);
+  if (!item) throw new ApiError(404, 'Item not found in order');
+
+  if (item.status !== 'delivered') {
+    throw new ApiError(400, 'Only delivered items can be returned');
+  }
+  if (item.returnStatus !== 'none') {
+    throw new ApiError(400, 'Return already requested for this item');
+  }
+
+  // Check 7-day return policy (PM SLA enforcement)
+  const deliveryDate = item.deliveryDate || order.updatedAt;
+  const daysSinceDelivery = (new Date() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24);
+  if (daysSinceDelivery > 7) {
+    throw new ApiError(400, 'Return window (7 days) has expired');
+  }
+
+  item.returnStatus = 'requested';
+  item.returnReason = reason;
+
+  await order.save();
+
+  return res.status(200).json(new ApiResponse(200, order, 'Return requested successfully'));
+});
+
+/**
+ * @desc    Process a return request (Approve/Reject)
+ * @route   PUT /api/v3/orders/:id/items/:itemId/process-return
+ * @access  Private (Seller/Admin)
+ */
+export const processReturn = asyncHandler(async (req, res) => {
+  const { id, itemId } = req.params;
+  const { status } = req.body; // 'approved', 'rejected', 'refunded'
+
+  if (!['approved', 'rejected', 'refunded'].includes(status)) {
+    throw new ApiError(400, 'Invalid return status');
+  }
+
+  const order = await Order.findById(id);
+  if (!order) throw new ApiError(404, 'Order not found');
+
+  const item = order.items.id(itemId);
+  if (!item) throw new ApiError(404, 'Item not found in order');
+
+  // Verify authorization
+  if (req.user.role === 'seller' && item.vendor?.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'Not authorized to process this return');
+  }
+
+  if (item.returnStatus !== 'requested' && item.returnStatus !== 'approved') {
+    throw new ApiError(400, 'Cannot process return in current state');
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    item.returnStatus = status;
+    
+    if (status === 'refunded') {
+      item.status = 'returned';
+      // In a real system, we would trigger Razorpay refund API here.
+      
+      // Reverse Ledger Transaction
+      const saleAmountPaise = Math.round(item.subtotal * 100);
+      const commissionAmountPaise = Math.round(item.subtotal * 0.10 * 100);
+      
+      await LedgerTransaction.insertMany([
+        {
+          vendor: item.vendor,
+          type: 'refund',
+          amount: -saleAmountPaise, // deduct sale
+          order: order._id,
+          description: `Refund (RMA) - #${order.orderNumber}`
+        },
+        {
+          vendor: item.vendor,
+          type: 'commission_fee', // Revert fee
+          amount: commissionAmountPaise, // credit back the platform fee
+          order: order._id,
+          description: `Fee Reversal (RMA) - #${order.orderNumber}`
+        }
+      ], { session });
+
+      // Restore stock
+      await restoreStockForOrder({ items: [item] }, session);
+    }
+
+    recalculateRootOrderStatus(order);
+    await order.save({ session });
+    
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json(new ApiResponse(200, order, `Return ${status} successfully`));
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+});
+
+/**
  * @desc    Export orders to CSV (Admin)
  * @route   GET /api/v3/orders/export/csv
  * @access  Private/Admin
@@ -224,7 +357,8 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 export const exportOrdersCSV = asyncHandler(async (req, res) => {
   const orders = await Order.find({ status: { $ne: 'cancelled' } })
     .populate('user', 'name email')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .limit(5000); // Prevent OOM by capping export to 5000 recent orders
 
   const csvData = orders.map(o => ({
     OrderNumber: o.orderNumber,
@@ -250,10 +384,13 @@ export const exportOrdersCSV = asyncHandler(async (req, res) => {
 /*                               PRIVATE HELPERS                              */
 /* -------------------------------------------------------------------------- */
 
-async function fetchAndValidateUserCart(userId) {
+export async function fetchAndValidateUserCart(userId) {
   const cart = await Cart.findOne({ user: userId }).populate({
     path: 'items.product',
-    select: 'title price discountedPrice image stock seller variants'
+    select: 'title price discountedPrice image stock seller variantSummary'
+  }).populate({
+    path: 'items.variant',
+    select: 'sku stock optionValues price images'
   });
 
   if (!cart || cart.items.length === 0) {
@@ -268,7 +405,7 @@ async function fetchAndValidateUserCart(userId) {
   return cart;
 }
 
-async function calculateOrderTotals(cart, couponCode, userId) {
+export async function calculateOrderTotals(cart, couponCode, userId) {
   const validItems = cart.items.filter((item) => item.product);
   const subtotal = computeCartSubtotal(validItems);
 
@@ -294,14 +431,17 @@ async function calculateOrderTotals(cart, couponCode, userId) {
 
   const orderItems = validItems.map((item) => {
     const product = item.product;
-    const unitPrice = getUnitPrice(product);
+    const variant = item.variant;
+    const unitPrice = variant?.price ?? getUnitPrice(product);
     return {
       product: product._id,
+      variant: variant?._id || null,
+      sku: variant?.sku || '',
       vendor: product.seller,
       title: product.title,
       image: product.image,
-      price: product.price,
-      discountedPrice: product.discountedPrice,
+      price: variant?.price ?? product.price,
+      discountedPrice: variant?.compareAtPrice ?? product.discountedPrice,
       quantity: item.quantity,
       unitPrice,
       subtotal: unitPrice * item.quantity,
@@ -322,7 +462,7 @@ async function calculateOrderTotals(cart, couponCode, userId) {
   };
 }
 
-async function executeOrderTransaction({ userId, cart, orderCalculations, shippingAddress, paymentMethod }) {
+async function executeOrderTransaction({ userId, cart, orderCalculations, shippingAddress, paymentMethod, attributionTag }) {
   const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -337,7 +477,7 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
     }
 
     const validItems = cart.items.filter((item) => item.product);
-    await deductProductStock(validItems, session);
+    await deductStock(validItems, session);
 
     const [order] = await Order.create([{
       orderNumber: generateOrderNumber(),
@@ -359,11 +499,67 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
         country: shippingAddress.country?.trim() || 'India'
       },
       paymentMethod: paymentMethod === 'demo' ? 'demo' : 'cod',
-      status: 'confirmed'
+      status: 'confirmed',
+      attributionTag: attributionTag || null
     }], { session });
 
-    await incrementProductSales(orderItems, session);
+    await incrementSalesBulk(orderItems, session);
     await incrementCouponUsage(appliedCouponId, session);
+    
+    // Update affiliate metrics if an attribution tag exists
+    if (attributionTag) {
+      await AffiliateLink.findOneAndUpdate(
+        { trackingTag: attributionTag.toLowerCase(), isActive: true },
+        { 
+          $inc: { 
+            'metrics.conversions': 1, 
+            'metrics.revenueGenerated': total 
+          } 
+        },
+        { session }
+      );
+    }
+
+    // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
+    const vendorTotals = {};
+    for (const item of orderItems) {
+      if (item.vendor) {
+        const vid = item.vendor.toString();
+        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
+        vendorTotals[vid] += item.subtotal;
+      }
+    }
+
+    const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
+    const ledgerEntries = [];
+    
+    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
+      // 1. Credit Vendor for the sale (in paise)
+      const saleAmountPaise = Math.round(vendorTotal * 100);
+      ledgerEntries.push({
+        vendor: vendorId,
+        type: 'sale',
+        amount: saleAmountPaise,
+        order: order._id,
+        status: paymentMethod === 'cod' ? 'pending' : 'cleared',
+        description: `Order Revenue - #${order.orderNumber}`
+      });
+
+      // 2. Debit Platform Commission (in paise)
+      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
+      ledgerEntries.push({
+        vendor: vendorId,
+        type: 'commission_fee',
+        amount: -commissionAmountPaise, // negative amount for debits
+        order: order._id,
+        status: paymentMethod === 'cod' ? 'pending' : 'cleared',
+        description: `Platform Fee (10%) - #${order.orderNumber}`
+      });
+    }
+
+    if (ledgerEntries.length > 0) {
+      await LedgerTransaction.insertMany(ledgerEntries, { session });
+    }
 
     cart.items = [];
     await cart.save({ session });
@@ -379,66 +575,6 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
   }
 }
 
-async function deductProductStock(items, session) {
-  const sortedItems = [...items].sort((a, b) => 
-    a.product._id.toString().localeCompare(b.product._id.toString())
-  );
-
-  for (const item of sortedItems) {
-    const product = item.product;
-    const hasVariants = product.variants && product.variants.length > 0;
-    const matchingVariant = hasVariants && product.variants.find(
-      v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
-    );
-
-    let updatedProduct;
-    if (matchingVariant) {
-      updatedProduct = await Product.findOneAndUpdate(
-        {
-          _id: product._id,
-          variants: {
-            $elemMatch: {
-              size: item.size || '',
-              color: item.color || '',
-              stock: { $gte: item.quantity }
-            }
-          }
-        },
-        {
-          $inc: {
-            "variants.$.stock": -item.quantity,
-            stock: -item.quantity
-          }
-        },
-        { new: true, session }
-      );
-    } else {
-      updatedProduct = await Product.findOneAndUpdate(
-        { _id: product._id, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity } },
-        { new: true, session }
-      );
-    }
-
-    if (!updatedProduct) {
-      throw new ApiError(
-        400,
-        `Insufficient stock for "${product.title}". It might have just sold out.`
-      );
-    }
-  }
-}
-
-async function incrementProductSales(items, session) {
-  for (const item of items) {
-    await Product.findByIdAndUpdate(
-      item.product,
-      { $inc: { soldCount: item.quantity } },
-      { session }
-    );
-  }
-}
-
 async function incrementCouponUsage(couponId, session) {
   if (couponId) {
     await Coupon.findByIdAndUpdate(
@@ -449,7 +585,7 @@ async function incrementCouponUsage(couponId, session) {
   }
 }
 
-function isAuthorizedToViewOrder(order, user) {
+function _isAuthorizedToViewOrder(order, user) {
   if (user.role === 'admin') return true;
   if (order.user?._id?.toString() === user._id.toString() || order.user?.toString() === user._id.toString()) return true;
   if (user.role === 'seller') {
@@ -493,75 +629,69 @@ function assertValidTransition(oldStatus, newStatus) {
   }
 }
 
-async function transitionOrderStatus(order, newStatus) {
+async function transitionOrderStatus(order, newStatus, session) {
   const oldStatus = order.status;
   assertValidTransition(oldStatus, newStatus);
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-    await restoreStockForOrder(order);
+    await restoreStockForOrder(order, session);
   }
 
   if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
-    await reDeductStockForOrder(order);
+    await reDeductStockForOrder(order, session);
   }
 
-  // Update all items to match root status
   for (const item of order.items) {
     item.status = newStatus;
   }
 }
 
-async function transitionOrderItemStatus(order, item, newStatus, trackingNumber) {
+async function transitionOrderItemStatus(order, item, newStatus, trackingNumber, session) {
   const oldStatus = item.status;
   assertValidTransition(oldStatus, newStatus);
 
-  const product = await Product.findById(item.product);
-  const hasVariants = product && product.variants && product.variants.length > 0;
-  const matchingVariant = hasVariants && product.variants.find(
-    v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
-  );
+  const opts = session ? { session } : {};
+
+  // Resolve variant for this item
+  let variant = null;
+  if (item.variant) {
+    variant = await Variant.findById(item.variant).session(session);
+  } else if (item.sku) {
+    variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
+  } else if (item.color || item.size) {
+    const query = { product: item.product, deletedAt: null };
+    if (item.color) query['optionValues.Color'] = item.color;
+    if (item.size) query['optionValues.Size'] = item.size;
+    variant = await Variant.findOne(query).session(session);
+  }
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-    if (matchingVariant) {
-      await Product.findOneAndUpdate(
-        { _id: item.product, "variants.size": item.size || '', "variants.color": item.color || '' },
-        { $inc: { "variants.$.stock": item.quantity, stock: item.quantity, soldCount: -item.quantity } }
+    if (variant) {
+      await Variant.findOneAndUpdate(
+        { _id: variant._id },
+        { $inc: { stock: item.quantity } },
+        opts
       );
     } else {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: item.quantity, soldCount: -item.quantity }
-      });
+      }, opts);
     }
   }
 
   if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
     let updated;
-    if (matchingVariant) {
-      updated = await Product.findOneAndUpdate(
-        {
-          _id: item.product,
-          variants: {
-            $elemMatch: {
-              size: item.size || '',
-              color: item.color || '',
-              stock: { $gte: item.quantity }
-            }
-          }
-        },
-        {
-          $inc: {
-            "variants.$.stock": -item.quantity,
-            stock: -item.quantity,
-            soldCount: item.quantity
-          }
-        },
-        { new: true }
+    if (variant) {
+      updated = await Variant.findOneAndUpdate(
+        { _id: variant._id, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true, ...opts }
       );
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity, soldCount: item.quantity } },
-        { new: true }
+        { new: true, ...opts }
       );
     }
     if (!updated) {
@@ -590,73 +720,74 @@ function recalculateRootOrderStatus(order) {
   }
 }
 
-async function restoreStockForOrder(order) {
-  const sortedItems = [...order.items].sort((a, b) => 
-    a.product.toString().localeCompare(b.product.toString())
+async function restoreStockForOrder(order, session) {
+  const sortedItems = [...order.items].sort((a, b) =>
+    (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
   );
 
   for (const item of sortedItems) {
     if (item.status !== 'cancelled') {
-      const product = await Product.findById(item.product);
-      const hasVariants = product && product.variants && product.variants.length > 0;
-      const matchingVariant = hasVariants && product.variants.find(
-        v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
-      );
+      // Resolve variant
+      let variant = null;
+      if (item.variant) {
+        variant = await Variant.findById(item.variant).session(session);
+      } else if (item.sku) {
+        variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
+      } else if (item.color || item.size) {
+        const query = { product: item.product, deletedAt: null };
+        if (item.color) query['optionValues.Color'] = item.color;
+        if (item.size) query['optionValues.Size'] = item.size;
+        variant = await Variant.findOne(query).session(session);
+      }
 
-      if (matchingVariant) {
-        await Product.findOneAndUpdate(
-          { _id: item.product, "variants.size": item.size || '', "variants.color": item.color || '' },
-          { $inc: { "variants.$.stock": item.quantity, stock: item.quantity, soldCount: -item.quantity } }
+      if (variant) {
+        await Variant.findOneAndUpdate(
+          { _id: variant._id },
+          { $inc: { stock: item.quantity } },
+          session ? { session } : {}
         );
       } else {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: item.quantity, soldCount: -item.quantity }
-        });
+        }, session ? { session } : {});
       }
       item.status = 'cancelled';
     }
   }
 }
 
-async function reDeductStockForOrder(order) {
-  const sortedItems = [...order.items].sort((a, b) => 
-    a.product.toString().localeCompare(b.product.toString())
+async function reDeductStockForOrder(order, session) {
+  const sortedItems = [...order.items].sort((a, b) =>
+    (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
   );
 
   for (const item of sortedItems) {
-    const product = await Product.findById(item.product);
-    const hasVariants = product && product.variants && product.variants.length > 0;
-    const matchingVariant = hasVariants && product.variants.find(
-      v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
-    );
+    // Resolve variant
+    let variant = null;
+    if (item.variant) {
+      variant = await Variant.findById(item.variant).session(session);
+    } else if (item.sku) {
+      variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
+    } else if (item.color || item.size) {
+      const query = { product: item.product, deletedAt: null };
+      if (item.color) query['optionValues.Color'] = item.color;
+      if (item.size) query['optionValues.Size'] = item.size;
+      variant = await Variant.findOne(query).session(session);
+    }
 
+    const opts = { new: true, ...(session ? { session } : {}) };
     let updated;
-    if (matchingVariant) {
-      updated = await Product.findOneAndUpdate(
-        {
-          _id: item.product,
-          variants: {
-            $elemMatch: {
-              size: item.size || '',
-              color: item.color || '',
-              stock: { $gte: item.quantity }
-            }
-          }
-        },
-        {
-          $inc: {
-            "variants.$.stock": -item.quantity,
-            stock: -item.quantity,
-            soldCount: item.quantity
-          }
-        },
-        { new: true }
+    if (variant) {
+      updated = await Variant.findOneAndUpdate(
+        { _id: variant._id, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        opts
       );
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity, soldCount: item.quantity } },
-        { new: true }
+        opts
       );
     }
 
@@ -664,21 +795,28 @@ async function reDeductStockForOrder(order) {
       // Rollback any items already deducted in this loop
       const deductedItems = sortedItems.slice(0, sortedItems.indexOf(item));
       for (const prev of deductedItems) {
-        const prevProduct = await Product.findById(prev.product);
-        const prevHasVariants = prevProduct && prevProduct.variants && prevProduct.variants.length > 0;
-        const prevMatchingVariant = prevHasVariants && prevProduct.variants.find(
-          v => (v.size || '') === (prev.size || '') && (v.color || '') === (prev.color || '')
-        );
+        let prevVariant = null;
+        if (prev.variant) {
+          prevVariant = await Variant.findById(prev.variant).session(session);
+        } else if (prev.sku) {
+          prevVariant = await Variant.findOne({ sku: prev.sku, deletedAt: null }).session(session);
+        } else if (prev.color || prev.size) {
+          const q = { product: prev.product, deletedAt: null };
+          if (prev.color) q['optionValues.Color'] = prev.color;
+          if (prev.size) q['optionValues.Size'] = prev.size;
+          prevVariant = await Variant.findOne(q).session(session);
+        }
 
-        if (prevMatchingVariant) {
-          await Product.findOneAndUpdate(
-            { _id: prev.product, "variants.size": prev.size || '', "variants.color": prev.color || '' },
-            { $inc: { "variants.$.stock": prev.quantity, stock: prev.quantity, soldCount: -prev.quantity } }
+        if (prevVariant) {
+          await Variant.findOneAndUpdate(
+            { _id: prevVariant._id },
+            { $inc: { stock: prev.quantity } },
+            session ? { session } : {}
           );
         } else {
           await Product.findByIdAndUpdate(prev.product, {
             $inc: { stock: prev.quantity, soldCount: -prev.quantity }
-          });
+          }, session ? { session } : {});
         }
       }
       throw new ApiError(400, `Cannot reinstate order. Product "${item.title}" is out of stock.`);

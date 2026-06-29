@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import { Coupon } from '../models/coupon.model.js';
 import { Order } from '../models/order.model.js';
-import { Cart } from '../models/cart.model.js';
 
 /* -------------------------------------------------------------------------- */
 /*                                CORE CLASSES                                */
@@ -148,7 +147,7 @@ export function normalizeImageUrl(image) {
   return PLACEHOLDER;
 }
 
-export function mapProductForResponse(product, req = null) {
+export function mapProductForResponse(product, _req = null) {
   if (!product) return product;
   const obj = product.toObject ? product.toObject() : { ...product };
   obj.image = normalizeImageUrl(obj.image);
@@ -286,63 +285,49 @@ export const validateShippingAddress = (address) => {
   address.phone = validateIndianPhone(address.phone);
 };
 
-export const buildOrderFromCart = async (userId, { shippingAddress, couponCode }) => {
-  validateShippingAddress(shippingAddress);
-  const cart = await Cart.findOne({ user: userId }).populate('items.product');
-
-  if (!cart || cart.items.length === 0) throw new ApiError(400, 'Cart is empty.');
-  const validItems = cart.items.filter(item => item.product);
-
-  for (const item of validItems) {
-    if (item.product.stock < item.quantity) {
-      throw new ApiError(400, `Only ${item.product.stock} left for "${item.product.title}".`);
-    }
-  }
-
-  const subtotal = computeCartSubtotal(validItems);
-  let discountAmount = 0;
-  let taxableValue = subtotal;
-  let appliedCouponCode;
-
-  if (couponCode?.trim()) {
-    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId);
-    discountAmount = couponResult.discountAmount;
-    taxableValue = couponResult.finalTotal;
-    appliedCouponCode = couponResult.code;
-  }
-
-  const taxAmount = taxableValue * 0.18;
-  const total = taxableValue + taxAmount;
-
-  const orderItems = validItems.map(item => {
-    const unitPrice = getUnitPrice(item.product);
-    return {
-      product: item.product._id,
-      vendor: item.product.seller,
-      title: item.product.title,
-      image: item.product.image,
-      price: item.product.price,
-      discountedPrice: item.product.discountedPrice,
-      quantity: item.quantity,
-      unitPrice,
-      subtotal: unitPrice * item.quantity,
-      size: item.size || '',
-      color: item.color || '',
-      status: 'confirmed'
-    };
-  });
-
-  return {
-    cart,
-    orderItems,
-    subtotal,
-    taxAmount,
-    discountAmount,
-    total,
-    appliedCouponCode,
-    shippingAddress
-  };
-};
-
 export const generateOrderNumber = () =>
   `BL-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`.toUpperCase();
+
+/** Safely JSON.parse a string field, returning fallback on error. */
+export const safeJSON = (v, fallback) => {
+  if (v == null || v === '') return fallback;
+  if (typeof v !== 'string') return v;
+  try { return JSON.parse(v); } catch { return fallback; }
+};
+
+/**
+ * Generate cache hash from object parameters
+ * Deduplicates parameters and creates consistent cache keys
+ */
+export const getCacheHash = (params) => {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .reduce((acc, key) => {
+      const value = String(params[key]).replace(/[\s:]{1,}/g, '');
+      acc[key] = value;
+      return acc;
+    }, {});
+  
+  const hash = crypto.createHash('md5').update(JSON.stringify(sortedParams)).digest('hex');
+  return hash;
+};
+
+/**
+ * Extract safe user fields for API responses
+ * Removes sensitive fields like password while maintaining all public user data
+ */
+export const buildSafeUser = (user) => {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone,
+    brandName: user.brandName,
+    avatar: user.avatar,
+    isActive: user.isActive,
+    addresses: user.addresses,
+    wishlist: user.wishlist,
+    storefront: user.storefront
+  };
+};

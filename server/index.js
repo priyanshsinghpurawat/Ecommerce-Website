@@ -1,4 +1,3 @@
-/** WHY: Entry point to start the server and connect the database. */
 import mongoose from 'mongoose';
 import { ENV } from './config/env.js';
 import connectDB from './config/db.js';
@@ -8,71 +7,114 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { setupSocket } from './config/socket.js';
 import { initInventoryCron } from './utils/cron.js';
-import { clearCache } from './utils/cache.js';
+import { clearCacheByPattern } from './utils/cache.js';
+import { logger } from './utils/logger.js';
 
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
-
-    // Connect to Redis (Optional)
+    // Parallelize DB and Redis connections to avoid blocking
+    const initPromises = [connectDB()];
     if (ENV.REDIS_URL) {
-      await connectRedis();
+      initPromises.push(connectRedis());
     }
+    await Promise.all(initPromises);
 
-    // Flush cache on startup to clear any stale category or query cache
-    await clearCache();
-    console.log('Cache flushed successfully on startup.');
+    // Clear only app-owned cache keys — not the whole Redis DB.
+    // flushDb() would wipe other services' data in shared Redis environments.
+    await clearCacheByPattern('products:');
+    await clearCacheByPattern('categories:');
+    logger.info('App cache cleared on startup');
 
-    // Initialize background tasks
     initInventoryCron();
 
     const httpServer = createServer(app);
+
     const io = new Server(httpServer, {
       cors: {
         origin: ENV.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || true,
         credentials: true
       }
     });
-    
+
     setupSocket(io);
 
     const server = httpServer.listen(ENV.PORT, () => {
-      console.log(`MensVibe API → http://localhost:${ENV.PORT} [${ENV.NODE_ENV}]`);
+      logger.info(`Server started on port ${ENV.PORT}`, { env: ENV.NODE_ENV });
     });
 
-    // Handle process-level errors
-    process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.on('unhandledRejection', (reason) => {
+      logger.error('Unhandled rejection', { reason });
       process.exit(1);
     });
 
     process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
+      logger.error('Uncaught exception', { error: error.message, stack: error.stack });
       process.exit(1);
     });
 
-    // Graceful shutdown
     const shutdown = async () => {
-      console.log('Shutting down server gracefully...');
-      server.close(async () => {
-        try {
-          await mongoose.disconnect();
-          console.log('MongoDB connection closed.');
-        } catch (err) {
-          console.error('Error closing MongoDB connection:', err.message);
-        }
+      logger.info('Shutting down server gracefully...');
 
-        if (redisClient?.isReady) {
+      // Priority 1: Redis cleanup (preserve data priority)
+      const shutdownTasks = [];
+
+      shutdownTasks.push(
+        (async () => {
           try {
-            await redisClient.quit();
-            console.log('Redis connection closed.');
+            if (redisClient?.isReady) {
+              await redisClient.quit();
+              logger.info('Redis disconnected');
+            }
           } catch (err) {
-            console.error('Error closing Redis connection:', err.message);
+            logger.error('Redis shutdown error', { error: err.message });
           }
-        }
-        process.exit(0);
-      });
+        })()
+      );
+
+      shutdownTasks.push(
+        (async () => {
+          try {
+            io.close();
+          } catch (err) {
+            logger.error('Socket shutdown error', { error: err.message });
+          }
+        })()
+      );
+
+      shutdownTasks.push(
+        (async () => {
+          try {
+            await new Promise((resolve) => {
+              httpServer.close(() => {
+                logger.info('HTTP server closed gracefully');
+                resolve();
+              });
+              // Fallback timeout for forced shutdown
+              setTimeout(() => {
+                logger.warn('HTTP server forced close after timeout');
+                resolve();
+              }, 30000);
+            });
+          } catch (err) {
+            logger.error('HTTP server shutdown error', { error: err.message });
+          }
+        })()
+      );
+
+      shutdownTasks.push(
+        (async () => {
+          try {
+            await mongoose.disconnect({ force: true, timeout: 30000 });
+            logger.info('MongoDB disconnected');
+          } catch (err) {
+            logger.error('MongoDB shutdown error', { error: err.message });
+          }
+        })()
+      );
+
+      await Promise.allSettled(shutdownTasks.map(task => task.catch(err => logger.error('Shutdown task failed', { error: err.message }))));
+
+      process.exit(0);
     };
 
     process.on('SIGTERM', shutdown);
@@ -80,16 +122,23 @@ const startServer = async () => {
 
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${ENV.PORT} is in use. Run: npm run free-port`);
+        logger.error('Port in use', { port: ENV.PORT });
         process.exit(1);
       }
       throw err;
     });
   } catch (err) {
-    console.error('Server startup failed:', err.message);
+    logger.error('Server startup failed', { error: err.message });
     process.exit(1);
   }
 };
 
-startServer();
+// Execute startup with proper async queue management to prevent unhandled synchronous floating promises
+Promise.resolve()
+  .then(() => startServer())
+  .then(() => logger.info('Server initialization queue completed successfully'))
+  .catch((err) => {
+    logger.error('Fatal queue error during startup', { error: err.message });
+    process.exit(1);
+  });
 

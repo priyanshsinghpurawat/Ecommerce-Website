@@ -147,6 +147,8 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
   const products = await Product.find({ seller: id }).populate('category subcategory').lean();
   const productIds = products.map(p => p._id);
   
+  const productIdSet = new Set(productIds.map(pid => pid.toString()));
+  
   const orders = await Order.find({ "items.product": { $in: productIds } })
     .populate('user', 'name email')
     .sort({ createdAt: -1 })
@@ -159,28 +161,27 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
   const productStats = {}; // To track units and revenue per product
 
   orders.forEach(order => {
-    // Only count confirmed/delivered orders for revenue
     const isRevenueOrder = ['confirmed', 'shipped', 'delivered'].includes(order.status);
     
     order.items.forEach(item => {
       const itemProductId = item.product?._id || item.product;
       const productIdStr = String(itemProductId);
       
-      if (productIds.some(pid => String(pid) === productIdStr)) {
-        const itemRevenue = (item.unitPrice * item.quantity);
-        
-        if (isRevenueOrder) {
-          totalRevenue += itemRevenue;
-        }
-        
-        if (!productStats[productIdStr]) {
-          productStats[productIdStr] = { revenue: 0, units: 0 };
-        }
-        
-        if (isRevenueOrder) {
-          productStats[productIdStr].revenue += itemRevenue;
-          productStats[productIdStr].units += item.quantity;
-        }
+      if (!productIdSet.has(productIdStr)) return;
+      
+      const itemRevenue = item.unitPrice * item.quantity;
+      
+      if (isRevenueOrder) {
+        totalRevenue += itemRevenue;
+      }
+      
+      if (!productStats[productIdStr]) {
+        productStats[productIdStr] = { revenue: 0, units: 0 };
+      }
+      
+      if (isRevenueOrder) {
+        productStats[productIdStr].revenue += itemRevenue;
+        productStats[productIdStr].units += item.quantity;
       }
     });
   });
@@ -199,17 +200,22 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
-  const recentOrders = orders.slice(0, 5).map(o => ({
-    _id: o._id,
-    orderNumber: o.orderNumber,
-    customer: o.user?.name || 'Guest',
-    status: o.status,
-    createdAt: o.createdAt,
-    vendorItemsCount: o.items.filter(item => productIds.some(pid => pid.equals(item.product))).length,
-    vendorSubtotal: o.items
-      .filter(item => productIds.some(pid => pid.equals(item.product)))
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-  }));
+  const recentOrders = orders.slice(0, 5).map(o => {
+    const vendorItems = o.items.filter(item => {
+      const itemProductId = item.product?._id || item.product;
+      return productIdSet.has(String(itemProductId));
+    });
+    
+    return {
+      _id: o._id,
+      orderNumber: o.orderNumber,
+      customer: o.user?.name || 'Guest',
+      status: o.status,
+      createdAt: o.createdAt,
+      vendorItemsCount: vendorItems.length,
+      vendorSubtotal: vendorItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    };
+  });
 
   return res.status(200).json(new ApiResponse(200, {
     vendor,
@@ -359,12 +365,12 @@ export const getProfile = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Update profile info (name, phone, avatar)
+ * @desc    Update profile info (name, phone, avatar, brandName, storefront)
  * @route   PUT /api/v3/users/me
  * @access  Private
  */
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone, avatar } = req.body;
+  const { name, phone, avatar, brandName, storefront } = req.body;
 
   const user = await User.findById(req.user._id);
   if (!user) {
@@ -374,6 +380,17 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (name && typeof name === 'string') user.name = name.trim();
   if (phone !== undefined) user.phone = typeof phone === 'string' ? phone.trim() : '';
   if (avatar !== undefined) user.avatar = typeof avatar === 'string' ? avatar.trim() : '';
+  
+  if (user.role === 'seller') {
+    if (brandName !== undefined) user.brandName = typeof brandName === 'string' ? brandName.trim() : '';
+    if (storefront && typeof storefront === 'object') {
+      if (!user.storefront) user.storefront = {};
+      if (storefront.banner !== undefined) user.storefront.banner = typeof storefront.banner === 'string' ? storefront.banner.trim() : '';
+      if (storefront.description !== undefined) user.storefront.description = typeof storefront.description === 'string' ? storefront.description.trim() : '';
+      if (storefront.returnPolicy !== undefined) user.storefront.returnPolicy = typeof storefront.returnPolicy === 'string' ? storefront.returnPolicy.trim() : '';
+      if (storefront.slug !== undefined) user.storefront.slug = typeof storefront.slug === 'string' ? storefront.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') : '';
+    }
+  }
 
   await user.save();
   const updated = await User.findById(user._id).select('-password');
@@ -422,7 +439,18 @@ export const addAddress = asyncHandler(async (req, res) => {
  */
 export const updateAddress = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+
+  // Whitelist only the allowed address fields — never Object.assign raw body
+  const { fullName, phone, street, city, state, zipCode, country, isDefault } = req.body;
+  const safeUpdates = {};
+  if (fullName !== undefined) safeUpdates.fullName = fullName;
+  if (phone !== undefined) safeUpdates.phone = phone;
+  if (street !== undefined) safeUpdates.street = street;
+  if (city !== undefined) safeUpdates.city = city;
+  if (state !== undefined) safeUpdates.state = state;
+  if (zipCode !== undefined) safeUpdates.zipCode = zipCode;
+  if (country !== undefined) safeUpdates.country = country;
+  if (isDefault !== undefined) safeUpdates.isDefault = isDefault;
 
   const user = await User.findById(req.user._id);
   const address = user.addresses.id(id);
@@ -432,11 +460,11 @@ export const updateAddress = asyncHandler(async (req, res) => {
   }
 
   // If marking as default, unset others
-  if (updates.isDefault) {
+  if (safeUpdates.isDefault) {
     user.addresses.forEach(addr => addr.isDefault = false);
   }
 
-  Object.assign(address, updates);
+  Object.assign(address, safeUpdates);
   await user.save();
 
   return res.status(200).json(new ApiResponse(200, user.addresses, 'Address updated successfully'));
@@ -521,7 +549,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  if (user.wishlist.includes(productId)) {
+  if (user.wishlist.some(id => id.toString() === productId)) {
     return res.status(200).json(new ApiResponse(200, user.wishlist, 'Product already in wishlist'));
   }
 

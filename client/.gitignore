@@ -1,3 +1,8 @@
+# Environment variables — MUST never be committed
+.env
+.env.*
+*.env.local
+
 # Logs
 logs
 *.log

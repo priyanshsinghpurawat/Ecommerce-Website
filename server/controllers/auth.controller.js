@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
+import { asyncHandler, ApiError, ApiResponse, buildSafeUser } from '../utils/helpers.js';
 import { User } from '../models/user.model.js';
 import { OAuth2Client } from 'google-auth-library';
 import { ENV } from '../config/env.js';
@@ -13,11 +13,14 @@ const cookieOptions = {
   maxAge: 24 * 60 * 60 * 1000
 };
 
-const sendAuthResponse = (res, statusCode, user, token, message) =>
-  res
+const sendAuthResponse = (res, statusCode, user, token, message) => {
+  return res
     .status(statusCode)
     .cookie('token', token, cookieOptions)
-    .json(new ApiResponse(statusCode, { user, token }, message));
+    .json(new ApiResponse(statusCode, { user }, message));
+};
+
+
 
 export const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
@@ -54,9 +57,8 @@ export const googleLogin = asyncHandler(async (req, res) => {
     }
 
     const token = user.generateAccessToken();
-    const safeUser = await User.findById(user._id).select('-password');
 
-    return sendAuthResponse(res, 200, safeUser, token, 'Welcome back via Google.');
+    return sendAuthResponse(res, 200, buildSafeUser(user), token, 'Welcome back via Google.');
   } catch {
     throw new ApiError(401, 'Google authentication failed. Please try again.');
   }
@@ -77,10 +79,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     role: 'user'
   });
 
-  const safeUser = await User.findById(user._id).select('-password');
-  const token = safeUser.generateAccessToken();
+  const token = user.generateAccessToken();
 
-  return sendAuthResponse(res, 201, safeUser, token, 'Account created.');
+  return sendAuthResponse(res, 201, buildSafeUser(user), token, 'Account created.');
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
@@ -97,17 +98,13 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = user.generateAccessToken();
-  const safeUser = await User.findById(user._id).select('-password');
 
-  return sendAuthResponse(res, 200, safeUser, token, 'Welcome back.');
+  return sendAuthResponse(res, 200, buildSafeUser(user), token, 'Welcome back.');
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password');
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
-  return res.status(200).json(new ApiResponse(200, user, 'OK'));
+  const safeUser = buildSafeUser(req.user);
+  return res.status(200).json(new ApiResponse(200, safeUser, 'OK'));
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {

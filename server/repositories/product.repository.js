@@ -45,6 +45,10 @@ export class ProductRepository {
     return await Product.countDocuments(filter);
   }
 
+  static async distinct(field, filter = {}) {
+    return await Product.distinct(field, filter);
+  }
+
   static async findByIdAndUpdate(id, data, options = { new: true }) {
     return await Product.findByIdAndUpdate(id, data, options);
   }

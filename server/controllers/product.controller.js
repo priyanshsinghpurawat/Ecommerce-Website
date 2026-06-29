@@ -1,16 +1,9 @@
-import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
+import { Variant } from '../models/variant.model.js';
 import { ProductRepository } from '../repositories/product.repository.js';
 import { ProductService } from '../services/product.service.js';
-import { asyncHandler, ApiError, ApiResponse, mapProductForResponse } from '../utils/helpers.js';
+import { asyncHandler, ApiError, ApiResponse, mapProductForResponse, safeJSON, getCacheHash } from '../utils/helpers.js';
 import { getCache, setCache, deleteCache, clearCacheByPattern } from '../utils/cache.js';
-
-/** Safely JSON.parse a string field, returning fallback on error. */
-const safeJSON = (v, fallback) => {
-  if (v == null || v === '') return fallback;
-  if (typeof v !== 'string') return v;
-  try { return JSON.parse(v); } catch { return fallback; }
-};
 
 /**
  * @desc   Create a product
@@ -51,6 +44,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       { path: 'seller', select: 'name email' }
     ]);
 
+    await ProductService.syncStandaloneFromEmbedded(product._id, variants);
     await clearCacheByPattern('products:');
 
     return res
@@ -75,36 +69,53 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     return res.status(400).send('We must block object injection to prevent security leaks');
   }
 
-  const cacheKey = `products:page=${page}:limit=${limit}:search=${search}:cat=${category}:sub=${subcategory}:sort=${sort}:badge=${badge}:sel=${seller}:minP=${minPrice}:maxP=${maxPrice}:clr=${color}`;
+  // Hash-based caching to prevent cache key bloat
+  const cacheHash = getCacheHash({ page, limit, search, category, subcategory, sort, badge, seller, minPrice, maxPrice, color });
+  const cacheKey = `products:${cacheHash}`;
+  
   const cached = await getCache(cacheKey);
   if (cached) {
     return res.status(200).json(new ApiResponse(200, cached, 'Products retrieved successfully (cached)'));
   }
 
-  const query = ProductService.buildCatalogQuery({ search, category, subcategory, badge, seller, minPrice, maxPrice, color });
+  // Optimized query building with proper parameter sanitization
+  const query = ProductService.buildCatalogQuery({ 
+    search: String(search).trim(), 
+    category, 
+    subcategory, 
+    badge, 
+    seller, 
+    minPrice: minPrice ? Number(minPrice) : undefined, 
+    maxPrice: maxPrice ? Number(maxPrice) : undefined, 
+    color 
+  });
   const sortOption = ProductService.getSortOption(sort);
 
-  const pageNum = Number(page);
-  const limitNum = Number(limit);
+  // Pagination with validation
+  const pageNum = Math.max(1, Number(page) || 1);
+  const limitNum = Math.min(Math.max(1, Number(limit) || 10), 100);
   const skip = (pageNum - 1) * limitNum;
 
-  const totalProducts = await ProductRepository.countDocuments(query);
+  // Batch operation for better performance
+  const [totalProducts, products] = await Promise.all([
+    ProductRepository.countDocuments(query),
+    ProductRepository.find(query, {
+      sort: sortOption,
+      skip,
+      limit: limitNum,
+      populate: [
+        { path: 'category', select: 'name slug' },
+        { path: 'subcategory', select: 'name slug' },
+        { path: 'seller', select: 'name email' }
+      ],
+      lean: true
+    })
+  ]);
+
   const totalPages = Math.ceil(totalProducts / limitNum) || 1;
   if (pageNum > totalPages && totalProducts > 0) {
     throw new ApiError(404, `Page ${pageNum} not found. Total pages: ${totalPages}`);
   }
-
-  const products = await ProductRepository.find(query, {
-    sort: sortOption,
-    skip,
-    limit: limitNum,
-    populate: [
-      { path: 'category', select: 'name slug' },
-      { path: 'subcategory', select: 'name slug' },
-      { path: 'seller', select: 'name email' }
-    ],
-    lean: true
-  });
 
   const payload = {
     products: products.map((p) => mapProductForResponse(p, req)),
@@ -113,6 +124,29 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   await setCache(cacheKey, payload, 300);
 
   return res.status(200).json(new ApiResponse(200, payload, 'Products retrieved successfully'));
+});
+
+/**
+ * @desc   Get distinct filter values (e.g. colours) for the shop sidebar
+ * @route  GET /api/v3/products/filters
+ * @access Public
+ */
+export const getProductFilters = asyncHandler(async (req, res) => {
+  const cacheKey = 'products:filters';
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    return res.status(200).json(new ApiResponse(200, cached, 'Product filters retrieved successfully (cached)'));
+  }
+
+  const raw = await Variant.distinct('optionValues.Color', { deletedAt: null });
+  const colors = [...new Set(
+    raw.filter(Boolean).map((c) => String(c).trim()).filter(Boolean)
+  )].sort();
+
+  const payload = { colors };
+  await setCache(cacheKey, payload, 3600);
+
+  return res.status(200).json(new ApiResponse(200, payload, 'Product filters retrieved successfully'));
 });
 
 /**
@@ -318,7 +352,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
     const keptNow = new Set([
       product.image,
       ...product.images,
-      ...product.variants.flatMap((v) => v.images || [])
+      ...(product.variants || []).flatMap((v) => v.images || [])
     ].filter(Boolean));
     
     const toDelete = [
@@ -334,6 +368,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
       { path: 'subcategory', select: 'name slug' }
     ]);
 
+    await ProductService.syncStandaloneFromEmbedded(product._id, variants);
     await clearCacheByPattern('products:');
     await deleteCache(`product:id=${id}`);
 
@@ -362,9 +397,15 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   const imagesToDelete = [
     product.image,
-    ...(product.images || []),
-    ...(product.variants || []).flatMap((v) => v.images || [])
+    ...(product.images || [])
   ].filter(Boolean);
+
+  // Soft-delete associated variants
+  const variantImages = await Variant.find({ product: id, deletedAt: null }).select('images');
+  for (const vi of variantImages) {
+    if (vi.images?.length) imagesToDelete.push(...vi.images);
+  }
+  await Variant.updateMany({ product: id, deletedAt: null }, { $set: { deletedAt: new Date() } });
 
   await ProductRepository.findByIdAndDelete(id);
   await ProductService.deleteImages(imagesToDelete);
@@ -374,3 +415,4 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, null, 'Product and its images deleted successfully'));
 });
+

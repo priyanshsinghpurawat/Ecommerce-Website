@@ -1,5 +1,7 @@
 # Dependency directories
 node_modules/
+.pnp
+.pnp.js
 
 # Build outputs
 dist/
@@ -9,11 +11,22 @@ client/dist/
 # Environment files
 .env
 .env.*
-!.env.example
 *.env
+*.env.local
+*.pem
+*.key
+*.cert
+*.p12
+
 # Operating System files
 .DS_Store
-Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+ehthumbs_vista.db
+[Tt]humbs.db
 desktop.ini
 
 # IDE and Editor files
@@ -21,25 +34,39 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # Logs
+logs/
+server/logs/
+client/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 .eslintcache
-
 
 # Testing and Coverage
 coverage/
 .nyc_output/
 .vitest/
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
 
 # Database & Cache files
 *.sqlite
 *.db
 .cache/
+.turbo/
+.vercel/
+.netlify/
 
 # Server specific
 server/public/
@@ -47,6 +74,7 @@ server/public/
 .agents/
 gha-creds-*.json
 skills-lock.json
+testsprite_tests/
 
 # Temporary logs & debug scripts
 server/scripts/dev-tools.js
@@ -63,8 +91,7 @@ docker-compose.yml
 .dockerignore
 Dockerfile
 
-# TestSprite test folders and secrets
-**/testsprite_tests/
+
 
 # Jest example files
 jest-tests/

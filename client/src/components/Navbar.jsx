@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2 } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useCategories } from '../hooks/useCategories.js';
-import { getSubcategories, getProducts } from '../services/api.js';
+import { useSubcategories } from '../hooks/useSubcategories.js';
+import { getProducts } from '../services/product.service.js';
 import { resolveImageUrl } from '../utils/helpers.js';
 import { motion } from 'framer-motion';
 import { Logo } from './Logo.jsx';
@@ -62,9 +63,10 @@ export const Navbar = () => {
   const { wishlist } = useWishlist();
   const { theme, toggleTheme } = useTheme();
   const { categories, fetchCategories } = useCategories();
+  const { subcategories, fetchSubcategories } = useSubcategories();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [subcategories, setSubcategories] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -76,11 +78,14 @@ export const Navbar = () => {
   const searchRef = useRef(null);
 
   useEffect(() => {
-    getSubcategories()
-      .then((res) => setSubcategories(res?.data || []))
-      .catch(() => setSubcategories([]));
+    fetchSubcategories();
     fetchCategories();
-  }, [fetchCategories]);
+  }, [fetchCategories, fetchSubcategories]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -216,7 +221,7 @@ export const Navbar = () => {
                         className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/5 text-left transition-colors"
                       >
                         <img
-                          src={resolveImageUrl(product.images?.[0] || product.image, product.title)}
+                          src={resolveImageUrl(product.images?.[0] || product.image)}
                           alt=""
                           className="h-8 w-8 rounded-lg object-cover bg-white/10 border border-white/5"
                         />
@@ -253,7 +258,7 @@ export const Navbar = () => {
                 <NavLink
                   to="/shop"
                   className={({ isActive }) =>
-                    `px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-brand-primary' : 'text-app-text/55 hover:text-app-text'}`
+                    `px-3.5 py-2 text-xs font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1 ${isActive ? 'text-brand-primary' : 'text-app-text/55 hover:text-app-text'}`
                   }
                 >
                   Shop
@@ -263,7 +268,7 @@ export const Navbar = () => {
                 <NavLink
                   to="/street-drip"
                   className={({ isActive }) =>
-                    `px-4 py-1.5 text-[10px] font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1 rounded-full bg-brand-primary text-black shadow-lg shadow-brand-primary/15 transition-all hover:scale-105 active:scale-95 duration-200 mx-1.5`
+                    `px-4 py-1.5 text-xs font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1 rounded-full bg-brand-primary text-black shadow-lg shadow-brand-primary/15 transition-all hover:scale-105 active:scale-95 duration-200 mx-1.5`
                   }
                 >
                   <Zap className="h-3 w-3 fill-black text-black" />
@@ -278,7 +283,7 @@ export const Navbar = () => {
                       key={sub._id}
                       to={`/shop?subcategory=${sub._id}`}
                       className={({ isActive }) =>
-                        `px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 ${isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'}`
+                        `px-3.5 py-2 text-xs font-extrabold uppercase tracking-widest whitespace-nowrap flex items-center gap-1.5 ${isActive ? 'text-brand-primary font-black' : 'text-app-text/55 hover:text-app-text'}`
                       }
                     >
                       <span>{sub.name}</span>
@@ -349,7 +354,7 @@ export const Navbar = () => {
                 {/* Admin/Seller Quick Dashboard button */}
                 {(user?.role === 'admin' || user?.role === 'seller') ? (
                   <Link
-                    to={user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard'}
+                    to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
                     className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-xl bg-brand-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-brand-primary/20"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
@@ -401,19 +406,17 @@ export const Navbar = () => {
                 </div>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2.5">
                 <Link
                   to="/login"
-                  className="px-5 py-2.5 text-[9px] font-black uppercase tracking-widest text-app-text bg-white/[0.02] border border-white/10 rounded-xl hover:border-brand-primary/50 transition-all duration-300 relative group/btn active:scale-95"
+                  className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-app-text/70 hover:text-brand-primary rounded-full border border-surface-200 hover:border-brand-primary/40 transition-all duration-200 active:scale-95"
                 >
-                  <div className="absolute inset-0 bg-brand-primary/5 rounded-xl blur-sm opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 -z-10" />
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2.5 text-[9px] font-black uppercase tracking-widest text-black bg-brand-primary rounded-xl hover:bg-brand-primary/90 hover:scale-105 transition-all duration-300 relative group/sign active:scale-95 shadow-[0_4px_20px_rgba(193,255,0,0.2)]"
+                  className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-black bg-brand-primary rounded-full hover:bg-brand-primary/85 transition-all duration-200 active:scale-95 hover:shadow-[0_0_20px_rgba(193,255,0,0.25)]"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-brand-primary to-[#00a8cc] rounded-xl blur-md opacity-30 group-hover/sign:opacity-60 transition-opacity duration-300 -z-10" />
                   Sign Up
                 </Link>
               </div>
@@ -458,7 +461,7 @@ export const Navbar = () => {
           ) : (
             <div className="mt-2 pt-4 border-t border-white/10 space-y-3">
               <Link
-                to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/seller/dashboard' : '/profile'}
+                to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/vendor/dashboard' : '/profile'}
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center justify-between w-full rounded-2xl bg-brand-primary px-6 py-4 text-xs font-black uppercase tracking-widest text-black shadow-xl"
               >

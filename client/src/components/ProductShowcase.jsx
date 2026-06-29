@@ -35,7 +35,7 @@ export const ProductShowcase = ({
       </div>
 
       {loading ? (
-        <div className="flex overflow-x-auto gap-4 pb-4 px-4 md:px-0 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-visible">
+        <div className="flex overflow-x-auto gap-5 pb-4 px-4 md:px-0 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-6 md:overflow-visible">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="snap-start shrink-0 w-[70vw] sm:w-[45vw] md:w-auto md:shrink">
               <ProductCardSkeleton />
@@ -43,7 +43,7 @@ export const ProductShowcase = ({
           ))}
         </div>
       ) : products.length > 0 ? (
-        <div className="flex overflow-x-auto gap-4 pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-visible">
+        <div className="flex overflow-x-auto gap-5 pb-4 px-4 md:px-0 snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-6 md:overflow-visible">
           {products.map((prod) => (
             <div key={prod._id} className="snap-start shrink-0 w-[70vw] sm:w-[45vw] md:w-auto md:shrink">
               <ProductCard product={prod} />

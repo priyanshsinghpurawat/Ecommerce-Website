@@ -1,9 +1,11 @@
 /** WHY: Background tasks to fix stock locks and keep the server from idling. */
 import cron from 'node-cron';
 import axios from 'axios';
+import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
-import { Product } from '../models/product.model.js';
+import { restoreStock } from '../services/order.service.js';
 import { ENV } from '../config/env.js';
+import { logger } from './logger.js';
 
 /**
  * Automates the cleanup of expired pending orders.
@@ -16,8 +18,10 @@ import { ENV } from '../config/env.js';
 export const initInventoryCron = () => {
   // 1. Inventory Recovery Job (Every 10 minutes)
   cron.schedule('*/10 * * * *', async () => {
-    console.log('[Cron] Checking for expired pending orders...');
-    
+    logger.info('[Cron] Checking for expired pending orders...');
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
       const expirationTime = new Date(Date.now() - 30 * 60 * 1000); // 30 minutes ago
 
@@ -25,64 +29,34 @@ export const initInventoryCron = () => {
         status: 'pending',
         paymentMethod: 'razorpay',
         createdAt: { $lt: expirationTime }
-      });
+      }).session(session);
 
-      if (expiredOrders.length === 0) return;
+      if (expiredOrders.length === 0) {
+        await session.commitTransaction();
+        session.endSession();
+        return;
+      }
 
-      console.log(`[Cron] Found ${expiredOrders.length} expired orders. Recovering...`);
-
-      const productUpdates = [];
-      const orderUpdates = [];
+      logger.info(`[Cron] Found ${expiredOrders.length} expired orders. Recovering...`);
 
       for (const order of expiredOrders) {
-        for (const item of order.items) {
-          if (item.size || item.color) {
-            productUpdates.push({
-              updateOne: {
-                filter: {
-                  _id: item.product,
-                  variants: {
-                    $elemMatch: {
-                      size: item.size || '',
-                      color: item.color || ''
-                    }
-                  }
-                },
-                update: {
-                  $inc: {
-                    "variants.$.stock": item.quantity,
-                    stock: item.quantity
-                  }
-                }
-              }
-            });
-          } else {
-            productUpdates.push({
-              updateOne: {
-                filter: { _id: item.product },
-                update: { $inc: { stock: item.quantity } }
-              }
-            });
-          }
-        }
-        orderUpdates.push(order._id);
+        await restoreStock(order.items, session);
       }
 
-      // Execute bulk updates for performance
-      if (productUpdates.length > 0) {
-        await Product.bulkWrite(productUpdates);
-      }
+      const orderUpdates = expiredOrders.map(order => order._id);
+      await Order.updateMany(
+        { _id: { $in: orderUpdates } },
+        { $set: { status: 'cancelled', paymentStatus: 'failed' } },
+        { session }
+      );
 
-      if (orderUpdates.length > 0) {
-        await Order.updateMany(
-          { _id: { $in: orderUpdates } },
-          { $set: { status: 'cancelled', paymentStatus: 'failed' } }
-        );
-      }
-
-      console.log(`[Cron] Successfully recovered ${expiredOrders.length} orders.`);
+      await session.commitTransaction();
+      logger.info(`[Cron] Successfully recovered ${expiredOrders.length} orders.`);
     } catch (error) {
-      console.error('[Cron] Inventory recovery failed:', error.message);
+      await session.abortTransaction();
+      logger.error('[Cron] Inventory recovery failed', { error: error.message });
+    } finally {
+      session.endSession();
     }
   });
 
@@ -92,11 +66,11 @@ export const initInventoryCron = () => {
     try {
       const url = `${ENV.SERVER_URL}/api/v3/health`;
       await axios.get(url);
-      console.log(`[Cron] Self-ping successful.`);
+      logger.info('[Cron] Self-ping successful.');
     } catch (error) {
-      console.error('[Cron] Self-ping failed:', error.message);
+      logger.error('[Cron] Self-ping failed', { error: error.message });
     }
   });
 
-  console.log('[Cron] All background schedulers initialized');
+  logger.info('[Cron] All background schedulers initialized');
 };

@@ -43,6 +43,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: ""
     },
+    storefront: {
+      banner: { type: String, default: "" },
+      description: { type: String, default: "" },
+      returnPolicy: { type: String, default: "" },
+      slug: { type: String, unique: true, sparse: true, trim: true, lowercase: true }
+    },
     isActive: {
       type: Boolean,
       default: true

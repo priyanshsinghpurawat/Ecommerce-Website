@@ -3,10 +3,13 @@ import Razorpay from 'razorpay';
 import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
 import { Product } from '../models/product.model.js';
+import { Variant } from '../models/variant.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
-import { asyncHandler, ApiError, ApiResponse, buildOrderFromCart, generateOrderNumber, calculateCouponDiscount } from '../utils/helpers.js';
+import { asyncHandler, ApiError, ApiResponse, generateOrderNumber, calculateCouponDiscount, validateShippingAddress } from '../utils/helpers.js';
+import { calculateOrderTotals, fetchAndValidateUserCart } from './order.controller.js';
+import { restoreStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
 import { ENV } from '../config/env.js';
 
 const isRazorpayConfigured = () => {
@@ -46,7 +49,10 @@ const getRazorpay = () => {
 
 export const createCheckout = asyncHandler(async (req, res) => {
   const { shippingAddress, couponCode } = req.body;
-  const built = await buildOrderFromCart(req.user._id, { shippingAddress, couponCode });
+
+  validateShippingAddress(shippingAddress);
+  const cart = await fetchAndValidateUserCart(req.user._id);
+  const calculations = await calculateOrderTotals(cart, couponCode, req.user._id);
 
   // Transactionally reserve stock up-front to prevent overselling
   const session = await mongoose.startSession();
@@ -56,49 +62,42 @@ export const createCheckout = asyncHandler(async (req, res) => {
     // Acquire lock on user to prevent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
 
-    if (built.appliedCouponCode) {
-      const validItems = built.cart.items.filter(item => item.product);
-      await calculateCouponDiscount(built.appliedCouponCode, built.subtotal, validItems, req.user._id, session);
+    if (calculations.appliedCouponCode) {
+      const validItems = cart.items.filter(item => item.product);
+      await calculateCouponDiscount(calculations.appliedCouponCode, calculations.subtotal, validItems, req.user._id, session);
     }
 
     let appliedCouponId = null;
-    if (built.appliedCouponCode) {
-      const couponDoc = await Coupon.findOne({ code: built.appliedCouponCode }).session(session);
+    if (calculations.appliedCouponCode) {
+      const couponDoc = await Coupon.findOne({ code: calculations.appliedCouponCode }).session(session);
       if (couponDoc) {
         appliedCouponId = couponDoc._id;
       }
     }
 
-    const sortedOrderItems = [...built.orderItems].sort((a, b) => 
+    const sortedOrderItems = [...calculations.orderItems].sort((a, b) => 
       a.product.toString().localeCompare(b.product.toString())
     );
 
     for (const item of sortedOrderItems) {
-      const product = await Product.findById(item.product);
-      const hasVariants = product && product.variants && product.variants.length > 0;
-      const matchingVariant = hasVariants && product.variants.find(
-        v => (v.size || '') === (item.size || '') && (v.color || '') === (item.color || '')
-      );
+      // Resolve variant
+      let variant = null;
+      if (item.variant) {
+        variant = await Variant.findById(item.variant).session(session);
+      } else if (item.sku) {
+        variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
+      } else if (item.color || item.size) {
+        const query = { product: item.product, deletedAt: null };
+        if (item.color) query['optionValues.Color'] = item.color;
+        if (item.size) query['optionValues.Size'] = item.size;
+        variant = await Variant.findOne(query).session(session);
+      }
 
       let updated;
-      if (matchingVariant) {
-        updated = await Product.findOneAndUpdate(
-          {
-            _id: item.product,
-            variants: {
-              $elemMatch: {
-                size: item.size || '',
-                color: item.color || '',
-                stock: { $gte: item.quantity }
-              }
-            }
-          },
-          {
-            $inc: {
-              "variants.$.stock": -item.quantity,
-              stock: -item.quantity
-            }
-          },
+      if (variant) {
+        updated = await Variant.findOneAndUpdate(
+          { _id: variant._id, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
           { new: true, session }
         );
       } else {
@@ -117,40 +116,49 @@ export const createCheckout = asyncHandler(async (req, res) => {
     const [order] = await Order.create([{
       orderNumber: generateOrderNumber(),
       user: req.user._id,
-      items: built.orderItems,
-      subtotal: built.subtotal,
-      taxAmount: built.taxAmount,
-      discountAmount: built.discountAmount,
-      total: built.total,
+      items: calculations.orderItems,
+      subtotal: calculations.subtotal,
+      taxAmount: calculations.taxAmount,
+      discountAmount: calculations.discountAmount,
+      total: calculations.total,
       coupon: appliedCouponId,
-      couponCode: built.appliedCouponCode,
-      shippingAddress: built.shippingAddress,
+      couponCode: calculations.appliedCouponCode,
+      shippingAddress,
       paymentMethod: 'razorpay',
       paymentStatus: 'pending',
       status: 'pending'
     }], { session });
 
-    const razorpay = getRazorpay();
-    const amountPaise = Math.round(built.total * 100);
-
-    const rzOrder = await razorpay.orders.create({
-      amount: amountPaise,
-      currency: 'INR',
-      receipt: order._id.toString(),
-      notes: { orderNumber: order.orderNumber }
-    });
-
-    order.razorpayOrderId = rzOrder.id;
-    await order.save({ session });
-
     await session.commitTransaction();
     session.endSession();
+
+    // Create Razorpay order AFTER DB commit — if this fails, the order exists
+    // and the cron job will clean it up. No phantom orders.
+    const razorpay = getRazorpay();
+    const amountPaise = Math.round(calculations.total * 100);
+    let rzOrder;
+    try {
+      rzOrder = await razorpay.orders.create({
+        amount: amountPaise,
+        currency: 'INR',
+        receipt: order._id.toString(),
+        notes: { orderNumber: order.orderNumber }
+      });
+      order.razorpayOrderId = rzOrder.id;
+      await order.save();
+    } catch {
+      // Razorpay failed — mark order as failed so cron restores stock
+      order.paymentStatus = 'failed';
+      order.status = 'cancelled';
+      await order.save();
+      throw new ApiError(502, 'Payment gateway error. Please try again.');
+    }
 
     return res.status(201).json(
       new ApiResponse(201, {
         orderId: order._id,
         orderNumber: order.orderNumber,
-        amount: built.total,
+        amount: calculations.total,
         amountPaise,
         razorpayOrderId: rzOrder.id,
         keyId: ENV.RAZORPAY_KEY_ID
@@ -195,71 +203,89 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   if (order.user.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Not your order');
   }
-  if (order.paymentStatus === 'paid') {
-    return res.status(200).json(new ApiResponse(200, order, 'Already paid'));
+  if (order.paymentStatus !== 'pending') {
+    return res.status(200).json(new ApiResponse(200, order, 'Order already processed'));
   }
 
   const expectedBuffer = Buffer.from(expected, 'hex');
   const signatureBuffer = Buffer.from(razorpay_signature, 'hex');
 
   if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
-    // Signature failed — atomically release reserved stock and mark order failed
-    const restoreSession = await mongoose.startSession();
-    restoreSession.startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const bulkOps = order.items.map(item => ({
-        updateOne: {
-          filter: {
-            _id: item.product,
-            ...(item.size || item.color ? { "variants.size": item.size || '', "variants.color": item.color || '' } : {})
-          },
-          update: {
-            $inc: {
-              ...(item.size || item.color ? { "variants.$.stock": item.quantity } : {}),
-              stock: item.quantity
-            }
-          }
-        }
-      }));
+      // Find and update the order inside the transaction
+      const failedOrder = await Order.findOneAndUpdate(
+        { _id: orderId, paymentStatus: 'pending' },
+        { $set: { paymentStatus: 'failed', status: 'cancelled' } },
+        { new: true, session }
+      );
 
-      if (bulkOps.length > 0) {
-        await Product.bulkWrite(bulkOps, { session: restoreSession });
+      if (!failedOrder) {
+        throw new ApiError(400, 'Payment verification failed, but order was already processed.');
       }
 
-      order.paymentStatus = 'failed';
-      order.status = 'cancelled';
-      await order.save({ session: restoreSession });
-      await restoreSession.commitTransaction();
+      // Restore stock via the shared service
+      await restoreStock(failedOrder.items, session);
+
+      await session.commitTransaction();
     } catch (restoreErr) {
-      await restoreSession.abortTransaction();
+      await session.abortTransaction();
       throw restoreErr;
     } finally {
-      restoreSession.endSession();
+      session.endSession();
     }
     throw new ApiError(400, 'Payment verification failed');
   }
 
-  // Stock was already decremented in createCheckout — just confirm the order
-  order.paymentStatus = 'paid';
-  order.status = 'confirmed';
-  order.razorpayPaymentId = razorpay_payment_id;
-  order.razorpayOrderId = razorpay_order_id;
-  await order.save();
+  // Atomically claim the order, then run post-success writes in a transaction
+  const successOrder = await Order.findOneAndUpdate(
+    { _id: orderId, paymentStatus: 'pending' },
+    {
+      $set: {
+        paymentStatus: 'paid',
+        status: 'confirmed',
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id
+      }
+    },
+    { new: true }
+  );
 
-  if (order.coupon) {
-    await Coupon.findByIdAndUpdate(order.coupon, { $inc: { usageCount: 1 } });
+  if (!successOrder) {
+    return res.status(200).json(new ApiResponse(200, order, 'Order already processed successfully'));
   }
 
-  // Increment soldCount
-  for (const item of order.items) {
-    await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+  // Run coupon increment + soldCount + cart clear inside a transaction so a
+  // mid-flight crash cannot leave these in a partial / inconsistent state.
+  const successSession = await mongoose.startSession();
+  successSession.startTransaction();
+  try {
+    if (successOrder.coupon) {
+      await Coupon.findByIdAndUpdate(
+        successOrder.coupon,
+        { $inc: { usageCount: 1 } },
+        { session: successSession }
+      );
+    }
+
+    // Bulk-increment soldCount (same pattern as order.service.js)
+    await incrementSalesBulk(successOrder.items, successSession);
+
+    const cart = await Cart.findOne({ user: req.user._id }).session(successSession);
+    if (cart) {
+      cart.items = [];
+      await cart.save({ session: successSession });
+    }
+
+    await successSession.commitTransaction();
+  } catch (postErr) {
+    await successSession.abortTransaction();
+    // Payment is already confirmed — log and continue rather than failing the response
+    console.error('[Payment] Post-success writes failed (non-fatal):', postErr.message);
+  } finally {
+    successSession.endSession();
   }
 
-  const cart = await Cart.findOne({ user: req.user._id });
-  if (cart) {
-    cart.items = [];
-    await cart.save();
-  }
-
-  return res.status(200).json(new ApiResponse(200, order, 'Payment successful'));
+  return res.status(200).json(new ApiResponse(200, successOrder, 'Payment successful'));
 });

@@ -58,23 +58,27 @@ export const deleteCache = async (key) => {
 };
 
 /**
- * Evict cache keys matching a pattern
+ * Evict cache keys matching a pattern using Redis Lua script for O(1) operation
  */
 export const clearCacheByPattern = async (pattern) => {
   try {
     if (redisClient?.isReady) {
-      let cursor = 0;
-      do {
-        const reply = await redisClient.scan(cursor, {
-          MATCH: `*${pattern}*`,
-          COUNT: 100, // Process 100 keys per iteration
-        });
-        cursor = reply.cursor;
-        const keys = reply.keys;
-        if (keys.length > 0) {
-          await redisClient.del(keys);
-        }
-      } while (cursor !== 0);
+      const script = `
+        local cursor = "0"
+        local keys = {}
+        repeat
+          local reply = redis.call('SCAN', cursor, 'MATCH', ARGV[1], 'COUNT', ARGV[2])
+          cursor = reply[1]
+          for i = 1, #reply[2] do
+            keys[#keys + 1] = reply[2][i]
+          end
+        until cursor == "0"
+        for i = 1, #keys do
+          redis.call('DEL', keys[i])
+        end
+        return #keys
+      `;
+      await redisClient.eval(script, 0, `*${pattern}*`, 1000);
     }
   } catch (error) {
     console.error('Redis Pattern Clear Error:', error.message);

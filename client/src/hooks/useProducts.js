@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api.js';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/product.service.js';
 
 export const useProducts = () => {
   const [products, setProducts] = useState([]);

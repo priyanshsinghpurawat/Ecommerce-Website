@@ -39,10 +39,9 @@ jobs:
       - name: Run Backend Lint
         run: npm run lint
         working-directory: server
-        continue-on-error: true # Optional: depending on strictness
 
       - name: Run Backend Tests with Coverage
-        run: npx vitest run --coverage
+        run: npx vitest run --coverage --coverage.thresholds.lines=70
         working-directory: server
         env:
           MONGODB_URI: mongodb://localhost:27017/test
@@ -78,10 +77,9 @@ jobs:
       - name: Run Frontend Lint
         run: npm run lint
         working-directory: client
-        continue-on-error: true
 
       - name: Run Frontend Tests with Coverage
-        run: npx vitest run --passWithNoTests --coverage
+        run: npx vitest run --passWithNoTests --coverage --coverage.thresholds.lines=70
         working-directory: client
 
       - name: Build Frontend

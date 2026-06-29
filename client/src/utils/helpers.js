@@ -124,3 +124,33 @@ export const revokeItem = (item) => {
     URL.revokeObjectURL(item.previewUrl);
   }
 };
+
+/** Simple in-memory cache with TTL for API responses */
+const cache = new Map();
+const DEFAULT_TTL = 60000; // 1 minute
+
+export function getCache(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiry) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+export function setCache(key, data, ttl = DEFAULT_TTL) {
+  cache.set(key, { data, expiry: Date.now() + ttl });
+}
+
+export function clearCache(key) {
+  cache.delete(key);
+}
+
+export function clearAllCache() {
+  cache.clear();
+}
+
+export function formatCurrency(val) {
+  return `₹${Number(val || 0).toLocaleString('en-IN')}`;
+}

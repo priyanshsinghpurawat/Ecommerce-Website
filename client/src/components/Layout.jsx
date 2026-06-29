@@ -1,21 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useLocation, Link, NavLink } from 'react-router-dom';
 import { Navbar } from './Navbar.jsx';
 import { Footer } from './Footer.jsx';
+import { ScrollProgress } from './ScrollProgress.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home as HomeIcon, ShoppingBag, Heart, User, Sparkles } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
+import api from '../services/api.js';
 
 export const Layout = () => {
   const location = useLocation();
   const { cartItemsCount } = useCart();
   const { wishlist } = useWishlist();
 
+  // Affiliate Link Interceptor
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const refTag = queryParams.get('ref');
+    
+    if (refTag) {
+      // 1. Save to local storage for 30 days (attribution window)
+      const expiry = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+      localStorage.setItem('mensvibe_affiliate_tag', JSON.stringify({ tag: refTag, expiry }));
+      
+      // 2. Track click on backend asynchronously (fire and forget)
+      api.post(`/affiliates/track/${refTag}`).catch(err => console.error('Affiliate tracking failed', err));
+    }
+  }, [location.search]);
+
   return (
     <div className="flex min-h-screen flex-col bg-app-bg font-sans text-app-text antialiased">
+      <ScrollProgress />
       <Navbar />
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 py-6 md:py-10 relative pb-24 md:pb-10">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 relative pb-24 md:pb-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

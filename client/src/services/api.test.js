@@ -32,15 +32,10 @@ vi.mock('axios', () => {
 });
 
 // Import the services AFTER the mock is registered
-import api, {
-  login,
-  register,
-  me,
-  logout,
-  getProducts,
-  createProduct,
-  getPaymentConfig
-} from './api.js';
+import api from './api.js';
+import { login, register, me, logout } from './auth.service.js';
+import { getProducts, createProduct } from './product.service.js';
+import { getPaymentConfig } from './payment.service.js';
 
 describe('Frontend API Clients and Handlers', () => {
   beforeEach(() => {

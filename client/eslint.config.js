@@ -30,9 +30,27 @@ export default [
     },
   },
   {
-    files: ['vite.config.js'],
+    files: ['vite.config.js', 'playwright.config.js'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    files: ['**/*.test.{js,jsx}', '**/*.spec.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        vi: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        each: 'readonly',
+      },
     },
   },
 ]

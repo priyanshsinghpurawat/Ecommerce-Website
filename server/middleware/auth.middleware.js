@@ -17,11 +17,15 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const decodedToken = jwt.verify(token, ENV.JWT_SECRET);
+    const decodedToken = jwt.verify(token, ENV.JWT_SECRET, { algorithms: ['HS256'] });
     const user = await User.findById(decodedToken._id).select("-password");
 
     if (!user) {
       throw new ApiError(401, "Invalid Access Token. User not found.");
+    }
+    
+    if (!user.isActive) {
+      throw new ApiError(403, "User account is deactivated.");
     }
 
     req.user = user;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getMyOrders } from '../services/api.js';
+import { getMyOrders } from '../services/order.service.js';
 import { Loader2, Package, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -47,11 +47,12 @@ export const Orders = () => {
 
       {orders.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 p-12 text-center">
-          <Package className="h-10 w-10 mx-auto text-app-text/30 mb-4" />
-          <p className="text-xs text-app-text/50 mb-4">You have not placed any orders yet.</p>
+          <div className="text-5xl mb-4">📦</div>
+          <p className="text-sm font-bold text-app-text mb-1">No orders yet</p>
+          <p className="text-xs text-app-text/45 mb-5">When you place an order, it'll show up here.</p>
           <Link
             to="/shop"
-            className="inline-block rounded-2xl bg-app-text px-6 py-3 text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover"
+            className="inline-block rounded-full bg-brand-primary px-6 py-3 text-xs font-bold uppercase tracking-wider text-black hover:opacity-90 transition-all active:scale-95"
           >
             Start Shopping
           </Link>

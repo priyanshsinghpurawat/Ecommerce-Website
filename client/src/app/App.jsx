@@ -32,6 +32,7 @@ const Profile = lazy(() => import('../pages/Profile.jsx').then(m => ({ default: 
 const Wishlist = lazy(() => import('../pages/Wishlist.jsx').then(m => ({ default: m.Wishlist })));
 const NotFound = lazy(() => import('../pages/NotFound.jsx').then(m => ({ default: m.NotFound })));
 const AboutUs = lazy(() => import('../pages/AboutUs.jsx').then(m => ({ default: m.AboutUs })));
+const VendorStore = lazy(() => import('../pages/VendorStore.jsx').then(m => ({ default: m.VendorStore })));
 
 // Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
@@ -51,6 +52,9 @@ const SellerDashboard = lazy(() => import('../pages/admin/SellerDashboard.jsx').
 const SellerProducts = lazy(() => import('../pages/admin/SellerProducts.jsx').then(m => ({ default: m.SellerProducts })));
 const AddEditProduct = lazy(() => import('../pages/admin/AddEditProduct.jsx'));
 const SellerOrders = lazy(() => import('../pages/admin/SellerOrders.jsx').then(m => ({ default: m.SellerOrders })));
+const SellerAffiliates = lazy(() => import('../pages/admin/SellerAffiliates.jsx').then(m => ({ default: m.SellerAffiliates })));
+const SellerStorefront = lazy(() => import('../pages/admin/SellerStorefront.jsx').then(m => ({ default: m.SellerStorefront })));
+const SellerBilling = lazy(() => import('../pages/admin/SellerBilling.jsx').then(m => ({ default: m.SellerBilling })));
 
 import '../App.css';
 
@@ -109,6 +113,7 @@ function App() {
                       <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
                       <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                       <Route path="about" element={<AboutUs />} />
+                      <Route path="store/:slug" element={<VendorStore />} />
                       <Route path="*" element={<NotFound />} />
                     </Route>
 
@@ -134,7 +139,7 @@ function App() {
                     </Route>
 
                     <Route
-                      path="/seller"
+                      path="/vendor"
                       element={
                         <SellerRoute>
                           <SellerLayout />
@@ -147,6 +152,9 @@ function App() {
                       <Route path="products/:id/edit" element={<AddEditProduct />} />
                       <Route path="coupons" element={<AdminCoupons />} />
                       <Route path="orders" element={<SellerOrders />} />
+                      <Route path="affiliates" element={<SellerAffiliates />} />
+                      <Route path="storefront" element={<SellerStorefront />} />
+                      <Route path="billing" element={<SellerBilling />} />
                     </Route>
                   </Routes>
                 </Suspense>

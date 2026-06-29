@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getSubcategories, createSubcategory, updateSubcategory, deleteSubcategory } from '../../services/api.js';
 import { useCategories } from '../../hooks/useCategories.js';
+import { useSubcategories } from '../../hooks/useSubcategories.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Plus, Edit2, Trash2, Loader2, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Input } from '../../components/Input.jsx';
 
 export const AdminSubcategories = () => {
-  const [subcategories, setSubcategories] = useState([]);
+  const { subcategories, fetchSubcategories, addSubcategory, editSubcategory, removeSubcategory } = useSubcategories();
   const [loading, setLoading] = useState(true);
   const { categories, fetchCategories } = useCategories();
   
@@ -29,8 +29,7 @@ export const AdminSubcategories = () => {
     setLoading(true);
     try {
       await fetchCategories();
-      const res = await getSubcategories();
-      setSubcategories(res?.data || []);
+      await fetchSubcategories();
     } catch (err) {
       toast.error('Failed to fetch data');
     } finally {
@@ -44,7 +43,7 @@ export const AdminSubcategories = () => {
 
   const filteredSubcategories = subcategories.filter(sub => 
     sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    sub.category?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenCreateModal = () => {
@@ -79,16 +78,18 @@ export const AdminSubcategories = () => {
     setActionLoading(true);
     try {
       if (isEditing) {
-        await updateSubcategory(editingId, { name: name.trim(), category: selectedCategory });
+        const res = await editSubcategory(editingId, { name: name.trim(), category: selectedCategory });
+        if (!res.success) throw new Error(res.error);
         toast.success('Subcategory updated successfully');
       } else {
-        await createSubcategory({ name: name.trim(), category: selectedCategory });
+        const res = await addSubcategory({ name: name.trim(), category: selectedCategory });
+        if (!res.success) throw new Error(res.error);
         toast.success('Subcategory created successfully');
       }
       setModalOpen(false);
       fetchAllData();
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Operation failed');
+      toast.error(err?.message || 'Operation failed');
     } finally {
       setActionLoading(false);
     }
@@ -98,11 +99,12 @@ export const AdminSubcategories = () => {
     if (window.confirm(`Are you sure you want to delete subcategory "${sub.name}"?`)) {
       setActionLoading(true);
       try {
-        await deleteSubcategory(sub._id);
+        const res = await removeSubcategory(sub._id);
+        if (!res.success) throw new Error(res.error);
         toast.success('Subcategory deleted successfully');
         fetchAllData();
       } catch (err) {
-        toast.error('Failed to delete subcategory');
+        toast.error(err?.message || 'Failed to delete subcategory');
       } finally {
         setActionLoading(false);
       }

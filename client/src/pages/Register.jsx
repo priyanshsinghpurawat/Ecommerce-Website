@@ -104,7 +104,13 @@ export const Register = () => {
 
     if (result.success) {
       toast.success('Account ready — happy shopping.');
-      navigate('/');
+      if (result.user?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (result.user?.role === 'seller') {
+        navigate('/vendor/dashboard');
+      } else {
+        navigate('/');
+      }
     } else {
       setServerError(result.error);
       toast.error(result.error || 'Registration failed.');
@@ -119,7 +125,13 @@ export const Register = () => {
 
     if (result.success) {
       toast.success('Signed in via Google.');
-      navigate('/');
+      if (result.user?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (result.user?.role === 'seller') {
+        navigate('/vendor/dashboard');
+      } else {
+        navigate('/');
+      }
     } else {
       setServerError(result.error);
       toast.error(result.error || 'Google Sign-In failed.');

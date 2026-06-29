@@ -6,7 +6,9 @@ import {
   getAllOrders,
   updateOrderStatus,
   getOrderAnalytics,
-  exportOrdersCSV
+  exportOrdersCSV,
+  requestReturn,
+  processReturn
 } from '../controllers/order.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -82,6 +84,17 @@ router.post('/', verifyJWT, validate({ body: createOrderSchema }), createOrder);
  *                 $ref: '#/components/schemas/Order'
  */
 router.get('/my', verifyJWT, getMyOrders);
+
+/**
+ * @openapi
+ * /api/v3/orders/{id}/items/{itemId}/return:
+ *   post:
+ *     summary: Request a return for an order item
+ *     tags: [Orders]
+ *     security:
+ *       - BearerAuth: []
+ */
+router.post('/:id/items/:itemId/return', verifyJWT, requestReturn);
 
 /**
  * @openapi
@@ -178,6 +191,17 @@ router.get('/', verifyJWT, authorizeRoles('admin', 'seller'), getAllOrders);
  *         description: Status updated successfully
  */
 router.patch('/:id/status', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: updateOrderStatusSchema }), updateOrderStatus);
+
+/**
+ * @openapi
+ * /api/v3/orders/{id}/items/{itemId}/process-return:
+ *   put:
+ *     summary: Process a return request (approve/reject/refund)
+ *     tags: [Orders]
+ *     security:
+ *       - BearerAuth: []
+ */
+router.put('/:id/items/:itemId/process-return', verifyJWT, authorizeRoles('admin', 'seller'), processReturn);
 
 /**
  * @openapi

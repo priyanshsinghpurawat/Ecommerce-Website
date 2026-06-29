@@ -7,6 +7,12 @@ const orderItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: true
     },
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Variant',
+      default: null
+    },
+    sku: { type: String, trim: true },
     title: { type: String, required: true },
     image: { type: String },
     price: { type: Number, required: true },
@@ -22,8 +28,17 @@ const orderItemSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned'],
       default: 'confirmed'
+    },
+    returnStatus: {
+      type: String,
+      enum: ['none', 'requested', 'approved', 'rejected', 'refunded'],
+      default: 'none'
+    },
+    returnReason: {
+      type: String,
+      trim: true
     },
     trackingNumber: { type: String, trim: true },
     deliveryDate: { type: Date }
@@ -87,6 +102,11 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'],
       default: 'pending'
+    },
+    attributionTag: {
+      type: String,
+      trim: true,
+      default: null
     }
   },
   { timestamps: true }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts, getCategories, getAllOrders, getOrderAnalytics } from '../../services/api.js';
+import { getProducts } from '../../services/product.service.js';
+import { getCategories } from '../../services/category.service.js';
+import { getAllOrders, getOrderAnalytics } from '../../services/order.service.js';
 import StockHeatmap from '../../components/admin/StockHeatmap.jsx';
 import RevenueAnalytics from '../../components/admin/RevenueAnalytics.jsx';
 import { TrendingUp, Package, Download } from 'lucide-react';
@@ -21,6 +23,7 @@ export const AdminDashboard = () => {
     stockLevels: [] // for the visual widget
   });
   const [analytics, setAnalytics] = useState(null);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,9 +43,11 @@ export const AdminDashboard = () => {
         const lowStock = products.filter(p => p.stock > 0 && p.stock <= 5).length;
         const outOfStock = products.filter(p => p.stock === 0).length;
 
-        const orders = ordersRes?.data || [];
+        const ordersData = ordersRes?.data;
+        const orders = Array.isArray(ordersData) ? ordersData : (ordersData?.orders || []);
         const orderRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
 
+        setProducts(products);
         setStats({
           totalProducts: prodRes.data?.pagination?.totalProducts || products.length,
           totalCategories: categories.length,
@@ -70,9 +75,9 @@ export const AdminDashboard = () => {
   const formatCurrency = (val) => `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   const handleExportCSV = () => {
-    // In a real app, you might fetch with Authorization header, 
-    // but since we use cookies for auth, window.open works.
-    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v3/orders/export/csv`, '_blank');
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const baseUrl = apiUrl ? apiUrl.replace(/\/api\/v3\/?$/, '') : window.location.origin;
+    window.open(`${baseUrl}/api/v3/orders/export/csv`, '_blank');
   };
   
   return (
@@ -119,7 +124,7 @@ export const AdminDashboard = () => {
         
         {/* Left: Stock Heatmap Visualization */}
         <div className="lg:col-span-2">
-          <StockHeatmap />
+          <StockHeatmap products={products} />
         </div>
 
         {/* Right: Valuation & Inventory Status */}

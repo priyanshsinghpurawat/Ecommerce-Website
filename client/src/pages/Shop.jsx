@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
 import { useShopFilters } from '../hooks/useShopFilters.js';
-import { getSubcategories, getProducts } from '../services/api.js';
+import { useSubcategories } from '../hooks/useSubcategories.js';
+import { getProductFilters } from '../services/product.service.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } from 'lucide-react';
@@ -59,13 +60,13 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
 export const Shop = () => {
   const { products, pagination, loading, error, fetchProducts } = useProducts();
   const { categories, fetchCategories } = useCategories();
+  const { subcategories, fetchSubcategories } = useSubcategories();
   const {
     filters, selectedColors, hasActiveFilters,
     priceMin, setPriceMin, priceMax, setPriceMax,
     updateFilters, toggleColor, applyPriceFilter, clearAllFilters
   } = useShopFilters();
 
-  const [subcategories, setSubcategories] = useState([]);
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [availableColors, setAvailableColors] = useState([]);
@@ -73,26 +74,23 @@ export const Shop = () => {
   const activeSub = subcategories.find((s) => s._id === filters.subcategory);
   const activeCat = categories.find((c) => c._id === filters.category);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useEffect(() => {
+    fetchCategories();
+    fetchSubcategories();
+  }, [fetchCategories, fetchSubcategories]);
+
+  const filteredSubcategories = useMemo(() => {
+    if (!filters.category) return subcategories;
+    return subcategories.filter(sub => {
+      const parentId = typeof sub.category === 'object' ? sub.category?._id : sub.category;
+      return parentId === filters.category;
+    });
+  }, [subcategories, filters.category]);
 
   useEffect(() => {
-    const loadSubs = async () => {
-      try {
-        const res = await getSubcategories(filters.category || undefined);
-        setSubcategories(res?.data || []);
-      } catch { setSubcategories([]); }
-    };
-    loadSubs();
-  }, [filters.category]);
-
-  useEffect(() => {
-    getProducts({ limit: 200, fields: 'variants' })
+    getProductFilters()
       .then((res) => {
-        const all = res?.data?.products || [];
-        const colours = [...new Set(
-          all.flatMap(p => (p.variants || []).map(v => v.color).filter(Boolean))
-        )].sort();
-        setAvailableColors(colours);
+        setAvailableColors(res?.data?.colors || []);
       })
       .catch(() => setAvailableColors([]));
   }, []);
@@ -140,13 +138,13 @@ export const Shop = () => {
       </CollapsibleSection>
 
       {/* Subcategories when a category is selected */}
-      {subcategories.length > 0 ? (
+      {filteredSubcategories.length > 0 ? (
         <CollapsibleSection title="Sub-Categories">
           <div className="space-y-1">
             <button type="button" onClick={() => updateFilters({ subcategory: '' })}
               className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${!filters.subcategory ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
             >All</button>
-            {subcategories.map((sub) => (
+            {filteredSubcategories.map((sub) => (
               <button key={sub._id} type="button" onClick={() => updateFilters({ subcategory: sub._id })}
                 className={`w-full text-left rounded-xl px-4 py-2 text-xs font-bold transition-all ${filters.subcategory === sub._id ? 'text-brand-primary bg-brand-primary/10' : 'text-app-text/60 hover:bg-surface-50'}`}
               >{sub.name}</button>

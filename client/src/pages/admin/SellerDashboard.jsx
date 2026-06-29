@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getProducts, getAllOrders } from '../../services/api.js';
+import { getProducts } from '../../services/product.service.js';
+import { getAllOrders } from '../../services/order.service.js';
 import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight, Loader2, Clock } from 'lucide-react';
 
 // --- Pure Helper Functions (KISS Principle) ---
@@ -74,9 +75,12 @@ export const SellerDashboard = () => {
           getAllOrders({ seller: user._id })
         ]);
 
+        const ordersData = ordersRes?.data;
+        const orders = Array.isArray(ordersData) ? ordersData : (ordersData?.orders || []);
+
         const processedData = calculateSellerData(
           prodRes.data?.products || [],
-          ordersRes?.data || []
+          orders
         );
 
         setData(processedData);
@@ -100,10 +104,7 @@ export const SellerDashboard = () => {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-10">
-      <div>
-        <h2 className="text-3xl font-bold text-gray-900">Seller Dashboard</h2>
-        <p className="text-base text-gray-600 mt-2">Manage your products and view your sales performance.</p>
-      </div>
+
 
       {/* --- Stat Cards --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

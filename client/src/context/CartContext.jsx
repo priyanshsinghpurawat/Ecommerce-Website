@@ -1,7 +1,7 @@
 /** WHY: Global state for the shopping cart (adding items, clearing, subtotal). */
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
-import * as cartService from '../services/api.js';
+import * as cartService from '../services/cart.service.js';
 
 export const CartContext = createContext();
 

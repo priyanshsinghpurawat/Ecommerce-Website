@@ -12,15 +12,14 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Only connect if the user is logged in
     if (user) {
-      const socketInstance = io(import.meta.env.VITE_API_URL.replace('/api/v3', '') || 'http://localhost:3000', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const socketUrl = apiUrl ? apiUrl.replace(/\/api\/v3\/?$/, '') : window.location.origin;
+
+      const socketInstance = io(socketUrl, {
         withCredentials: true,
       });
 
       setSocket(socketInstance);
-
-      socketInstance.on('connect', () => {
-        console.log('Socket connected successfully');
-      });
 
       socketInstance.on('connect_error', (err) => {
         console.error('Socket connection error:', err);

@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   getProfile, updateProfile, 
   addAddress, updateAddress, deleteAddress, setDefaultAddress,
-  getMyOrders
-} from '../services/api.js';
+} from '../services/user.service.js';
+import { getMyOrders } from '../services/order.service.js';
 import { 
   Loader2, User, MapPin, Package, Heart, Save, Plus, Trash2, 
   CheckCircle2, ChevronRight, ShoppingBag, Clock, ShieldCheck, 

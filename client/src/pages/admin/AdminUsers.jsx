@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllUsers, updateUserRole } from '../../services/api.js';
+import { getAllUsers, updateUserRole } from '../../services/user.service.js';
 import { Loader2, User as UserIcon, Shield, ShoppingBag, Mail, Hash, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

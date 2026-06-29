@@ -7,6 +7,11 @@ const cartItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: [true, 'Product reference is required']
     },
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Variant',
+      default: null
+    },
     quantity: {
       type: Number,
       required: [true, 'Quantity is required'],
@@ -37,6 +42,10 @@ const cartSchema = new mongoose.Schema(
   {
     timestamps: true
   }
+);
+
+cartSchema.index({ user: 1, 'items.product': 1, 'items.variant': 1 },
+  { unique: true, partialFilterExpression: { 'items.0': { $exists: true } } }
 );
 
 export const Cart = mongoose.model('Cart', cartSchema);

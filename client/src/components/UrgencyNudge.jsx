@@ -28,21 +28,7 @@ const Chip = ({ value, label }) => (
 
 // ─── Pulsing dot ─────────────────────────────────────────────────────────────
 const PulseDot = () => (
-  <>
-    <style>{`
-      @keyframes mv-rip {
-        0%  { transform: scale(0.7); opacity: 1; }
-        100%{ transform: scale(1.9); opacity: 0; }
-      }
-      .mv-pulse { position: relative; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex-shrink: 0; margin-top: 3px; }
-      .mv-pulse::after {
-        content: ''; position: absolute; inset: -3px;
-        border-radius: 50%; border: 1.5px solid rgba(239,68,68,0.4);
-        animation: mv-rip 1.4s ease-out infinite;
-      }
-    `}</style>
-    <div className="mv-pulse" aria-hidden="true" />
-  </>
+  <div className="mv-pulse" aria-hidden="true" />
 );
 
 // ─── Size chip ───────────────────────────────────────────────────────────────

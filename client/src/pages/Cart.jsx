@@ -19,13 +19,13 @@ import {
 import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether.jsx';
 import { toast } from 'react-hot-toast';
 import { 
-  applyCoupon,
   createCheckout,
   verifyPayment,
   getPaymentConfig,
-  createOrder,
-  getProfile
-} from '../services/api.js';
+} from '../services/payment.service.js';
+import { createOrder } from '../services/order.service.js';
+import { applyCoupon } from '../services/coupon.service.js';
+import { getProfile } from '../services/user.service.js';
 import { resolveImageUrl, validateIndianPhone, getErrorMessage } from '../utils/helpers.js';
 import { DEFAULT_SHIPPING, SUGGESTED_COUPONS } from '../constants/checkout.js';
 
@@ -390,16 +390,14 @@ export const Cart = () => {
           animate={EMPTY_CART_ANIMATION}
           className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-20 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[420px] gap-5"
         >
-          <div className="h-20 w-20 bg-surface-50/60 rounded-full flex items-center justify-center text-app-text/30 border border-white shadow-md">
-            <ShoppingBag className="h-8 w-8" />
-          </div>
+          <div className="text-6xl mb-2">🛒</div>
           <div>
             <h2 className="text-lg font-black uppercase tracking-wider text-app-text">Your bag is empty</h2>
-            <p className="text-xs text-app-text/40 mt-1.5 font-medium">Looks like you haven't added anything yet.</p>
+            <p className="text-xs text-app-text/40 mt-1.5 font-medium max-w-xs">Nothing in here yet. Go find something that speaks to you.</p>
           </div>
           <Link
             to="/shop"
-            className="rounded-2xl bg-brand-primary px-10 py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-all shadow-lg shadow-brand-primary/20 cursor-pointer"
+            className="rounded-full bg-brand-primary px-10 py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-all shadow-lg shadow-brand-primary/20 cursor-pointer active:scale-95"
           >
             Start Shopping
           </Link>
@@ -470,36 +468,48 @@ export const Cart = () => {
                                 </div>
                               </td>
 
-                              {/* Quantity Controls with dynamic spinners */}
-                              <td className="px-6 py-4 text-center">
-                                <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
-                                  {updatingItemId === item._id ? (
-                                    <div className="flex items-center justify-center px-4 py-0.5">
-                                      <Loader2 className="h-4.5 w-4.5 animate-spin text-brand-primary" />
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <button
-                                        onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
-                                        disabled={item.quantity <= 1 || updatingItemId !== null}
-                                        className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                        title="Decrease Quantity"
-                                      >
-                                        <Minus className="h-3.5 w-3.5" />
-                                      </button>
-                                      <span className="text-xs font-extrabold px-1.5 font-mono">{item.quantity}</span>
-                                      <button
-                                        onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
-                                        disabled={updatingItemId !== null}
-                                        className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                        title="Increase Quantity"
-                                      >
-                                        <Plus className="h-3.5 w-3.5" />
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </td>
+                               {/* Quantity Controls with dynamic spinners */}
+                               <td className="px-6 py-4 text-center">
+                                 <div className="inline-flex items-center gap-2.5 rounded-xl border border-surface-100 bg-surface-50/70 px-2.5 py-1.5 shadow-sm">
+                                   {updatingItemId === item._id ? (
+                                     <div className="flex items-center justify-center px-4 py-0.5">
+                                       <Loader2 className="h-4.5 w-4.5 animate-spin text-brand-primary" />
+                                     </div>
+                                   ) : (
+                                     <>
+                                       <button
+                                         onClick={() => handleQuantityChange(item._id, item.quantity, -1)}
+                                         disabled={item.quantity <= 1 || updatingItemId !== null}
+                                         className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                         title="Decrease Quantity"
+                                       >
+                                         <Minus className="h-3.5 w-3.5" />
+                                       </button>
+                                       <span className="text-xs font-extrabold px-1.5 font-mono">{item.quantity}</span>
+                                       <button
+                                         onClick={() => handleQuantityChange(item._id, item.quantity, 1)}
+                                         disabled={updatingItemId !== null}
+                                         className="text-app-text/50 hover:text-app-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                         title="Increase Quantity"
+                                       >
+                                         <Plus className="h-3.5 w-3.5" />
+                                       </button>
+                                     </>
+                                   )}
+                                 </div>
+                                 {/* Show available stock hint */}
+                                 {(() => {
+                                   const stock = item.variant?.stock ?? prod.stock;
+                                   if (stock !== undefined && stock !== null && stock <= 5) {
+                                     return (
+                                       <p className="text-[9px] font-bold text-red-400 mt-1 uppercase tracking-wider">
+                                         {stock === 0 ? 'Out of stock' : `Only ${stock} left`}
+                                       </p>
+                                     );
+                                   }
+                                   return null;
+                                 })()}
+                               </td>
 
                               {/* Unit Price */}
                               <td className="px-6 py-4 text-right font-mono font-bold text-app-text/75 text-xs">

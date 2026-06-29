@@ -19,14 +19,18 @@ export default defineConfig({
     },
   },
   test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.js',
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: {
-        lines: 40,
+        lines: 50,
         functions: 20,
-        branches: 40,
-        statements: 40
+        branches: 60,
+        statements: 50
       }
     }
   },
@@ -35,6 +39,7 @@ export default defineConfig({
     port: 5173,
   },
   optimizeDeps: {
-    exclude: ['socket.io-client']
+    exclude: ['socket.io-client'],
+    include: ['debug']
   }
 })

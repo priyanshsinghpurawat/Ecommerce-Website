@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createProduct,
   getAllProducts,
+  getProductFilters,
   getProductById,
   getFrequentlyBoughtTogether,
   updateProduct,
@@ -64,6 +65,8 @@ const router = Router();
  *                     $ref: '#/components/schemas/Product'
  */
 router.get('/', getAllProducts);
+
+router.get('/filters', getProductFilters);
 
 /**
  * @openapi

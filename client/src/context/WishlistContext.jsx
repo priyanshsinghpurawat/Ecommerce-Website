@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
-import * as wishlistService from '../services/api.js';
+import * as wishlistService from '../services/user.service.js';
 
 export const WishlistContext = createContext();
 
@@ -46,11 +46,7 @@ export const WishlistProvider = ({ children }) => {
         return { success: true, action: 'removed' };
       } else {
         await wishlistService.addToWishlist(productId);
-        // Refresh wishlist to get populated product data if needed, 
-        // or just add the ID if we only care about the state.
-        // For simplicity and immediate UI update:
-        setWishlist(prev => [...prev, productId]); 
-        fetchWishlist(); // Fetch to get full data
+        await fetchWishlist();
         return { success: true, action: 'added' };
       }
     } catch (err) {

@@ -4,16 +4,17 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { HERO_SLIDES } from '../constants/showcase.js';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const SLIDE_DURATION = 6000;
+
 export const HeroCarousel = () => {
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     if (isPaused) return;
-
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % HERO_SLIDES.length);
-    }, 4000); // Snappy 4-second scroll
+    }, SLIDE_DURATION);
     return () => clearInterval(timer);
   }, [isPaused, index]);
 
@@ -29,120 +30,90 @@ export const HeroCarousel = () => {
     setIndex((i) => (i + 1) % HERO_SLIDES.length);
   };
 
+  const renderImage = (src, className = '') => (
+    <img
+      src={src}
+      alt=""
+      loading={index === 0 ? 'eager' : 'lazy'}
+      onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_street.png'; }}
+      className={className}
+    />
+  );
+
   return (
     <section
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative w-full overflow-hidden rounded-none bg-app-bg min-h-[600px] md:min-h-[750px] lg:min-h-[85vh] shadow-soft mx-auto max-w-full group"
+      className="relative w-full overflow-hidden bg-black min-h-[70vh] md:min-h-[85vh] lg:min-h-[92vh] group"
     >
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.97 }}
-          transition={{ duration: 0.35, ease: "easeInOut" }}
-          className="absolute inset-0 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: 'easeInOut' }}
+          className="absolute inset-0"
         >
           {slide.image3 ? (
-            // 3-column split vertical panels (Triptych)
-            <div className="absolute inset-0 w-full h-full grid grid-cols-3 gap-[2px] md:gap-[4px] bg-black/10">
-              <Link to={slide.link1 || slide.link} className="relative h-full w-full overflow-hidden block">
-                <img
-                  src={slide.image}
-                  alt=""
-                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
-                />
-              </Link>
-              <Link to={slide.link2 || slide.link} className="relative h-full w-full overflow-hidden block">
-                <img
-                  src={slide.image2}
-                  alt=""
-                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
-                />
-              </Link>
-              <Link to={slide.link3 || slide.link} className="relative h-full w-full overflow-hidden block">
-                <img
-                  src={slide.image3}
-                  alt=""
-                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
-                />
-              </Link>
-            </div>
-          ) : slide.image2 ? (
-            // 2-column split vertical panels
-            <div className="absolute inset-0 w-full h-full grid grid-cols-2 gap-[2px] md:gap-[4px] bg-black/10">
-              <Link to={slide.link1 || slide.link} className="relative h-full w-full overflow-hidden block">
-                <img
-                  src={slide.image}
-                  alt=""
-                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
-                />
-              </Link>
-              <Link to={slide.link2 || slide.link} className="relative h-full w-full overflow-hidden block">
-                <img
-                  src={slide.image2}
-                  alt=""
-                  className="w-full h-full object-cover object-top hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
-                />
-              </Link>
+            <div className="absolute inset-0 w-full h-full grid grid-cols-3 gap-0">
+              {[slide.image, slide.image2, slide.image3].map((img, i) => (
+                <Link key={i} to={[slide.link1, slide.link2, slide.link3][i] || slide.link} className="relative h-full w-full overflow-hidden block">
+                  <img
+                    src={img}
+                    alt=""
+                    className="w-full h-full object-cover object-top"
+                  />
+                </Link>
+              ))}
             </div>
           ) : (
-            // Standard single image background
             <img
               src={slide.image}
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-top"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/assets/hero_street.png';
-              }}
+              onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_street.png'; }}
             />
           )}
 
-          {/* Ambient gradient to overlay text cleanly */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient}`} />
+          <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient || 'from-black/80 via-black/40 to-transparent'}`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      <div className="relative z-20 flex h-full min-h-[600px] md:min-h-[750px] lg:min-h-[85vh] flex-col justify-center p-8 md:p-24 md:max-w-3xl text-left">
+      <div className="relative z-20 flex h-[70vh] md:h-[85vh] lg:h-[92vh] flex-col justify-end md:justify-center p-6 md:p-16 lg:p-24 md:max-w-4xl text-left">
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60 mb-4 block italic">
+            <motion.span
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="text-[10px] font-black uppercase tracking-[0.5em] text-brand-primary mb-4 block"
+            >
               {slide.eyebrow}
-            </span>
-            <h1 className="font-sans text-5xl md:text-8xl font-black text-white leading-[0.9] italic tracking-tighter uppercase">
+            </motion.span>
+            <h1 className="font-sans text-6xl md:text-[100px] lg:text-[120px] font-black text-white leading-[0.85] tracking-tighter uppercase">
               {slide.title}
             </h1>
-            <p className="mt-4 text-[11px] font-black uppercase tracking-[0.5em] text-brand-primary">
+            <p className="mt-3 md:mt-5 text-xs md:text-sm font-black uppercase tracking-[0.6em] text-white/50">
               {slide.subtitle}
             </p>
-            <p className="mt-8 max-w-md text-sm text-white/70 leading-relaxed font-bold uppercase tracking-tight">
+            <p className="mt-6 md:mt-8 max-w-md text-sm md:text-base text-white/60 leading-relaxed font-medium">
               {slide.description}
             </p>
-            {slide.link.startsWith('#') ? (
-              <a
-                href={slide.link}
-                className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
-              >
-                {slide.cta}
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            ) : (
-              <Link
-                to={slide.link}
-                className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 transition-all shadow-2xl shadow-brand-primary/20"
-              >
-                {slide.cta}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            )}
+            <Link
+              to={slide.link}
+              className="mt-8 md:mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-brand-primary px-8 md:px-12 py-3.5 md:py-4 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-black hover:scale-105 hover:shadow-[0_0_40px_rgba(193,255,0,0.3)] transition-all duration-300"
+            >
+              {slide.cta}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -150,28 +121,28 @@ export const HeroCarousel = () => {
       <button
         type="button"
         onClick={handlePrev}
-        className="absolute left-6 top-1/2 z-30 -translate-y-1/2 rounded-2xl bg-white/10 p-3 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20 border border-white/10"
+        className="absolute left-4 md:left-8 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-2.5 md:p-3 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 border border-white/10"
         aria-label="Previous slide"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
       </button>
       <button
         type="button"
         onClick={handleNext}
-        className="absolute right-6 top-1/2 z-30 -translate-y-1/2 rounded-2xl bg-white/10 p-3 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20 border border-white/10"
+        className="absolute right-4 md:right-8 top-1/2 z-30 -translate-y-1/2 rounded-full bg-white/10 p-2.5 md:p-3 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white/20 border border-white/10"
         aria-label="Next slide"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
       </button>
 
-      <div className="absolute bottom-10 left-1/2 z-30 flex -translate-x-1/2 gap-3">
+      <div className="absolute bottom-6 md:bottom-10 left-1/2 z-30 flex -translate-x-1/2 gap-2 md:gap-3">
         {HERO_SLIDES.map((s, i) => (
           <button
             key={s.id}
             type="button"
             onClick={() => setIndex(i)}
-            className={`h-1.5 rounded-full relative overflow-hidden transition-all duration-500 ${
-              i === index ? 'w-10 bg-white/25 shadow-lg shadow-brand-primary/5' : 'w-3 bg-white/20 hover:bg-white/40'
+            className={`h-1 rounded-full relative overflow-hidden transition-all duration-500 ${
+              i === index ? 'w-10 bg-white/25' : 'w-3 bg-white/20 hover:bg-white/40'
             }`}
             aria-label={`Go to slide ${i + 1}`}
           >
@@ -180,10 +151,7 @@ export const HeroCarousel = () => {
                 key={`${index}-${isPaused}`}
                 initial={{ width: '0%' }}
                 animate={{ width: isPaused ? '0%' : '100%' }}
-                transition={{
-                  duration: isPaused ? 0 : 4,
-                  ease: 'linear',
-                }}
+                transition={{ duration: isPaused ? 0 : SLIDE_DURATION / 1000, ease: 'linear' }}
                 className="absolute inset-y-0 left-0 bg-brand-primary"
               />
             )}

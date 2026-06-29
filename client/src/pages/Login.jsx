@@ -86,10 +86,14 @@ export const Login = () => {
         colors: ['#a3e635', '#ffffff', '#000000']
       });
       setTimeout(() => {
-        if (result.user?.role === 'admin' && !location.state?.from) {
-          navigate('/admin/dashboard');
-        } else {
+        if (location.state?.from) {
           navigate(redirectTo);
+        } else if (result.user?.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (result.user?.role === 'seller') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/');
         }
       }, 1000);
     } else {
@@ -113,10 +117,14 @@ export const Login = () => {
         colors: ['#a3e635', '#ffffff', '#000000']
       });
       setTimeout(() => {
-        if (result.user?.role === 'admin' && !location.state?.from) {
-          navigate('/admin/dashboard');
-        } else {
+        if (location.state?.from) {
           navigate(redirectTo);
+        } else if (result.user?.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (result.user?.role === 'seller') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/');
         }
       }, 1000);
     } else {

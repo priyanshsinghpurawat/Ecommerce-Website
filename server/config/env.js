@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
-  process.env.JWT_SECRET = 'test-jwt-secret-key-must-be-at-least-32-chars-long';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-must-be-at-least-32-chars-long';
   process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://test';
   process.env.PORT = '3000';
   process.env.CORS_ORIGIN = 'http://localhost:3000';
@@ -17,7 +17,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().optional(),
   MONGODB_URI_TEST: z.string().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_EXPIRY: z.string().optional(),
+  JWT_EXPIRY: z.string().default('7d'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   COOKIE_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
@@ -40,14 +40,12 @@ if (!parsed.success) {
   // In CI/tests we prefer not to hard-fail the process; tests often provide
   // environment at runtime or mock required services. Only hard-fail in
   // non-test environments to avoid breaking local development iteratively.
-  if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
+  if (process.env.NODE_ENV === 'test') {
     // Log a warning but continue — tests can set/override individual vars as needed.
     // Export a permissive ENV object that falls back to process.env values.
     // This avoids an abrupt process.exit which makes test runners fail early.
-    // eslint-disable-next-line no-console
-    console.warn(message + ' — continuing in test/CI mode.');
+    console.warn(message + ' — continuing in test mode.');
   } else {
-    // eslint-disable-next-line no-console
     console.error(message);
     // Non-test environments should not start with invalid configuration.
     process.exit(1);
@@ -65,7 +63,7 @@ export const ENV = parsed.success
       MONGODB_URI: process.env.MONGODB_URI,
       MONGODB_URI_TEST: process.env.MONGODB_URI_TEST,
       JWT_SECRET: process.env.JWT_SECRET,
-      JWT_EXPIRY: process.env.JWT_EXPIRY,
+      JWT_EXPIRY: process.env.JWT_EXPIRY || '7d',
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       COOKIE_SECRET: process.env.COOKIE_SECRET,
       REDIS_URL: process.env.REDIS_URL,

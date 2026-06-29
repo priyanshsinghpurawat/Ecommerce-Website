@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getAllOrders, updateOrderStatus } from '../../services/api.js';
+import { getAllOrders, updateOrderStatus } from '../../services/order.service.js';
 import { Loader2, Package, Search, Eye, ArrowUpDown, ChevronDown, CheckCircle, Clock, Truck, XCircle, Download, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';
+
+// State machine: defines which transitions are allowed from each status (matches backend)
+const VALID_TRANSITIONS = {
+  confirmed:        ['shipped', 'cancelled'],
+  partially_shipped:['shipped', 'cancelled'],
+  shipped:          ['delivered', 'cancelled'],
+  delivered:        [],
+  cancelled:        ['confirmed'],
+};
 
 export const AdminOrders = () => {
   const [searchParams] = useSearchParams();
@@ -202,26 +211,28 @@ export const AdminOrders = () => {
                           {order.status}
                         </span>
                         
-                        <div className="relative group/status">
-                          <select
-                            disabled={updatingId === order._id}
-                            value={order.status}
-                            onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full"
-                          >
-                            <option value="confirmed">Confirmed</option>
-                            <option value="shipped">Shipped</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                          <div className="p-1.5 rounded-lg hover:bg-app-bg text-muted hover:text-app-text transition-colors border border-transparent hover:border-border-base">
-                            {updatingId === order._id ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-brand-primary" />
-                            ) : (
-                              <ChevronDown className="h-3 w-3" />
-                            )}
+                        {(VALID_TRANSITIONS[order.status] || []).length > 0 && (
+                          <div className="relative group/status">
+                            <select
+                              disabled={updatingId === order._id}
+                              value=""
+                              onChange={(e) => e.target.value && handleStatusChange(order._id, e.target.value)}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                            >
+                              <option value="">Change…</option>
+                              {(VALID_TRANSITIONS[order.status] || []).map(s => (
+                                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                              ))}
+                            </select>
+                            <div className="p-1.5 rounded-lg hover:bg-app-bg text-muted hover:text-app-text transition-colors border border-transparent hover:border-border-base">
+                              {updatingId === order._id ? (
+                                <Loader2 className="h-3 w-3 animate-spin text-brand-primary" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-center">
@@ -358,7 +369,7 @@ export const AdminOrders = () => {
               <div className="flex flex-col items-end gap-2">
                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted">Quick Update:</span>
                 <div className="flex gap-2">
-                  {['shipped', 'delivered', 'cancelled'].filter(s => s !== selectedOrder.status).map(s => (
+                  {(VALID_TRANSITIONS[selectedOrder.status] || []).map(s => (
                     <button
                       key={s}
                       onClick={() => handleStatusChange(selectedOrder._id, s)}

@@ -15,11 +15,15 @@ import {
   deleteAddress,
   setDefaultAddress
 } from '../controllers/user.controller.js';
+import { getPublicVendorStore } from '../controllers/storefront.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { updateUserSchema, addressSchema } from '../validators/index.js';
 
 const router = Router();
+
+// Public routes
+router.get('/store/:slug', getPublicVendorStore);
 
 // Admin routes
 

@@ -9,10 +9,15 @@ import toast from 'react-hot-toast';
 
 import ImageDropzone from '../../components/admin/ImageDropzone.jsx';
 import VariantEditor from '../../components/admin/VariantEditor.jsx';
+import VariantDataTable from '../../components/admin/VariantDataTable.jsx';
+import VariantGeneratorModal from '../../components/admin/VariantGeneratorModal.jsx';
 import { useCategories } from '../../hooks/useCategories.js';
-import * as productService from '../../services/api.js';
-import * as subcategoryService from '../../services/api.js';
+import { useSubcategories } from '../../hooks/useSubcategories.js';
+import * as productService from '../../services/product.service.js';
 import { makeRemoteItem, getDiscountPercent } from '../../utils/helpers.js';
+
+// Feature flag: toggle to true to use new variant UI
+const NEW_VARIANT_UI_ENABLED = true;
 
 const productSchema = z.object({
   title: z.string().trim().min(2, 'Title too short').max(120),
@@ -44,13 +49,14 @@ export default function AddEditProduct() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const { categories, fetchCategories } = useCategories();
+  const { subcategories, fetchSubcategories } = useSubcategories();
 
-  const [subcategories, setSubcategories] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [variants, setVariants] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [activeStep, setActiveStep] = useState(0);
+  const [showGenerator, setShowGenerator] = useState(false);
 
   const {
     register, handleSubmit, watch, setValue, reset,
@@ -64,21 +70,20 @@ export default function AddEditProduct() {
   const watched = watch();
 
   useEffect(() => { if (!categories?.length) fetchCategories(); }, [categories?.length, fetchCategories]);
+  useEffect(() => { fetchSubcategories(); }, [fetchSubcategories]);
 
-  useEffect(() => {
-    if (!watchedCategory) { setSubcategories([]); return; }
-    let cancel = false;
-    subcategoryService
-      .getSubcategories(watchedCategory)
-      .then((res) => { if (!cancel) setSubcategories(res?.data || []); })
-      .catch(() => { if (!cancel) setSubcategories([]); });
-    return () => { cancel = true; };
-  }, [watchedCategory]);
+  const filteredSubcategories = useMemo(() => {
+    if (!watchedCategory) return [];
+    return subcategories.filter(sub => {
+      const parentId = typeof sub.category === 'object' ? sub.category?._id : sub.category;
+      return parentId === watchedCategory;
+    });
+  }, [subcategories, watchedCategory]);
 
   useEffect(() => {
     if (!isEdit) return;
     let cancel = false;
-    productService.getProductById(id).then((res) => {
+    productService.getProductById(id).then(async (res) => {
       if (cancel) return;
       const p = res.data;
       reset({
@@ -97,16 +102,45 @@ export default function AddEditProduct() {
         ...(p.images || [])
       ];
       setGallery(galleryUrls.map(makeRemoteItem));
-      setVariants(
-        (p.variants || []).map((v) => ({
+
+      // Load standalone variants if feature flag is on
+      let variantsData = p.variants || [];
+      if (NEW_VARIANT_UI_ENABLED && p._id) {
+        try {
+          const variantsRes = await productService.getProductVariants(p._id);
+          if (variantsRes?.data?.length) {
+            variantsData = variantsRes.data.map(v => ({
+              color: v.optionValues?.Color || '',
+              size: v.optionValues?.Size || '',
+              sku: v.sku || '',
+              stock: v.stock ?? 0,
+              price: v.price ?? '',
+              images: (v.images || []).map(makeRemoteItem),
+              variantId: v._id
+            }));
+          }
+        } catch {
+          // Fallback to embedded variants
+          variantsData = (p.variants || []).map(v => ({
+            color: v.color || '',
+            size: v.size || '',
+            sku: v.sku || '',
+            stock: v.stock ?? 0,
+            price: v.price ?? '',
+            images: (v.images || []).map(makeRemoteItem)
+          }));
+        }
+      } else {
+        variantsData = (p.variants || []).map(v => ({
           color: v.color || '',
           size: v.size || '',
           sku: v.sku || '',
           stock: v.stock ?? 0,
           price: v.price ?? '',
           images: (v.images || []).map(makeRemoteItem)
-        }))
-      );
+        }));
+      }
+      setVariants(variantsData);
       setLoading(false);
     }).catch((e) => {
       toast.error(e.response?.data?.message || 'Failed to load product');
@@ -322,7 +356,7 @@ export default function AddEditProduct() {
                     <label className={labelCls}>Subcategory</label>
                     <select {...register('subcategory')} className={inputCls} disabled={!watchedCategory}>
                       <option value="">Select subcategory</option>
-                      {subcategories.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                      {filteredSubcategories.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
                     </select>
                     {errors.subcategory && <p className="text-xs text-error mt-1">{errors.subcategory.message}</p>}
                   </div>
@@ -386,11 +420,37 @@ export default function AddEditProduct() {
                 exit={{ opacity: 0, x: 10 }}
                 className="bg-app-card border border-border rounded-2xl p-6 shadow-soft"
               >
-                <VariantEditor
-                  value={variants}
-                  onChange={setVariants}
-                  categoryName={categories?.find(c => c._id === watchedCategory)?.name || ''}
-                />
+                {NEW_VARIANT_UI_ENABLED ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-black uppercase tracking-wider text-sm">Variants</h3>
+                        <p className="text-[11px] text-muted mt-0.5">
+                          {variants.length} variant{variants.length !== 1 ? 's' : ''} · Use the generator or add rows manually.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowGenerator(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-primary/30 bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase tracking-wider hover:bg-brand-primary/20 transition-all"
+                      >
+                        ⚡ Generator
+                      </button>
+                    </div>
+                    <VariantDataTable
+                      value={variants}
+                      onChange={setVariants}
+                      onDelete={(variantId) => productService.deleteVariant(variantId).catch(() => {})}
+                      categoryName={categories?.find(c => c._id === watchedCategory)?.name || ''}
+                    />
+                  </>
+                ) : (
+                  <VariantEditor
+                    value={variants}
+                    onChange={setVariants}
+                    categoryName={categories?.find(c => c._id === watchedCategory)?.name || ''}
+                  />
+                )}
 
                 <div className="flex justify-between pt-4 mt-4 border-t border-border">
                   <button type="button" onClick={() => setActiveStep(1)} className="px-5 py-2.5 border border-border rounded-xl text-xs font-bold uppercase hover:bg-app-panel transition-all">
@@ -400,6 +460,16 @@ export default function AddEditProduct() {
                     Review & Publish →
                   </button>
                 </div>
+
+                {NEW_VARIANT_UI_ENABLED && (
+                  <VariantGeneratorModal
+                    isOpen={showGenerator}
+                    onClose={() => setShowGenerator(false)}
+                    onGenerate={(newVariants) => setVariants(prev => [...prev, ...newVariants])}
+                    productCode={watched.title ? watched.title.substring(0, 3).toUpperCase().replace(/\s+/g, '') : 'PROD'}
+                    categoryName={categories?.find(c => c._id === watchedCategory)?.name || ''}
+                  />
+                )}
               </motion.section>
             )}
 

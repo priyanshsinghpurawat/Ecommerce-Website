@@ -1,47 +1,7 @@
 import { Plus, Trash2, Wand2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import ImageDropzone from './ImageDropzone.jsx';
-
-// Map of color names to CSS values for swatch previews
-const COLOR_MAP = {
-  Black:      '#111111',
-  White:      '#f5f5f5',
-  Blue:       '#3b82f6',
-  Red:        '#ef4444',
-  Green:      '#22c55e',
-  Sand:       '#c2b280',
-  Sage:       '#8fae88',
-  Khaki:      '#c3b091',
-  'Neon Black': '#1a1a1a',
-  Navy:       '#1e3a5f',
-  Grey:       '#6b7280',
-  Brown:      '#92400e',
-  Yellow:     '#eab308',
-  Pink:       '#ec4899',
-  Purple:     '#a855f7',
-  Orange:     '#f97316',
-  Olive:      '#84863b',
-  Maroon:     '#800000',
-  Cream:      '#fffdd0',
-  Teal:       '#14b8a6',
-};
-
-const COLOR_OPTIONS = Object.keys(COLOR_MAP);
-
-const SIZE_GROUPS = [
-  { label: 'Apparel', sizes: ['MT', 'LT', 'XLT', '2XLT', '3XLT', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'], types: ['clothing', 'apparel', 'sportswear'] },
-  { label: 'Bottoms (Waist)', sizes: ['30x34', '32x34', '32x36', '34x34', '34x36', '36x36', '36x38', '38x36', '38x38', '28', '30', '32', '34', '36', '38', '40', '42', '44'], types: ['clothing', 'apparel', 'bottoms'] },
-  { label: 'Footwear (UK)', sizes: ['UK 10.5', 'UK 11', 'UK 12', 'UK 13', 'UK 14', 'UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10'], types: ['footwear', 'shoes', 'sneakers', 'boots'] },
-];
-
-const getSizeGroups = (categoryName = '') => {
-  const cat = categoryName.toLowerCase();
-  if (!cat) return SIZE_GROUPS; // no category selected — show all
-  const filtered = SIZE_GROUPS.filter(g => g.types.some(t => cat.includes(t)));
-  return filtered.length > 0 ? filtered : SIZE_GROUPS;
-};
-
-const ALL_SIZES = SIZE_GROUPS.flatMap(g => g.sizes);
+import { COLOR_MAP, COLOR_OPTIONS, getSizeGroups } from '../../utils/constants.js';
 
 /** Impure logic moved outside to satisfy React Compiler purity rules */
 const generateRandomSkuSuffix = () => Math.floor(1000 + Math.random() * 9000);
@@ -114,7 +74,6 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
 
           return (
             <div key={i} className="border border-border rounded-2xl overflow-hidden bg-app-card shadow-soft">
-              {/* Variant header / collapse toggle */}
               <button
                 type="button"
                 onClick={() => toggleCollapse(i)}
@@ -156,10 +115,7 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
 
               {!isCollapsed && (
                 <div className="px-5 pb-5 space-y-5 border-t border-border">
-                  {/* Row 1: Color + Size + SKU */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-
-                    {/* Color with swatch preview */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted">Colour</label>
                       <div className="flex items-center gap-2">
@@ -180,7 +136,6 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
                       </div>
                     </div>
 
-                    {/* Size */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted">Size</label>
                       <select
@@ -197,7 +152,6 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
                       </select>
                     </div>
 
-                    {/* SKU */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted">SKU</label>
                       <div className="flex gap-2">
@@ -220,7 +174,6 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
                     </div>
                   </div>
 
-                  {/* Row 2: Stock + Price override */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted">Stock</label>
@@ -249,7 +202,6 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
                     </div>
                   </div>
 
-                  {/* Row 3: Variant images */}
                   <div className="space-y-2">
                     <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-muted">
@@ -258,7 +210,7 @@ export default function VariantEditor({ value = [], onChange, categoryName = '' 
                       </label>
                       <p className="text-[10px] text-muted/60 mt-0.5">
                         These images appear when a customer selects this colour on the product page.
-      </p>
+                      </p>
                     </div>
                     <ImageDropzone
                       value={v.images}

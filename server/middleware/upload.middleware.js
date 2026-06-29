@@ -8,10 +8,13 @@ import multer from 'multer';
 import { fileTypeFromBuffer } from 'file-type';
 import cloudinary, { isCloudinaryConfigured } from '../config/cloudinary.js';
 import { ApiError } from '../utils/helpers.js';
+import { logger } from '../utils/logger.js';
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
-const MAX_FILES = 30; // gallery + per-variant headroom
+// Model allows 10 gallery images + 1 cover. Keep a small buffer for variants but
+// don't let multer accept 3x more files than Mongoose will ever store.
+const MAX_FILES = 12;
 
 const memoryStorage = multer.memoryStorage();
 
@@ -95,6 +98,6 @@ export const deleteFromCloudinary = async (imageUrl) => {
     const publicId = publicIdWithExt.replace(/\.[^/.]+$/, '');
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    console.error('Cloudinary delete failed:', error.message);
+    logger.error('Cloudinary delete failed', { error: error.message });
   }
 };

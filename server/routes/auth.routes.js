@@ -147,6 +147,6 @@ router.get('/me', verifyJWT, getCurrentUser);
  *       200:
  *         description: Logged out successfully
  */
-router.post('/logout', verifyJWT, logoutUser);
+router.post('/logout', logoutUser);
 
 export default router;

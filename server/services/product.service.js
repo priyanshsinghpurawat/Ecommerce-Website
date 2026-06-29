@@ -1,11 +1,7 @@
 import { uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 import { deleteFromCloudinary } from '../middleware/upload.middleware.js';
-
-const safeJSON = (v, fallback) => {
-  if (v == null || v === '') return fallback;
-  if (typeof v !== 'string') return v;
-  try { return JSON.parse(v); } catch { return fallback; }
-};
+import { Variant } from '../models/variant.model.js';
+import { safeJSON } from '../utils/helpers.js';
 
 const bucketFilesByField = (files = []) => {
   const buckets = {
@@ -66,6 +62,68 @@ export class ProductService {
     return { coverUrl, galleryUrls, variants };
   }
 
+  /** Sync embedded variants in product document (backward compat) */
+  static async syncEmbeddedVariants(productId) {
+    const product = await import('../models/product.model.js').then(m => m.Product.findById(productId));
+    if (!product) return;
+
+    // Build embedded variants from standalone Variant collection
+    const dbVariants = await Variant.find({ product: productId, deletedAt: null });
+    product.variants = dbVariants.map(v => ({
+      color: v.optionValues.get('Color') || '',
+      size: v.optionValues.get('Size') || '',
+      sku: v.sku,
+      stock: v.stock,
+      price: v.price,
+      images: v.images || []
+    }));
+
+    await product.save();
+  }
+
+  /**
+   * Upsert standalone Variant documents from the provided variants array.
+   * Called after product create/update so the Variant collection stays populated.
+   * @param {string} productId
+   * @param {Array} variants - Array of {color, size, sku, stock, price, images}
+   */
+  static async syncStandaloneFromEmbedded(productId, variants = []) {
+    if (!variants.length) return;
+
+    const existing = await Variant.find({ product: productId, deletedAt: null });
+    const existingBySku = new Map(existing.map(v => [v.sku, v]));
+
+    for (const ev of variants) {
+      if (!ev.sku) continue;
+      try {
+        const optionValues = new Map();
+        if (ev.color) optionValues.set('Color', ev.color);
+        if (ev.size) optionValues.set('Size', ev.size);
+
+        const standalone = existingBySku.get(ev.sku);
+        if (standalone) {
+          standalone.price = ev.price;
+          standalone.stock = ev.stock;
+          standalone.optionValues = optionValues;
+          if (ev.images?.length) standalone.images = ev.images;
+          await standalone.save();
+        } else {
+          await Variant.create({
+            product: productId,
+            sku: ev.sku,
+            price: ev.price,
+            stock: ev.stock,
+            optionValues,
+            images: ev.images || []
+          });
+        }
+      } catch { /* skip bad variant, continue sync */ }
+    }
+
+    const Product = (await import('../models/product.model.js')).Product;
+    await Product.recalculateVariantSummary(productId);
+  }
+
   /** Delete a set of images from Cloudinary */
   static async deleteImages(images = []) {
     const active = images.filter(Boolean);
@@ -85,7 +143,7 @@ export class ProductService {
     if (body.badge !== undefined) meta.badge = body.badge || '';
     if (body.rating !== undefined && body.rating !== '') meta.rating = Number(body.rating);
     if (body.reviewCount !== undefined && body.reviewCount !== '') meta.reviewCount = Number(body.reviewCount);
-    
+
     const related = safeJSON(body.relatedProducts, undefined);
     if (related) meta.relatedProducts = Array.isArray(related) ? related : [related];
     return meta;
@@ -133,7 +191,7 @@ export class ProductService {
           const safe = c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           return new RegExp(`^${safe}$`, 'i');
         });
-        query['variants.color'] = { $in: regexes };
+        query['variantSummary.colors'] = { $in: regexes };
       }
     }
 
@@ -142,10 +200,10 @@ export class ProductService {
 
   /** Map query sort string to MongoDB sort specification */
   static getSortOption(sort) {
-    const sortMap = { 
-      latest: { createdAt: -1 }, 
-      oldest: { createdAt: 1 }, 
-      priceAsc: { price: 1 }, 
+    const sortMap = {
+      latest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      priceAsc: { price: 1 },
       priceDesc: { price: -1 },
       bestSelling: { soldCount: -1 },
       popularity: { rating: -1, soldCount: -1 }

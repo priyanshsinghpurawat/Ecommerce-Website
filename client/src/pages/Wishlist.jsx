@@ -53,16 +53,14 @@ export const Wishlist = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-3xl border border-dashed border-surface-200 bg-surface-50/30">
-          <div className="h-16 w-16 rounded-full bg-surface-100 flex items-center justify-center mb-6">
-            <Sparkles className="h-8 w-8 text-app-text/20" />
-          </div>
+          <div className="text-6xl mb-4">💔</div>
           <h3 className="text-lg font-bold text-app-text">Your wishlist is empty</h3>
           <p className="text-sm text-app-text/50 mt-2 max-w-xs mx-auto">
             Save the items you love and they'll show up here.
           </p>
           <Link
             to="/shop"
-            className="mt-8 inline-flex items-center gap-2 bg-app-text text-black px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-brand-primary transition-all active:scale-95"
+            className="mt-8 inline-flex items-center gap-2 bg-brand-primary text-black px-8 py-3 rounded-full text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
             Go shopping

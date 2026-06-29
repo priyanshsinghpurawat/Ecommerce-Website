@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts.js';
 import { useCategories } from '../../hooks/useCategories.js';
-import { getVendors, getSubcategories } from '../../services/api.js';
+import { getVendors } from '../../services/user.service.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { DashboardTableSkeleton } from '../../components/Skeleton.jsx';
-import { Plus, Edit2, Trash2, Upload, Loader2, Search, ArrowUpDown, Eye, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload, Loader2, Search, ArrowUpDown, Eye, Star, Layers } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { resolveImageUrl, getDiscountPercent } from '../../utils/helpers.js';
 import api from '../../services/api.js';
+import VariantQuickEdit from '../../components/admin/VariantQuickEdit.jsx';
 
 export const AdminProducts = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,9 @@ export const AdminProducts = () => {
   // Modal Control States
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [variantProductId, setVariantProductId] = useState(null);
+  const [variantCategoryName, setVariantCategoryName] = useState('');
   
   // Table filters/search
   const [search, setSearch] = useState('');
@@ -168,6 +172,7 @@ export const AdminProducts = () => {
                   <th className="px-6 py-5">Subcategory</th>
                   <th className="px-6 py-5">Price</th>
                   <th className="px-6 py-5">Stock</th>
+                  <th className="px-6 py-5">Variants</th>
                   <th className="px-6 py-5 text-center">Actions</th>
                 </tr>
               </thead>
@@ -202,6 +207,11 @@ export const AdminProducts = () => {
                       </span>
                     </td>
                     <td className="px-6 py-5">
+                      <span className="text-[10px] font-bold text-muted">
+                        {prod.variants?.length || 0} var
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => {
@@ -220,6 +230,17 @@ export const AdminProducts = () => {
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </Link>
+                        <button
+                          onClick={() => {
+                            setVariantProductId(prod._id);
+                            setVariantCategoryName(prod.category?.name || '');
+                            setVariantModalOpen(true);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-app-bg border border-border-base text-app-text hover:bg-brand-primary hover:text-black transition-all shadow-sm"
+                          title="Manage Variants (SKU & Colour)"
+                        >
+                          <Layers className="h-3.5 w-3.5" />
+                        </button>
                         <button
                           onClick={() => handleDelete(prod._id)}
                           className="flex h-8 w-8 items-center justify-center rounded-xl bg-error/10 border border-error/20 text-error hover:bg-error hover:text-black transition-all shadow-sm"
@@ -350,6 +371,13 @@ export const AdminProducts = () => {
         )}
       </Modal>
 
+      {/* Variant Quick Edit Modal */}
+      <VariantQuickEdit
+        isOpen={variantModalOpen}
+        onClose={() => { setVariantModalOpen(false); setVariantProductId(null); setVariantCategoryName(''); fetchProducts({ page, limit: 12, search, sort, seller: sellerId }); }}
+        productId={variantProductId}
+        categoryName={variantCategoryName}
+      />
     </div>
   );
 };

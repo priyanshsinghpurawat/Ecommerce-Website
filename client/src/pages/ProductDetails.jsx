@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById } from '../services/api.js';
+import { getProductById, getProductVariants } from '../services/product.service.js';
 import { 
   Loader2, ArrowLeft, Star, Heart, ShoppingBag, Clock, Check, X, 
   ShieldCheck, Sparkles, Shield, Share2, ChevronDown, ChevronUp, Camera 
@@ -123,6 +123,14 @@ export const ProductDetails = () => {
       navigate('/login', { state: { from: `/product/${id}` } });
       return;
     }
+    
+    // Ensure size is selected before adding to cart
+    if (sizingData.sizeOptions.length > 0 && !selectedSize) {
+      toast.error('Please select a size first.');
+      // Optional: shake animation or scroll to sizes could go here
+      return;
+    }
+
     setCartLoading(true);
     const res = await addToCart(product._id, 1, { size: selectedSize, color: selectedColor });
     setCartLoading(false);
@@ -142,6 +150,26 @@ export const ProductDetails = () => {
         const response = await getProductById(id);
         if (response && response.success) {
           const prod = response.data;
+
+          // Fetch standalone variants and map to legacy format for UI compatibility
+          try {
+            const variantsRes = await getProductVariants(prod._id);
+            if (variantsRes?.data?.length) {
+              prod.variants = variantsRes.data.map(v => ({
+                color: v.optionValues?.Color || '',
+                size: v.optionValues?.Size || '',
+                sku: v.sku || '',
+                stock: v.stock ?? 0,
+                price: v.price ?? null,
+                images: v.images || [],
+                variantId: v._id
+              }));
+            }
+          } catch {
+            // Keep whatever variants came from the product document (legacy embedded)
+            if (!prod.variants) prod.variants = [];
+          }
+
           setProduct(prod);
           
           // Set default selected color & size
@@ -152,8 +180,8 @@ export const ProductDetails = () => {
           }
           if (defaultColor) setSelectedColor(defaultColor);
 
-          const isFoot = prod.category?.name?.toLowerCase() === 'footwear' || prod.subcategory?.name?.toLowerCase().includes('shoes') || prod.subcategory?.name?.toLowerCase().includes('sneakers');
-          setSelectedSize(isFoot ? 'UK 8' : 'S');
+          // Force user to explicitly select a size (No auto-selection)
+          setSelectedSize('');
         }
       } catch (err) {
         toast.error('Failed to load product details.');
@@ -502,14 +530,14 @@ export const ProductDetails = () => {
                 {priceData.showOriginalPrice ? (
                   <>
                     <span className="text-3xl font-black tracking-tighter text-app-text">
-                      ₹{product.discountedPrice.toLocaleString('en-IN')}
+                      ₹{priceData.discountedPrice.toLocaleString('en-IN')}
                     </span>
                     <span className="text-lg font-bold text-app-text/30 line-through tracking-tighter">
-                      ₹{product.price.toLocaleString('en-IN')}
+                      ₹{priceData.basePrice.toLocaleString('en-IN')}
                     </span>
                     {/* Consistent Acid Green Tag */}
                     <span className="text-[10px] font-black uppercase tracking-widest text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-2.5 py-1 rounded-md">
-                      -{getDiscountPercent(product.price, product.discountedPrice)}% Off
+                      -{getDiscountPercent(priceData.basePrice, priceData.discountedPrice)}% Off
                     </span>
                   </>
                 ) : (
@@ -545,12 +573,8 @@ export const ProductDetails = () => {
                         onClick={() => {
                           setSelectedColor(color);
                           setSelectedImage(null);
-                          if (product.variants && product.variants.length > 0) {
-                            const newSizes = product.variants.filter(v => v.color === color).map(v => v.size);
-                            if (newSizes.length > 0 && !newSizes.includes(selectedSize)) {
-                              setSelectedSize(newSizes[0]);
-                            }
-                          }
+                          // Reset size selection when color changes so they must re-select for validation
+                          setSelectedSize('');
                         }}
                         title={color}
                         className={`flex flex-col items-center gap-1.5 p-1.5 rounded-2xl border-2 transition-all ${

@@ -27,7 +27,6 @@ const migrateSlugs = async () => {
           if (!existing) {
             isUnique = true;
           } else {
-            attempt++;
             newSlug = `${baseSlug}-${Math.floor(Math.random() * 10000)}`;
           }
         }

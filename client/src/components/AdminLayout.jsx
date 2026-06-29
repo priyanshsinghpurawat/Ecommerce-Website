@@ -34,7 +34,7 @@ export const AdminLayout = () => {
   const navLinks = [
     { to: '/admin/dashboard', label: 'Command Hub', icon: LayoutDashboard },
     { to: '/admin/products', label: 'Inventory Control', icon: ShoppingBag },
-    { to: '/admin/categories', label: 'Taxonomy', icon: Tags },
+    { to: '/admin/categories', label: 'Categories', icon: Tags },
     { to: '/admin/subcategories', label: 'Hierarchy', icon: Layers },
     { to: '/admin/coupons', label: 'Growth Engines', icon: Ticket },
     { to: '/admin/orders', label: 'Fulfillment', icon: ClipboardList },

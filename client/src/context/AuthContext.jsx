@@ -1,7 +1,10 @@
 /** WHY: Global state for the logged-in user (session, roles, logout). */
-import { createContext, useState, useEffect } from 'react';
-import * as authService from '../services/api.js';
+import { createContext, useState, useEffect, useRef } from 'react';
+import * as authService from '../services/auth.service.js';
 import { unwrapData, getErrorMessage } from '../utils/helpers.js';
+
+const SESSION_CACHE_KEY = 'auth_session';
+const SESSION_TTL = 5 * 60 * 1000; // 5 minutes
 
 export const AuthContext = createContext();
 
@@ -9,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const verifySessionRef = useRef(null);
 
   // On mount, revalidate the session against the server (httpOnly cookie).
   // We optionally seed UI from a cached `user` for snappier first render,
@@ -30,29 +34,61 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('user');
+      localStorage.removeItem(SESSION_CACHE_KEY);
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 
     const verifySession = async () => {
-      try {
-        const body = await authService.me();
-        if (!isMounted) return;
-
-        const fresh = unwrapData(body);
-        if (fresh) {
-          setUser(fresh);
-          setIsAuthenticated(true);
-          localStorage.setItem('user', JSON.stringify(fresh));
-        } else {
-          throw new Error('No user data');
-        }
-      } catch {
-        if (!isMounted) return;
-        handleUnauthorized();
-      } finally {
-        if (isMounted) setLoading(false);
+      if (verifySessionRef.current) {
+        return verifySessionRef.current;
       }
+
+      verifySessionRef.current = (async () => {
+        try {
+          // Check session cache first
+          const cachedSession = localStorage.getItem(SESSION_CACHE_KEY);
+          if (cachedSession) {
+            try {
+              const { user: cachedUser, timestamp } = JSON.parse(cachedSession);
+              if (Date.now() - timestamp < SESSION_TTL) {
+                if (!isMounted) return;
+                setUser(cachedUser);
+                setIsAuthenticated(true);
+                return;
+              }
+            } catch {
+              localStorage.removeItem(SESSION_CACHE_KEY);
+            }
+          }
+
+          const body = await authService.me();
+          if (!isMounted) return;
+
+          const fresh = unwrapData(body);
+          if (fresh) {
+            setUser(fresh);
+            setIsAuthenticated(true);
+            localStorage.setItem('user', JSON.stringify(fresh));
+            localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
+              user: fresh,
+              timestamp: Date.now()
+            }));
+          } else {
+            throw new Error('No user data');
+          }
+        } catch (err) {
+          if (!isMounted) return;
+          // Only clear auth on explicit 401, not on network errors during initial load
+          if (err?.response?.status === 401) {
+            handleUnauthorized();
+          }
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      })();
+
+      return verifySessionRef.current;
     };
 
     verifySession();
