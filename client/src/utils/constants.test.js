@@ -31,11 +31,13 @@ describe('SIZE_GROUPS', () => {
     expect(SIZE_GROUPS).toHaveLength(3);
   });
 
-  it.each(SIZE_GROUPS)('group has sizes and types', (group) => {
-    expect(group.label).toBeDefined();
-    expect(Array.isArray(group.sizes)).toBe(true);
-    expect(group.sizes.length).toBeGreaterThan(0);
-    expect(Array.isArray(group.types)).toBe(true);
+  SIZE_GROUPS.forEach((group) => {
+    it(`group ${group.label} has sizes and types`, () => {
+      expect(group.label).toBeDefined();
+      expect(Array.isArray(group.sizes)).toBe(true);
+      expect(group.sizes.length).toBeGreaterThan(0);
+      expect(Array.isArray(group.types)).toBe(true);
+    });
   });
 });
 

@@ -62,6 +62,10 @@ For each identified issue, formulate a review comment adhering to the following 
 1. **Correctness:** Identify logic errors, unhandled edge cases, race conditions, incorrect API usage, and data validation flaws.
 
 2. **Security:** Pinpoint vulnerabilities such as injection attacks, insecure data storage, insufficient access controls, or secrets exposure.
+   - **JWT Validation**: Ensure signatures are verified, tokens have expiration times, and payloads do not expose sensitive user info.
+   - **Payment Security**: Verify payment logic (like Stripe Webhooks) checks signatures and validates amounts/currencies before updating status.
+   - **MongoDB Injection**: Ensure queries use Mongoose schemas or parameterized objects, never raw user-supplied strings.
+   - **Socket.io Integrity**: Validate socket authorization and ensure event listeners are cleaned up properly to prevent memory leaks.
 
 3. **Efficiency:** Locate performance bottlenecks, unnecessary computations, memory leaks, and inefficient data structures.
 

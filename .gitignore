@@ -72,9 +72,6 @@ cypress/screenshots/
 # Server specific
 server/public/
 gemini-creds-*.json
-
-# Personal / local scripts
-trunk.ps1
 .husky/
 
 # Heavy files and reports
