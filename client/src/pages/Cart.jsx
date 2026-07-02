@@ -374,7 +374,7 @@ export const Cart = () => {
 
   return (
     <div className="space-y-8 pb-16">
-      <SEO title="Shopping Cart" description="Review your items before checkout." />
+      <SEO title="Shopping Cart" description="Review your items before checkout." noindex />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

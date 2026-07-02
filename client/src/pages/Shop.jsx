@@ -8,6 +8,7 @@ import { getProductFilters } from '../services/product.service.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { SEO } from '../components/SEO.jsx';
+import { Helmet } from 'react-helmet-async';
 import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } from 'lucide-react';
 
 /* ── Inline SVG category icons ── */
@@ -214,6 +215,18 @@ export const Shop = () => {
   return (
     <div className="space-y-8 pb-16">
       <SEO title="Shop" description="Browse our full collection of streetwear, drip clothing, and accessories for men." />
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://mensvibe.in/' },
+              { '@type': 'ListItem', position: 2, name: 'Shop', item: 'https://mensvibe.in/shop' },
+            ],
+          })}
+        </script>
+      </Helmet>
       {/* ── MAIN LAYOUT: Sidebar + Grid ── */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 

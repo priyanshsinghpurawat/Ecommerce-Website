@@ -10,7 +10,7 @@ import { resolveImageUrl, getDiscountPercent } from '../utils/helpers.js';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
-import { SEO } from '../components/SEO.jsx';
+import { SEO, ProductJsonLd } from '../components/SEO.jsx';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether.jsx';
@@ -423,6 +423,7 @@ export const ProductDetails = () => {
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700">
       <SEO title={product?.title || 'Product Details'} description={product?.description?.slice(0, 160) || 'View product details at MensVibe.'} />
+      <ProductJsonLd product={product} />
       <Link
         to="/shop"
         className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-app-text/40 hover:text-app-text transition-colors"

@@ -152,7 +152,7 @@ export const Register = () => {
       className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('/auth-bg.png')" }}
     >
-      <SEO title="Create Account" description="Create your MensVibe account to start shopping." />
+      <SEO title="Create Account" description="Create your MensVibe account to start shopping." noindex />
       <div className="absolute inset-0 bg-black/60"></div>
       <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
         <div className="mb-8 text-center">

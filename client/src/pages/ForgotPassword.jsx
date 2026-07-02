@@ -43,7 +43,7 @@ export const ForgotPassword = () => {
       <div className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative" style={{ backgroundImage: "url('/auth-bg.png')" }}>
         <div className="absolute inset-0 bg-black/60" />
         <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10 text-center">
-          <SEO title="Check Your Email" description="Password reset email sent." />
+          <SEO title="Check Your Email" description="Password reset email sent." noindex />
           <MailCheck className="mx-auto h-12 w-12 text-brand-primary mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
           <p className="text-sm text-white/60 mb-6">
@@ -61,7 +61,7 @@ export const ForgotPassword = () => {
     <div className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative" style={{ backgroundImage: "url('/auth-bg.png')" }}>
       <div className="absolute inset-0 bg-black/60" />
       <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
-        <SEO title="Forgot Password" description="Reset your MensVibe password." />
+        <SEO title="Forgot Password" description="Reset your MensVibe password." noindex />
         <div className="mb-8 text-center">
           <h2 className="text-2xl font-bold text-white">Forgot password</h2>
           <p className="mt-2 text-sm text-white/60">

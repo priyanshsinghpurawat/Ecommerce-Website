@@ -102,6 +102,7 @@ export const Home = () => {
 
   return (
     <div className="space-y-6 md:space-y-8 pb-6">
+      <SEO title="Home" description="Premium streetwear and drip clothing for men. Shop the latest collections at MensVibe." image="/assets/hero_street.png" />
       <HeroCarousel />
 
       <motion.div 
