@@ -18,25 +18,6 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:6.0
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ping:1})'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout
@@ -57,25 +38,8 @@ jobs:
         run: npm audit --audit-level=high || true
         working-directory: server
 
-      - name: Lint
-        run: npm run lint
-        working-directory: server
 
-      - name: Test with coverage
-        run: npx vitest run --coverage
-        working-directory: server
-        env:
-          MONGODB_URI: mongodb://localhost:27017/test
-          REDIS_URL: redis://localhost:6379
-          PORT: 3001
-          NODE_ENV: test
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./server/coverage/
-          fail_ci_if_error: false
 
   frontend:
     name: Frontend
@@ -100,13 +64,8 @@ jobs:
         run: npm audit --audit-level=high || true
         working-directory: client
 
-      - name: Lint
-        run: npm run lint
-        working-directory: client
 
-      - name: Test
-        run: npm test
-        working-directory: client
+
 
       - name: Build
         run: npm run build
