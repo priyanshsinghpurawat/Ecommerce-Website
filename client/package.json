@@ -18,7 +18,6 @@
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.1",
     "canvas-confetti": "^1.9.4",
-    "cookie": "^0.6.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.460.0",
     "react": "^19.2.6",
