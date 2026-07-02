@@ -12,9 +12,8 @@ Fixes # (issue number)
 
 ## How Has This Been Tested?
 <!-- Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. -->
-- [ ] Backend Vitest Suite passed (`npm test` in `/server`)
-- [ ] Frontend Vitest Suite passed (`npm test` in `/client`)
-- [ ] Linting passed on both ends
+- [ ] Local verification passed
+
 
 ## Checklist:
 - [ ] My code follows the project's style guidelines

@@ -46,9 +46,12 @@ export const Layout = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-app-bg font-sans text-app-text antialiased">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand-primary focus:text-black focus:rounded-lg focus:text-sm focus:font-bold">
+        Skip to main content
+      </a>
       <ScrollProgress />
       <Navbar />
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 relative pb-24 md:pb-10">
+      <main id="main-content" className="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 relative pb-24 md:pb-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
