@@ -39,13 +39,9 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   validateShippingAddress(shippingAddress);
 
-  const cart = await fetchAndValidateUserCart(req.user._id);
-  const orderCalculations = await calculateOrderTotals(cart, couponCode, req.user._id);
-  
   const order = await executeOrderTransaction({
     userId: req.user._id,
-    cart,
-    orderCalculations,
+    couponCode,
     shippingAddress,
     paymentMethod,
     attributionTag
@@ -100,7 +96,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
   if (req.user.role === 'user') {
     filter.user = req.user._id;
   } else if (req.user.role === 'seller') {
-    filter['items.vendor'] = req.user._id;
+    filter['items.seller'] = req.user._id;
   }
 
   const order = await Order.findOne(filter).populate('user', 'name email').lean();
@@ -181,19 +177,19 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       if (itemId) {
         const item = order.items.id(itemId);
         if (!item) throw new ApiError(404, 'Item not found in order');
-        if (item.vendor.toString() !== req.user._id.toString()) {
+        if (item.seller.toString() !== req.user._id.toString()) {
           throw new ApiError(403, 'You are not authorized to update this item');
         }
         await transitionOrderItemStatus(order, item, status, trackingNumber, session);
       } else {
         let updatedAny = false;
         for (const item of order.items) {
-          if (item.vendor.toString() === req.user._id.toString()) {
+          if (item.seller.toString() === req.user._id.toString()) {
             await transitionOrderItemStatus(order, item, status, trackingNumber, session);
             updatedAny = true;
           }
         }
-        if (!updatedAny) throw new ApiError(403, 'No items found for this vendor in this order');
+        if (!updatedAny) throw new ApiError(403, 'No items found for this seller in this order');
       }
     } else if (req.user.role === 'admin') {
       if (itemId) {
@@ -313,7 +309,7 @@ export const processReturn = asyncHandler(async (req, res) => {
   if (!item) throw new ApiError(404, 'Item not found in order');
 
   // Verify authorization
-  if (req.user.role === 'seller' && item.vendor?.toString() !== req.user._id.toString()) {
+  if (req.user.role === 'seller' && item.seller?.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Not authorized to process this return');
   }
 
@@ -337,14 +333,14 @@ export const processReturn = asyncHandler(async (req, res) => {
       
       await LedgerTransaction.insertMany([
         {
-          vendor: item.vendor,
+          seller: item.seller,
           type: 'refund',
           amount: -saleAmountPaise, // deduct sale
           order: order._id,
           description: `Refund (RMA) - #${order.orderNumber}`
         },
         {
-          vendor: item.vendor,
+          seller: item.seller,
           type: 'commission_fee', // Revert fee
           amount: commissionAmountPaise, // credit back the platform fee
           order: order._id,
@@ -411,14 +407,17 @@ export const exportOrdersCSV = asyncHandler(async (req, res) => {
 /*                               PRIVATE HELPERS                              */
 /* -------------------------------------------------------------------------- */
 
-export async function fetchAndValidateUserCart(userId) {
-  const cart = await Cart.findOne({ user: userId }).populate({
+export async function fetchAndValidateUserCart(userId, session = null) {
+  let query = Cart.findOne({ user: userId }).populate({
     path: 'items.product',
     select: 'title price discountedPrice image stock seller variantSummary'
   }).populate({
     path: 'items.variant',
     select: 'sku stock optionValues price images'
   });
+  
+  if (session) query = query.session(session);
+  const cart = await query;
 
   if (!cart || cart.items.length === 0) {
     throw new ApiError(400, 'Your cart is empty. Add items before checkout.');
@@ -432,7 +431,7 @@ export async function fetchAndValidateUserCart(userId) {
   return cart;
 }
 
-export async function calculateOrderTotals(cart, couponCode, userId) {
+export async function calculateOrderTotals(cart, couponCode, userId, session = null) {
   const validItems = cart.items.filter((item) => item.product);
   const subtotal = computeCartSubtotal(validItems);
 
@@ -442,12 +441,15 @@ export async function calculateOrderTotals(cart, couponCode, userId) {
   let appliedCouponId;
 
   if (couponCode?.trim()) {
-    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId);
+    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId, session);
     discountAmount = couponResult.discountAmount;
     taxableValue = couponResult.finalTotal;
     appliedCouponCode = couponResult.code;
 
-    const couponDoc = await Coupon.findOne({ code: appliedCouponCode });
+    let couponQuery = Coupon.findOne({ code: appliedCouponCode });
+    if (session) couponQuery = couponQuery.session(session);
+    const couponDoc = await couponQuery;
+    
     if (couponDoc) {
       appliedCouponId = couponDoc._id;
     }
@@ -464,7 +466,7 @@ export async function calculateOrderTotals(cart, couponCode, userId) {
       product: product._id,
       variant: variant?._id || null,
       sku: variant?.sku || '',
-      vendor: product.seller,
+      seller: product.seller,
       title: product.title,
       image: product.image,
       price: variant?.price ?? product.price,
@@ -489,8 +491,7 @@ export async function calculateOrderTotals(cart, couponCode, userId) {
   };
 }
 
-async function executeOrderTransaction({ userId, cart, orderCalculations, shippingAddress, paymentMethod, attributionTag }) {
-  const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
+async function executeOrderTransaction({ userId, couponCode, shippingAddress, paymentMethod, attributionTag }) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -498,10 +499,9 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
     // Acquire lock on user to prevent concurrent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(userId, { $set: { updatedAt: new Date() } }, { session });
 
-    if (appliedCouponCode) {
-      const validItems = cart.items.filter((item) => item.product);
-      await calculateCouponDiscount(appliedCouponCode, subtotal, validItems, userId, session);
-    }
+    const cart = await fetchAndValidateUserCart(userId, session);
+    const orderCalculations = await calculateOrderTotals(cart, couponCode, userId, session);
+    const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
 
     const validItems = cart.items.filter((item) => item.product);
     await deductStock(validItems, session);
@@ -548,23 +548,23 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
     }
 
     // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
-    const vendorTotals = {};
+    const sellerTotals = {};
     for (const item of orderItems) {
-      if (item.vendor) {
-        const vid = item.vendor.toString();
-        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
-        vendorTotals[vid] += item.subtotal;
+      if (item.seller) {
+        const vid = item.seller.toString();
+        if (!sellerTotals[vid]) sellerTotals[vid] = 0;
+        sellerTotals[vid] += item.subtotal;
       }
     }
 
     const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
     const ledgerEntries = [];
     
-    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
-      // 1. Credit Vendor for the sale (in paise)
-      const saleAmountPaise = Math.round(vendorTotal * 100);
+    for (const [sellerId, sellerTotal] of Object.entries(sellerTotals)) {
+      // 1. Credit Seller for the sale (in paise)
+      const saleAmountPaise = Math.round(sellerTotal * 100);
       ledgerEntries.push({
-        vendor: vendorId,
+        seller: sellerId,
         type: 'sale',
         amount: saleAmountPaise,
         order: order._id,
@@ -573,9 +573,9 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
       });
 
       // 2. Debit Platform Commission (in paise)
-      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
+      const commissionAmountPaise = Math.round(sellerTotal * PLATFORM_FEE_PERCENTAGE * 100);
       ledgerEntries.push({
-        vendor: vendorId,
+        seller: sellerId,
         type: 'commission_fee',
         amount: -commissionAmountPaise, // negative amount for debits
         order: order._id,

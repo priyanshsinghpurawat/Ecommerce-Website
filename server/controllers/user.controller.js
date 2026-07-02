@@ -6,11 +6,11 @@ import { uploadBufferToCloudinary } from '../utils/cloudinaryUpload.js';
 import { deleteFromCloudinary } from '../middleware/upload.middleware.js';
 
 /**
- * @desc    Get all vendors (Admin)
- * @route   GET /api/v3/users/vendors
+ * @desc    Get all sellers (Admin)
+ * @route   GET /api/v3/users/sellers
  * @access  Private/Admin
  */
-export const getVendors = asyncHandler(async (req, res) => {
+export const getSellers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 50 } = req.query;
   const pageNum = Math.max(1, Number(page));
   const limitNum = Math.min(100, Math.max(1, Number(limit)));
@@ -101,56 +101,56 @@ export const getVendors = asyncHandler(async (req, res) => {
   ]);
 
   const total = result.metadata[0]?.total || 0;
-  const vendors = result.data;
+  const sellers = result.data;
 
   return res.status(200).json(new ApiResponse(200, {
-    vendors,
+    sellers,
     pagination: {
       total,
       totalPages: Math.ceil(total / limitNum),
       currentPage: pageNum,
       limit: limitNum
     }
-  }, 'Vendors retrieved successfully'));
+  }, 'Sellers retrieved successfully'));
 });
 
 /**
- * @desc    Toggle vendor active status (Admin)
- * @route   PATCH /api/v3/users/vendors/:id/status
+ * @desc    Toggle seller active status (Admin)
+ * @route   PATCH /api/v3/users/sellers/:id/status
  * @access  Private/Admin
  */
-export const toggleVendorStatus = asyncHandler(async (req, res) => {
+export const toggleSellerStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findById(id);
   
   if (!user || user.role !== 'seller') {
-    throw new ApiError(404, 'Vendor not found');
+    throw new ApiError(404, 'Seller not found');
   }
 
   user.isActive = !user.isActive;
   await user.save();
 
-  return res.status(200).json(new ApiResponse(200, user, `Vendor status updated to ${user.isActive ? 'Active' : 'Inactive'}`));
+  return res.status(200).json(new ApiResponse(200, user, `Seller status updated to ${user.isActive ? 'Active' : 'Inactive'}`));
 });
 
 /**
- * @desc    Get detailed vendor profile (Admin)
- * @route   GET /api/v3/users/vendors/:id
+ * @desc    Get detailed seller profile (Admin)
+ * @route   GET /api/v3/users/sellers/:id
  * @access  Private/Admin
  */
-export const getVendorProfile = asyncHandler(async (req, res) => {
+export const getSellerProfile = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const vendor = await User.findById(id).select('-password').lean();
+  const seller = await User.findById(id).select('-password').lean();
   
-  if (!vendor || vendor.role !== 'seller') {
-    throw new ApiError(404, 'Vendor not found');
+  if (!seller || seller.role !== 'seller') {
+    throw new ApiError(404, 'Seller not found');
   }
 
   const products = await Product.find({ seller: id }).populate('category subcategory').lean();
   const productIds = products.map(p => p._id);
   const productIdSet = new Set(productIds.map(pid => pid.toString()));
 
-  // 1. Efficiently count active orders where the vendor's items are active (not delivered, cancelled, or returned)
+  // 1. Efficiently count active orders where the seller's items are active (not delivered, cancelled, or returned)
   const activeOrdersCount = await Order.countDocuments({
     items: {
       $elemMatch: {
@@ -217,7 +217,7 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
     .lean();
 
   const recentOrders = recentOrdersRaw.map(o => {
-    const vendorItems = o.items.filter(item => {
+    const sellerItems = o.items.filter(item => {
       const itemProductId = item.product?._id || item.product;
       return productIdSet.has(String(itemProductId));
     });
@@ -228,13 +228,13 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
       customer: o.user?.name || 'Guest',
       status: o.status,
       createdAt: o.createdAt,
-      vendorItemsCount: vendorItems.length,
-      vendorSubtotal: vendorItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+      sellerItemsCount: sellerItems.length,
+      sellerSubtotal: sellerItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
     };
   });
 
   return res.status(200).json(new ApiResponse(200, {
-    vendor,
+    seller,
     stats: {
       totalProducts: products.length,
       activeOrders: activeOrdersCount,
@@ -243,7 +243,7 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
     products: productsWithStats,
     topProducts,
     recentOrders
-  }, 'Vendor profile retrieved successfully'));
+  }, 'Seller profile retrieved successfully'));
 });
 
 /**
@@ -327,23 +327,34 @@ export const updateUserRole = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'You cannot change your own role');
   }
 
-  const user = await User.findById(id).select('-password');
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // If demoting an admin, ensure at least one other admin remains
-  if (user.role === 'admin' && role !== 'admin') {
-    const adminCount = await User.countDocuments({ role: 'admin' });
-    if (adminCount <= 1) {
-      throw new ApiError(400, 'Cannot demote the last admin. Promote another user first.');
+  try {
+    const user = await User.findById(id).select('-password').session(session);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
     }
+
+    // If demoting an admin, ensure at least one other admin remains
+    if (user.role === 'admin' && role !== 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' }).session(session);
+      if (adminCount <= 1) {
+        throw new ApiError(400, 'Cannot demote the last admin. Promote another user first.');
+      }
+    }
+
+    user.role = role;
+    await user.save({ session });
+    
+    await session.commitTransaction();
+    return res.status(200).json(new ApiResponse(200, user, `User role updated to ${role}`));
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  user.role = role;
-  await user.save();
-
-  return res.status(200).json(new ApiResponse(200, user, `User role updated to ${role}`));
 });
 
 /**
@@ -352,19 +363,19 @@ export const updateUserRole = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password').lean();
+  const user = await User.findById(req.user._id).select('-password');
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
   // Data Normalization (Transition from singular address to addresses array)
-  const userData = user;
-  if ((!userData.addresses || userData.addresses.length === 0) && userData.address) {
-    const legacyAddr = userData.address;
+  let needsSave = false;
+  if ((!user.addresses || user.addresses.length === 0) && user.address) {
+    const legacyAddr = user.address;
     if (legacyAddr.street || legacyAddr.city) {
-      userData.addresses = [{
-        fullName: userData.name,
-        phone: userData.phone || '',
+      user.addresses = [{
+        fullName: user.name,
+        phone: user.phone || '',
         street: legacyAddr.street || '',
         city: legacyAddr.city || '',
         state: legacyAddr.state || '',
@@ -372,12 +383,17 @@ export const getProfile = asyncHandler(async (req, res) => {
         country: legacyAddr.country || 'India',
         isDefault: true
       }];
+      needsSave = true;
     }
   }
 
-  if (!userData.addresses) userData.addresses = [];
+  if (needsSave) {
+    await user.save();
+  }
 
-  return res.status(200).json(new ApiResponse(200, userData, 'Profile retrieved successfully'));
+  if (!user.addresses) user.addresses = [];
+
+  return res.status(200).json(new ApiResponse(200, user, 'Profile retrieved successfully'));
 });
 
 /**
@@ -588,7 +604,7 @@ export const getWishlist = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const addToWishlist = asyncHandler(async (req, res) => {
-  const { productId } = req.body;
+  const { productId } = req.params;
   if (!productId) {
     throw new ApiError(400, 'Product ID is required');
   }

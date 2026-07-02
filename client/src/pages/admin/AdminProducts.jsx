@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts.js';
 import { useCategories } from '../../hooks/useCategories.js';
-import { getVendors } from '../../services/user.service.js';
+import { getSellers } from '../../services/user.service.js';
 import { Modal } from '../../components/Modal.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { DashboardTableSkeleton } from '../../components/Skeleton.jsx';
@@ -19,8 +19,8 @@ export const AdminProducts = () => {
   const { products, pagination, loading, fetchProducts, addProduct, editProduct, removeProduct } = useProducts();
   const { categories, fetchCategories } = useCategories();
 
-  // Vendor assignment state
-  const [vendors, setVendors] = useState([]);
+  // Seller assignment state
+  const [sellers, setSellers] = useState([]);
 
   // Modal Control States
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -40,12 +40,12 @@ export const AdminProducts = () => {
     fetchProducts({ page, limit: 12, search, sort, seller: sellerId });
     fetchCategories();
 
-    // Fetch vendor registry for assignments
-    const loadVendors = async () => {
-      const res = await getVendors();
-      if (res?.success) setVendors(res.data?.vendors || res.data || []);
+    // Fetch seller registry for assignments
+    const loadSellers = async () => {
+      const res = await getSellers();
+      if (res?.success) setSellers(res.data?.sellers || res.data || []);
     };
-    loadVendors();
+    loadSellers();
   }, [fetchProducts, fetchCategories, page, search, sort, sellerId]);
 
   const handleDelete = async (id) => {

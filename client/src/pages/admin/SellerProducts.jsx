@@ -69,7 +69,7 @@ export const SellerProducts = () => {
         </div>
         
         <Link
-          to="/vendor/products/new"
+          to="/seller/products/new"
           className="flex items-center gap-2 rounded-2xl bg-app-text px-4 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-app-bg hover:bg-app-text-hover shadow-md transition-all duration-300"
         >
           <Plus className="h-4 w-4" />
@@ -179,7 +179,7 @@ export const SellerProducts = () => {
                           <Eye className="h-3.5 w-3.5" />
                         </button>
                         <Link
-                          to={`/vendor/products/${prod._id}/edit`}
+                          to={`/seller/products/${prod._id}/edit`}
                           className="flex h-8 w-8 items-center justify-center rounded-xl bg-app-bg border border-border-base text-app-text hover:bg-brand-primary hover:text-black transition-all shadow-sm"
                           title="Edit Product"
                         >
@@ -314,7 +314,7 @@ export const SellerProducts = () => {
 
             <div className="flex gap-3 pt-2">
               <Link
-                to={`/vendor/products/${selectedProduct._id}/edit`}
+                to={`/seller/products/${selectedProduct._id}/edit`}
                 onClick={() => setDetailModalOpen(false)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-app-text py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover transition-colors"
               >

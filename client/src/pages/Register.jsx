@@ -115,7 +115,7 @@ export const Register = () => {
       if (result.user?.role === 'admin') {
         navigate('/admin/dashboard');
       } else if (result.user?.role === 'seller') {
-        navigate('/vendor/dashboard');
+        navigate('/seller/dashboard');
       } else {
         navigate('/');
       }
@@ -136,7 +136,7 @@ export const Register = () => {
       if (result.user?.role === 'admin') {
         navigate('/admin/dashboard');
       } else if (result.user?.role === 'seller') {
-        navigate('/vendor/dashboard');
+        navigate('/seller/dashboard');
       } else {
         navigate('/');
       }

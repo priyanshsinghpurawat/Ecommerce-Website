@@ -53,6 +53,13 @@ export const createCheckout = asyncHandler(async (req, res) => {
   const { shippingAddress, couponCode } = req.body;
 
   validateShippingAddress(shippingAddress);
+
+  // Prevent multiple pending orders to stop Inventory DoS
+  const existingPending = await Order.findOne({ user: req.user._id, paymentStatus: 'pending' });
+  if (existingPending) {
+    throw new ApiError(400, 'You already have a pending order. Please complete or wait for it to expire (30 mins) before creating a new one.');
+  }
+
   const cart = await fetchAndValidateUserCart(req.user._id);
   const calculations = await calculateOrderTotals(cart, couponCode, req.user._id);
 
@@ -86,6 +93,12 @@ export const createCheckout = asyncHandler(async (req, res) => {
   try {
     // Acquire lock on user to prevent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
+
+    // Double check inside transaction for race conditions
+    const txPending = await Order.findOne({ user: req.user._id, paymentStatus: 'pending' }).session(session);
+    if (txPending) {
+      throw new ApiError(400, 'You already have a pending order. Please complete or wait for it to expire.');
+    }
 
     if (calculations.appliedCouponCode) {
       const validItems = cart.items.filter(item => item.product);
@@ -295,23 +308,23 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     }
 
     // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
-    const vendorTotals = {};
+    const sellerTotals = {};
     for (const item of successOrder.items) {
-      if (item.vendor) {
-        const vid = item.vendor.toString();
-        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
-        vendorTotals[vid] += item.subtotal;
+      if (item.seller) {
+        const vid = item.seller.toString();
+        if (!sellerTotals[vid]) sellerTotals[vid] = 0;
+        sellerTotals[vid] += item.subtotal;
       }
     }
 
     const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
     const ledgerEntries = [];
     
-    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
-      // 1. Credit Vendor for the sale (in paise)
-      const saleAmountPaise = Math.round(vendorTotal * 100);
+    for (const [sellerId, sellerTotal] of Object.entries(sellerTotals)) {
+      // 1. Credit Seller for the sale (in paise)
+      const saleAmountPaise = Math.round(sellerTotal * 100);
       ledgerEntries.push({
-        vendor: vendorId,
+        seller: sellerId,
         type: 'sale',
         amount: saleAmountPaise,
         order: successOrder._id,
@@ -320,9 +333,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       });
 
       // 2. Debit Platform Commission (in paise)
-      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
+      const commissionAmountPaise = Math.round(sellerTotal * PLATFORM_FEE_PERCENTAGE * 100);
       ledgerEntries.push({
-        vendor: vendorId,
+        seller: sellerId,
         type: 'commission_fee',
         amount: -commissionAmountPaise, // negative amount for debits
         order: successOrder._id,

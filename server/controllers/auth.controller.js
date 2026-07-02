@@ -102,7 +102,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     password,
-    role: role === 'seller' ? 'seller' : 'user'
+    role: 'user'
   });
 
   const token = user.generateAccessToken();

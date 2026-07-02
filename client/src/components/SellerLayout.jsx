@@ -28,13 +28,13 @@ export const SellerLayout = () => {
   };
 
   const navLinks = [
-    { to: '/vendor/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/vendor/products', label: 'My Products', icon: ShoppingBag },
-    { to: '/vendor/orders', label: 'Store Orders', icon: ClipboardList },
-    { to: '/vendor/billing', label: 'Billing & Payouts', icon: Wallet },
-    { to: '/vendor/affiliates', label: 'Affiliates', icon: Link2 },
-    { to: '/vendor/coupons', label: 'My Coupons', icon: Tag },
-    { to: '/vendor/storefront', label: 'Branding', icon: Store },
+    { to: '/seller/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/seller/products', label: 'My Products', icon: ShoppingBag },
+    { to: '/seller/orders', label: 'Store Orders', icon: ClipboardList },
+    { to: '/seller/billing', label: 'Billing & Payouts', icon: Wallet },
+    { to: '/seller/affiliates', label: 'Affiliates', icon: Link2 },
+    { to: '/seller/coupons', label: 'My Coupons', icon: Tag },
+    { to: '/seller/storefront', label: 'Branding', icon: Store },
   ];
 
   return (
@@ -102,7 +102,7 @@ export const SellerLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-             <Link to="/vendor/products" className="flex items-center gap-2 px-4 py-2 bg-app-text text-app-bg rounded-xl font-black text-[10px] uppercase tracking-wider hover:opacity-90 transition-all shadow-lg">
+             <Link to="/seller/products" className="flex items-center gap-2 px-4 py-2 bg-app-text text-app-bg rounded-xl font-black text-[10px] uppercase tracking-wider hover:opacity-90 transition-all shadow-lg">
               <Plus className="h-4 w-4" />
               Add Product
             </Link>

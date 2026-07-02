@@ -16,7 +16,7 @@ export const registerSchema = z.object({
     { message: 'Invalid phone number' }
   ),
   brandName: z.string().optional(),
-  role: z.enum(['user', 'seller']).optional().default('user')
+  role: z.enum(['user']).optional().default('user')
 });
 
 export const loginSchema = z.object({

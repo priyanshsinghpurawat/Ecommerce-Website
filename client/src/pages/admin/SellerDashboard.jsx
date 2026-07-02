@@ -38,10 +38,10 @@ const calculateSellerData = (products, orders) => {
   const categoriesCount = new Set(products.map(p => p.category?._id)).size;
 
   const recentOrders = orders.slice(0, 5).map(o => {
-    const vendorSubtotal = o.items
+    const sellerSubtotal = o.items
       .filter(item => products.some(p => String(p._id) === String(item.product?._id || item.product)))
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
-    return { ...o, vendorSubtotal };
+    return { ...o, sellerSubtotal };
   });
 
   return {
@@ -176,7 +176,7 @@ export const SellerDashboard = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-white">₹{o.vendorSubtotal.toLocaleString('en-IN')}</p>
+                  <p className="text-lg font-bold text-white">₹{o.sellerSubtotal.toLocaleString('en-IN')}</p>
                   <p className="text-sm font-medium text-white/50 mt-1">{o.items.length} items</p>
                 </div>
               </div>

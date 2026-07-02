@@ -24,7 +24,7 @@ export const Layout = () => {
       if (user?.role === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else if (user?.role === 'seller') {
-        navigate('/vendor/dashboard', { replace: true });
+        navigate('/seller/dashboard', { replace: true });
       }
     }
   }, [isAuthenticated, user, navigate, location.pathname]);

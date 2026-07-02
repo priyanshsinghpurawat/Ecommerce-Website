@@ -65,8 +65,8 @@ sequenceDiagram
 - **Cryptographic Integrity**: Secure password generation, robust JWT session management, and `crypto.timingSafeEqual` signature verification.
 - **Bulletproof APIs**: Zod schema-validated payloads and sanitized NoSQL execution paths.
 
-### 📊 Vendor Command Center
-- **Multi-Vendor Ecosystem**: Vendors manage their own storefronts (`/store/:brandName`) and curate catalogs.
+### 📊 Seller Command Center
+- **Multi-seller Ecosystem**: sellers manage their own storefronts (`/store/:brandName`) and curate catalogs.
 - **Real-Time Logistics**: Sellers access dedicated dashboards to monitor incoming orders and track inventory depth.
 - **Financial Ledger**: Automated tracking of seller revenues minus the platform commission fee.
 

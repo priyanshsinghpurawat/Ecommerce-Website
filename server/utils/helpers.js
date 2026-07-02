@@ -231,7 +231,7 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
   let applicableTotal = cartTotalNum;
   let applicableItems = cartItems;
 
-  // If coupon is vendor-specific, filter out products not owned by this vendor
+  // If coupon is seller-specific, filter out products not owned by this seller
   if (coupon.seller) {
     applicableItems = applicableItems.filter(item => {
       const prodSeller = item.product?.seller || item.product;
@@ -245,7 +245,7 @@ export const calculateCouponDiscount = async (code, cartTotal, cartItems = [], u
     applicableTotal = applicableItems.reduce((sum, item) => sum + (getUnitPrice(item.product) || item.unitPrice || item.price) * item.quantity, 0);
     
     if (applicableTotal < coupon.minCartAmount) {
-      throw new ApiError(400, `Minimum purchase of ₹${coupon.minCartAmount} required for this vendor's items.`);
+      throw new ApiError(400, `Minimum purchase of ₹${coupon.minCartAmount} required for this seller's items.`);
     }
   }
 

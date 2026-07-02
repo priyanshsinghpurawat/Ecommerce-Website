@@ -8,15 +8,15 @@ import {
   removeFromWishlist,
   getAllUsers,
   updateUserRole,
-  getVendors,
-  toggleVendorStatus,
-  getVendorProfile,
+  getSellers,
+  toggleSellerStatus,
+  getSellerProfile,
   addAddress,
   updateAddress,
   deleteAddress,
   setDefaultAddress
 } from '../controllers/user.controller.js';
-import { getPublicVendorStore } from '../controllers/storefront.controller.js';
+import { getPublicSellerStore } from '../controllers/storefront.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { updateUserSchema, addressSchema } from '../validators/index.js';
@@ -25,7 +25,7 @@ import { upload, requireCloudinary } from '../middleware/upload.middleware.js';
 const router = Router();
 
 // Public routes
-router.get('/store/:slug', getPublicVendorStore);
+router.get('/store/:slug', getPublicSellerStore);
 
 // Admin routes
 
@@ -33,13 +33,30 @@ router.get('/store/:slug', getPublicVendorStore);
  * @openapi
  * /api/v3/users:
  *   get:
- *     summary: Get all users list (Admin only)
+ *     summary: Get all users with search, role filter, pagination (Admin only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: List of all registered users
+ *         description: List of users with pagination
  */
 router.get('/', verifyJWT, authorizeRoles('admin'), getAllUsers);
 
@@ -47,7 +64,7 @@ router.get('/', verifyJWT, authorizeRoles('admin'), getAllUsers);
  * @openapi
  * /api/v3/users/{id}/role:
  *   patch:
- *     summary: Update user role (Admin only)
+ *     summary: Update a user's role (Admin only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -63,39 +80,38 @@ router.get('/', verifyJWT, authorizeRoles('admin'), getAllUsers);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - role
+ *             required: [role]
  *             properties:
  *               role:
  *                 type: string
- *                 enum: [user, admin, seller]
+ *                 enum: [user, seller, admin]
  *     responses:
  *       200:
  *         description: User role updated successfully
  */
 router.patch('/:id/role', verifyJWT, authorizeRoles('admin'), updateUserRole);
 
-// Vendor management (Admin)
+// Seller management (Admin)
 
 /**
  * @openapi
- * /api/v3/users/vendors:
+ * /api/v3/users/sellers:
  *   get:
- *     summary: Get all vendors (Admin only)
+ *     summary: Get all sellers (Admin only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: List of all vendors
+ *         description: List of all sellers
  */
-router.get('/vendors', verifyJWT, authorizeRoles('admin'), getVendors);
+router.get('/sellers', verifyJWT, authorizeRoles('admin'), getSellers);
 
 /**
  * @openapi
- * /api/v3/users/vendors/{id}:
+ * /api/v3/users/sellers/{id}:
  *   get:
- *     summary: Get a specific vendor's profile (Admin only)
+ *     summary: Get a specific seller's profile (Admin only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -107,15 +123,15 @@ router.get('/vendors', verifyJWT, authorizeRoles('admin'), getVendors);
  *           type: string
  *     responses:
  *       200:
- *         description: Vendor profile details
+ *         description: Seller profile details
  */
-router.get('/vendors/:id', verifyJWT, authorizeRoles('admin'), getVendorProfile);
+router.get('/sellers/:id', verifyJWT, authorizeRoles('admin'), getSellerProfile);
 
 /**
  * @openapi
- * /api/v3/users/vendors/{id}/status:
+ * /api/v3/users/sellers/{id}/status:
  *   patch:
- *     summary: Toggle vendor active status (Admin only)
+ *     summary: Toggle seller active status (Admin only)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -127,9 +143,9 @@ router.get('/vendors/:id', verifyJWT, authorizeRoles('admin'), getVendorProfile)
  *           type: string
  *     responses:
  *       200:
- *         description: Vendor status toggled successfully
+ *         description: Seller status toggled successfully
  */
-router.patch('/vendors/:id/status', verifyJWT, authorizeRoles('admin'), toggleVendorStatus);
+router.patch('/sellers/:id/status', verifyJWT, authorizeRoles('admin'), toggleSellerStatus);
 
 // Profile routes
 
@@ -143,19 +159,15 @@ router.patch('/vendors/:id/status', verifyJWT, authorizeRoles('admin'), toggleVe
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: User profile retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
+ *         description: Profile details of current user
  */
 router.get('/me', verifyJWT, getProfile);
 
 /**
  * @openapi
- * /api/v3/users/me:
+ * /api/v3/users/profile:
  *   put:
- *     summary: Update logged-in user profile
+ *     summary: Update profile details (Name, phone, brandName, bio, address)
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -172,17 +184,19 @@ router.get('/me', verifyJWT, getProfile);
  *                 type: string
  *               brandName:
  *                 type: string
+ *               bio:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Profile updated successfully
  */
-router.put('/me', verifyJWT, validate({ body: updateUserSchema }), updateProfile);
+router.put('/profile', verifyJWT, validate(updateUserSchema), updateProfile);
 
 /**
  * @openapi
- * /api/v3/users/me/avatar:
+ * /api/v3/users/avatar:
  *   post:
- *     summary: Upload profile avatar image
+ *     summary: Upload avatar image
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -192,8 +206,6 @@ router.put('/me', verifyJWT, validate({ body: updateUserSchema }), updateProfile
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - avatar
  *             properties:
  *               avatar:
  *                 type: string
@@ -202,15 +214,15 @@ router.put('/me', verifyJWT, validate({ body: updateUserSchema }), updateProfile
  *       200:
  *         description: Avatar uploaded successfully
  */
-router.post('/me/avatar', verifyJWT, requireCloudinary, upload.single('avatar'), uploadAvatar);
+router.post('/avatar', verifyJWT, upload.single('avatar'), requireCloudinary, uploadAvatar);
 
-// Address book routes
+// Address Management routes
 
 /**
  * @openapi
  * /api/v3/users/addresses:
  *   post:
- *     summary: Add shipping address to address book
+ *     summary: Add new address
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -220,33 +232,35 @@ router.post('/me/avatar', verifyJWT, requireCloudinary, upload.single('avatar'),
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - fullName
- *               - phone
- *               - street
- *               - city
- *               - state
- *               - zipCode
+ *             required: [fullName, street, city, state, zipCode, country, phone]
  *             properties:
- *               fullName: { type: string }
- *               phone: { type: string }
- *               street: { type: string }
- *               city: { type: string }
- *               state: { type: string }
- *               zipCode: { type: string }
- *               country: { type: string, default: India }
- *               isDefault: { type: boolean }
+ *               fullName:
+ *                 type: string
+ *               street:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               isDefault:
+ *                 type: boolean
  *     responses:
  *       201:
  *         description: Address added successfully
  */
-router.post('/addresses', verifyJWT, validate({ body: addressSchema }), addAddress);
+router.post('/addresses', verifyJWT, validate(addressSchema), addAddress);
 
 /**
  * @openapi
  * /api/v3/users/addresses/{id}:
  *   put:
- *     summary: Update a shipping address
+ *     summary: Update an address
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -263,25 +277,33 @@ router.post('/addresses', verifyJWT, validate({ body: addressSchema }), addAddre
  *           schema:
  *             type: object
  *             properties:
- *               fullName: { type: string }
- *               phone: { type: string }
- *               street: { type: string }
- *               city: { type: string }
- *               state: { type: string }
- *               zipCode: { type: string }
- *               country: { type: string }
- *               isDefault: { type: boolean }
+ *               fullName:
+ *                 type: string
+ *               street:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               isDefault:
+ *                 type: boolean
  *     responses:
  *       200:
  *         description: Address updated successfully
  */
-router.put('/addresses/:id', verifyJWT, validate({ body: addressSchema.partial() }), updateAddress);
+router.put('/addresses/:id', verifyJWT, validate(addressSchema), updateAddress);
 
 /**
  * @openapi
  * /api/v3/users/addresses/{id}:
  *   delete:
- *     summary: Delete shipping address from address book
+ *     summary: Delete an address
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -301,7 +323,7 @@ router.delete('/addresses/:id', verifyJWT, deleteAddress);
  * @openapi
  * /api/v3/users/addresses/{id}/default:
  *   patch:
- *     summary: Mark a shipping address as default
+ *     summary: Set an address as default
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
@@ -313,7 +335,7 @@ router.delete('/addresses/:id', verifyJWT, deleteAddress);
  *           type: string
  *     responses:
  *       200:
- *         description: Set address as default successfully
+ *         description: Address set as default successfully
  */
 router.patch('/addresses/:id/default', verifyJWT, setDefaultAddress);
 
@@ -323,40 +345,35 @@ router.patch('/addresses/:id/default', verifyJWT, setDefaultAddress);
  * @openapi
  * /api/v3/users/wishlist:
  *   get:
- *     summary: Get logged-in user's wishlist
+ *     summary: Get user wishlist
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Wishlist products list retrieved successfully
+ *         description: User wishlist retrieved successfully
  */
 router.get('/wishlist', verifyJWT, getWishlist);
 
 /**
  * @openapi
- * /api/v3/users/wishlist:
+ * /api/v3/users/wishlist/{productId}:
  *   post:
  *     summary: Add product to wishlist
  *     tags: [Users]
  *     security:
  *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - productId
- *             properties:
- *               productId:
- *                 type: string
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Product added to wishlist successfully
  */
-router.post('/wishlist', verifyJWT, addToWishlist);
+router.post('/wishlist/:productId', verifyJWT, addToWishlist);
 
 /**
  * @openapi

@@ -44,8 +44,8 @@ const AdminSubcategories = lazy(() => import('../pages/admin/AdminSubcategories.
 const AdminCoupons = lazy(() => import('../pages/admin/AdminCoupons.jsx').then(m => ({ default: m.AdminCoupons })));
 const AdminOrders = lazy(() => import('../pages/admin/AdminOrders.jsx').then(m => ({ default: m.AdminOrders })));
 const AdminUsers = lazy(() => import('../pages/admin/AdminUsers.jsx').then(m => ({ default: m.AdminUsers })));
-const AdminVendors = lazy(() => import('../pages/admin/AdminVendors.jsx').then(m => ({ default: m.AdminVendors })));
-const AdminVendorProfile = lazy(() => import('../pages/admin/AdminVendorProfile.jsx').then(m => ({ default: m.AdminVendorProfile })));
+const AdminSellers = lazy(() => import('../pages/admin/AdminSellers.jsx').then(m => ({ default: m.AdminSellers })));
+const AdminSellerProfile = lazy(() => import('../pages/admin/AdminSellerProfile.jsx').then(m => ({ default: m.AdminSellerProfile })));
 
 // Seller Pages (Lazy Loaded)
 import { SellerLayout } from '../components/SellerLayout.jsx';
@@ -150,12 +150,12 @@ function App() {
                       <Route path="coupons" element={<AdminCoupons />} />
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="users" element={<AdminUsers />} />
-                      <Route path="vendors" element={<AdminVendors />} />
-                      <Route path="vendors/:id" element={<AdminVendorProfile />} />
+                      <Route path="sellers" element={<AdminSellers />} />
+                      <Route path="sellers/:id" element={<AdminSellerProfile />} />
                     </Route>
 
                     <Route
-                      path="/vendor"
+                      path="/seller"
                       element={
                         <SellerRoute>
                           <SellerLayout />

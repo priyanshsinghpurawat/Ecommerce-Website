@@ -345,11 +345,11 @@ export const Navbar = () => {
                 {/* Admin/Seller Quick Dashboard button */}
                 {(user?.role === 'admin' || user?.role === 'seller') ? (
                   <NavLink
-                    to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
+                    to={user.role === 'admin' ? '/admin/dashboard' : '/seller/dashboard'}
                     className={({ isActive }) => `hidden md:flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/40 shadow-none' : 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20 hover:scale-105'}`}
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
-                    {user.role === 'admin' ? 'Admin Console' : 'Vendor Station'}
+                    {user.role === 'admin' ? 'Admin Console' : 'Seller Station'}
                   </NavLink>
                 ) : null}
 
@@ -452,11 +452,11 @@ export const Navbar = () => {
           ) : (
             <div className="mt-2 pt-4 border-t border-white/10 space-y-3">
               <Link
-                to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/vendor/dashboard' : '/profile'}
+                to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'seller' ? '/seller/dashboard' : '/profile'}
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center justify-between w-full rounded-2xl bg-brand-primary px-6 py-4 text-xs font-black uppercase tracking-widest text-black shadow-xl"
               >
-                <span>{user?.role === 'admin' ? 'Admin Access' : user?.role === 'seller' ? 'Vendor Access' : 'My Account'}</span>
+                <span>{user?.role === 'admin' ? 'Admin Access' : user?.role === 'seller' ? 'Seller Access' : 'My Account'}</span>
                 <LayoutDashboard className="h-4 w-4" />
               </Link>
             </div>

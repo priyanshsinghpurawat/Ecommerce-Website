@@ -2,15 +2,15 @@ import { LedgerTransaction } from '../models/ledger.model.js';
 import { asyncHandler, ApiResponse } from '../utils/helpers.js';
 
 /**
- * @desc    Get vendor's billing dashboard data (Balance & Ledger)
+ * @desc    Get seller's billing dashboard data (Balance & Ledger)
  * @route   GET /api/v3/billing/my-ledger
  * @access  Private/Seller
  */
 export const getMyLedger = asyncHandler(async (req, res) => {
-  const vendorId = req.user._id;
+  const sellerId = req.user._id;
 
-  // 1. Fetch all cleared ledger transactions (Limiting to 1000 to prevent Memory OOM on large vendors)
-  const transactions = await LedgerTransaction.find({ vendor: vendorId })
+  // 1. Fetch all cleared ledger transactions (Limiting to 1000 to prevent Memory OOM on large sellers)
+  const transactions = await LedgerTransaction.find({ seller: sellerId })
     .populate('order', 'orderNumber status')
     .sort({ createdAt: -1 })
     .limit(1000)

@@ -39,7 +39,7 @@ export const AdminLayout = () => {
     { to: '/admin/coupons', label: 'Growth Engines', icon: Ticket },
     { to: '/admin/orders', label: 'Fulfillment', icon: ClipboardList },
     { to: '/admin/users', label: 'Access Control', icon: Users },
-    { to: '/admin/vendors', label: 'Market Partners', icon: Store },
+    { to: '/admin/sellers', label: 'Market Partners', icon: Store },
   ];
 
   return (

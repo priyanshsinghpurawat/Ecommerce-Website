@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const affiliateLinkSchema = new mongoose.Schema(
   {
-    vendor: {
+    seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -19,7 +19,7 @@ const affiliateLinkSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // The unique tag generated (e.g., 'vendor123-ig-summer')
+    // The unique tag generated (e.g., 'Seller123-ig-summer')
     trackingTag: {
       type: String,
       required: true,
@@ -28,7 +28,7 @@ const affiliateLinkSchema = new mongoose.Schema(
       trim: true,
       lowercase: true
     },
-    // Human-readable name for the vendor to identify the campaign
+    // Human-readable name for the seller to identify the campaign
     campaignName: {
       type: String,
       required: true,
@@ -48,7 +48,7 @@ const affiliateLinkSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for quickly finding all links for a specific vendor, sorted by creation date
-affiliateLinkSchema.index({ vendor: 1, createdAt: -1 });
+// Index for quickly finding all links for a specific seller, sorted by creation date
+affiliateLinkSchema.index({ seller: 1, createdAt: -1 });
 
 export const AffiliateLink = mongoose.model('AffiliateLink', affiliateLinkSchema);
