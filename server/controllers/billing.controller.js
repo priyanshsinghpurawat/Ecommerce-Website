@@ -27,21 +27,21 @@ export const getMyLedger = asyncHandler(async (req, res) => {
     if (tx.status === 'cleared' || tx.status === 'pending') { // For now treat pending COD as cleared for balance display, or separate them.
       // Let's separate "Available Balance" (cleared) vs "Pending" (COD usually)
       if (tx.type === 'sale') totalSalesPaise += tx.amount;
-      if (tx.type === 'commission_fee') totalFeesPaise += Math.abs(tx.amount);
-      if (tx.type === 'payout') totalPayoutsPaise += Math.abs(tx.amount);
-      if (tx.type === 'refund') totalRefundsPaise += Math.abs(tx.amount);
+      if (tx.type === 'commission_fee') totalFeesPaise += tx.amount;
+      if (tx.type === 'payout') totalPayoutsPaise += tx.amount;
+      if (tx.type === 'refund') totalRefundsPaise += tx.amount;
     }
   });
 
-  // Net Balance in Paise = Sales - Fees - Payouts - Refunds
-  const netBalancePaise = totalSalesPaise - totalFeesPaise - totalPayoutsPaise - totalRefundsPaise;
+  // Net Balance in Paise = Sum of all transaction amounts (since debits are negative, credits are positive)
+  const netBalancePaise = totalSalesPaise + totalFeesPaise + totalPayoutsPaise + totalRefundsPaise;
 
   // Convert paise back to rupees for the frontend (or let frontend handle it)
-  // Let's send both to prevent floating point issues on frontend
+  // Negate debits (which are negative) to show them as positive values in the dashboard summary
   const summary = {
     totalSales: totalSalesPaise / 100,
-    totalFees: totalFeesPaise / 100,
-    totalPayouts: totalPayoutsPaise / 100,
+    totalFees: -totalFeesPaise / 100,
+    totalPayouts: -totalPayoutsPaise / 100,
     netBalance: netBalancePaise / 100,
   };
 

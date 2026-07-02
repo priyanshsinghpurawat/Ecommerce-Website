@@ -62,11 +62,31 @@ export const createOrder = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(100).lean();
+  const { page = 1, limit = 20 } = req.query;
+  const pageNum = Math.max(1, Number(page));
+  const limitNum = Math.min(100, Math.max(1, Number(limit)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [orders, total] = await Promise.all([
+    Order.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Order.countDocuments({ user: req.user._id })
+  ]);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, orders, 'Orders retrieved successfully'));
+    .json(new ApiResponse(200, {
+      orders,
+      pagination: {
+        total,
+        totalPages: Math.ceil(total / limitNum),
+        currentPage: pageNum,
+        limit: limitNum
+      }
+    }, 'Orders retrieved successfully'));
 });
 
 /**
@@ -356,29 +376,35 @@ export const processReturn = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 export const exportOrdersCSV = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ status: { $ne: 'cancelled' } })
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 })
-    .limit(5000); // Prevent OOM by capping export to 5000 recent orders
-
-  const csvData = orders.map(o => ({
-    OrderNumber: o.orderNumber,
-    Date: new Date(o.createdAt).toLocaleDateString(),
-    CustomerName: o.user?.name || 'Guest',
-    CustomerEmail: o.user?.email || 'N/A',
-    Status: o.status,
-    ItemsCount: o.items.reduce((sum, i) => sum + i.quantity, 0),
-    Subtotal: o.subtotal,
-    Tax: o.taxAmount,
-    Discount: o.discountAmount,
-    Total: o.total,
-    PaymentMethod: o.paymentMethod
-  }));
-
-  const csvString = Papa.unparse(csvData);
   res.header('Content-Type', 'text/csv');
   res.attachment('sales_report.csv');
-  return res.status(200).send(csvString);
+  
+  const headers = ['OrderNumber', 'Date', 'CustomerName', 'CustomerEmail', 'Status', 'ItemsCount', 'Subtotal', 'Tax', 'Discount', 'Total', 'PaymentMethod'];
+  res.write(Papa.unparse([headers], { header: false }) + '\n');
+  
+  const cursor = Order.find({ status: { $ne: 'cancelled' } })
+    .populate('user', 'name email')
+    .sort({ createdAt: -1 })
+    .cursor();
+    
+  for await (const o of cursor) {
+    const row = [
+      o.orderNumber,
+      new Date(o.createdAt).toLocaleDateString(),
+      o.user?.name || 'Guest',
+      o.user?.email || 'N/A',
+      o.status,
+      o.items.reduce((sum, i) => sum + i.quantity, 0),
+      o.subtotal,
+      o.taxAmount,
+      o.discountAmount,
+      o.total,
+      o.paymentMethod
+    ];
+    res.write(Papa.unparse([row], { header: false }) + '\n');
+  }
+  
+  res.end();
 });
 
 /* -------------------------------------------------------------------------- */

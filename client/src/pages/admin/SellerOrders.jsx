@@ -74,6 +74,7 @@ export const SellerOrders = () => {
   };
 
   const handleProcessReturn = async (orderId, itemId, returnStatus) => {
+    setUpdatingId(orderId);
     try {
       await api.put(`/orders/${orderId}/items/${itemId}/process-return`, { status: returnStatus });
       toast.success(`Return request ${returnStatus}`);
@@ -84,6 +85,8 @@ export const SellerOrders = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to process return');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -354,14 +357,16 @@ export const SellerOrders = () => {
                       {it.returnStatus === 'requested' && (
                         <>
                           <button
+                            disabled={updatingId === selectedOrder._id}
                             onClick={() => handleProcessReturn(selectedOrder._id, it._id, 'approved')}
-                            className="px-3 py-1.5 rounded-xl bg-brand-primary text-black text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-transform"
+                            className="px-3 py-1.5 rounded-xl bg-brand-primary text-black text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-transform disabled:opacity-50"
                           >
                             Approve Return
                           </button>
                           <button
+                            disabled={updatingId === selectedOrder._id}
                             onClick={() => handleProcessReturn(selectedOrder._id, it._id, 'rejected')}
-                            className="px-3 py-1.5 rounded-xl border border-error/50 text-error text-[9px] font-black uppercase tracking-widest hover:bg-error hover:text-white transition-colors"
+                            className="px-3 py-1.5 rounded-xl border border-error/50 text-error text-[9px] font-black uppercase tracking-widest hover:bg-error hover:text-white transition-colors disabled:opacity-50"
                           >
                             Reject Return
                           </button>
@@ -370,8 +375,9 @@ export const SellerOrders = () => {
 
                       {it.returnStatus === 'approved' && (
                         <button
+                          disabled={updatingId === selectedOrder._id}
                           onClick={() => handleProcessReturn(selectedOrder._id, it._id, 'refunded')}
-                          className="px-3 py-1.5 rounded-xl bg-success text-white text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-transform"
+                          className="px-3 py-1.5 rounded-xl bg-success text-white text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-transform disabled:opacity-50"
                         >
                           Issue Refund (Complete Return)
                         </button>

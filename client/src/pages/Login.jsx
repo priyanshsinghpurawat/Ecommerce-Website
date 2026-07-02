@@ -40,6 +40,7 @@ export const Login = () => {
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
     defaultValues: {
       email: '',
       password: ''
@@ -187,7 +188,7 @@ export const Login = () => {
               {...register('email')}
               className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 backdrop-blur-sm focus:outline-none transition-all ${errors.email ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-white/10'
                 }`}
-              placeholder="demo@mensvibe.in"
+              placeholder=""
             />
             {errors.email && (
               <p className="mt-1 text-xs text-error font-medium flex items-center gap-1">

@@ -36,6 +36,7 @@ export const ResetPassword = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(resetSchema),
+    mode: 'onTouched',
     defaultValues: { password: '', confirmPassword: '' },
   });
 

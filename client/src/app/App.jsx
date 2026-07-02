@@ -33,7 +33,8 @@ const Profile = lazy(() => import('../pages/Profile.jsx').then(m => ({ default: 
 const Wishlist = lazy(() => import('../pages/Wishlist.jsx').then(m => ({ default: m.Wishlist })));
 const NotFound = lazy(() => import('../pages/NotFound.jsx').then(m => ({ default: m.NotFound })));
 const AboutUs = lazy(() => import('../pages/AboutUs.jsx').then(m => ({ default: m.AboutUs })));
-const VendorStore = lazy(() => import('../pages/VendorStore.jsx').then(m => ({ default: m.VendorStore })));
+const SellerStore = lazy(() => import('../pages/SellerStore.jsx').then(m => ({ default: m.SellerStore })));
+const PolicyPage = lazy(() => import('../pages/PolicyPage.jsx').then(m => ({ default: m.PolicyPage })));
 
 // Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard.jsx').then(m => ({ default: m.AdminDashboard })));
@@ -115,7 +116,20 @@ function App() {
                       <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
                       <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                       <Route path="about" element={<AboutUs />} />
-                      <Route path="store/:slug" element={<VendorStore />} />
+                      <Route path="store/:slug" element={<SellerStore />} />
+                      
+                      {/* Help & Policy Routes */}
+                      <Route path="contact" element={<PolicyPage />} />
+                      <Route path="returns-policy" element={<PolicyPage />} />
+                      <Route path="terms/sale" element={<PolicyPage />} />
+                      <Route path="misc" element={<PolicyPage />} />
+                      <Route path="membership" element={<PolicyPage />} />
+                      <Route path="returns" element={<PolicyPage />} />
+                      <Route path="shipping" element={<PolicyPage />} />
+                      <Route path="orders-payment-faq" element={<PolicyPage />} />
+                      <Route path="privacy" element={<PolicyPage />} />
+                      <Route path="terms" element={<PolicyPage />} />
+                      
                       <Route path="*" element={<NotFound />} />
                     </Route>
 
@@ -141,7 +155,7 @@ function App() {
                     </Route>
 
                     <Route
-                      path="/seller"
+                      path="/vendor"
                       element={
                         <SellerRoute>
                           <SellerLayout />

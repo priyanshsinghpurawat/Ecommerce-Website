@@ -49,6 +49,7 @@ export const Register = () => {
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(registerSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       email: '',

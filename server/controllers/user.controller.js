@@ -148,44 +148,51 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
 
   const products = await Product.find({ seller: id }).populate('category subcategory').lean();
   const productIds = products.map(p => p._id);
-  
   const productIdSet = new Set(productIds.map(pid => pid.toString()));
-  
-  const orders = await Order.find({ "items.product": { $in: productIds } })
-    .populate('user', 'name email')
-    .sort({ createdAt: -1 })
-    .lean();
-  
-  const activeOrdersCount = orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
-  
-  // Calculate analytics
-  let totalRevenue = 0;
-  const productStats = {}; // To track units and revenue per product
 
-  orders.forEach(order => {
-    const isRevenueOrder = ['confirmed', 'shipped', 'delivered'].includes(order.status);
-    
-    order.items.forEach(item => {
-      const itemProductId = item.product?._id || item.product;
-      const productIdStr = String(itemProductId);
-      
-      if (!productIdSet.has(productIdStr)) return;
-      
-      const itemRevenue = item.unitPrice * item.quantity;
-      
-      if (isRevenueOrder) {
-        totalRevenue += itemRevenue;
+  // 1. Efficiently count active orders where the vendor's items are active (not delivered, cancelled, or returned)
+  const activeOrdersCount = await Order.countDocuments({
+    items: {
+      $elemMatch: {
+        product: { $in: productIds },
+        status: { $nin: ['delivered', 'cancelled', 'returned'] }
       }
-      
-      if (!productStats[productIdStr]) {
-        productStats[productIdStr] = { revenue: 0, units: 0 };
+    }
+  });
+
+  // 2. Aggregate sales revenue and units sold per product in database, filtering out non-revenue items (cancelled/returned)
+  const revenueStats = await Order.aggregate([
+    {
+      $match: {
+        "items.product": { $in: productIds },
+        status: { $in: ['confirmed', 'partially_shipped', 'shipped', 'delivered'] }
       }
-      
-      if (isRevenueOrder) {
-        productStats[productIdStr].revenue += itemRevenue;
-        productStats[productIdStr].units += item.quantity;
+    },
+    { $unwind: "$items" },
+    {
+      $match: {
+        "items.product": { $in: productIds },
+        "items.status": { $in: ['confirmed', 'shipped', 'delivered'] }
       }
-    });
+    },
+    {
+      $group: {
+        _id: "$items.product",
+        revenue: { $sum: { $multiply: ["$items.unitPrice", "$items.quantity"] } },
+        unitsSold: { $sum: "$items.quantity" }
+      }
+    }
+  ]);
+
+  let totalRevenue = 0;
+  const productStats = {};
+  revenueStats.forEach(stat => {
+    const pid = stat._id.toString();
+    productStats[pid] = {
+      revenue: stat.revenue,
+      units: stat.unitsSold
+    };
+    totalRevenue += stat.revenue;
   });
 
   // Enhance products with sales data and sort for top products
@@ -202,7 +209,14 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
-  const recentOrders = orders.slice(0, 5).map(o => {
+  // 3. Fetch only the top 5 recent orders instead of pulling everything
+  const recentOrdersRaw = await Order.find({ "items.product": { $in: productIds } })
+    .populate('user', 'name')
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .lean();
+
+  const recentOrders = recentOrdersRaw.map(o => {
     const vendorItems = o.items.filter(item => {
       const itemProductId = item.product?._id || item.product;
       return productIdSet.has(String(itemProductId));

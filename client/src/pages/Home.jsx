@@ -9,7 +9,7 @@ import { ProductShowcase } from '../components/ProductShowcase.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { CATEGORY_BANNERS, FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
 import { SEO } from '../components/SEO.jsx';
-import { Flame, Zap } from 'lucide-react';
+import { Flame, Zap, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCache, setCache } from '../utils/helpers.js';
 
@@ -214,7 +214,7 @@ export const Home = () => {
         className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-0"
       >
         {[
-          { icon: Flame, label: 'Free shipping', text: 'On all orders across India' },
+          { icon: Truck, label: 'Free shipping', text: 'On all orders across India' },
           { icon: Zap, label: 'COD available', text: 'Pay when your order arrives' },
           { icon: Flame, label: 'Fresh drops', text: 'Curated weekly releases' }
         ].map(({ icon: Icon, label, text }) => (

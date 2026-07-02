@@ -145,28 +145,6 @@ export const AdminDashboard = () => {
               </div>
             </div>
           </div>
-
-          <div className="bg-app-card p-8 rounded-[3rem] border border-border-base shadow-soft">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-black uppercase tracking-widest text-app-text italic">Top Clusters</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-app-text/70">Clothing</span>
-                <span className="text-[10px] font-black italic text-app-text">65%</span>
-              </div>
-              <div className="w-full bg-app-panel h-1 rounded-full overflow-hidden">
-                <div className="bg-brand-primary h-full rounded-full w-[65%]" />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-app-text/70">Footwear</span>
-                <span className="text-[10px] font-black italic text-app-text">25%</span>
-              </div>
-              <div className="w-full bg-app-panel h-1 rounded-full overflow-hidden">
-                <div className="bg-accent-cyan h-full rounded-full w-[25%]" />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { ProductGrid } from '../components/ProductGrid.jsx';
 import { Loader2, ShieldCheck, MapPin } from 'lucide-react';
 import { resolveImageUrl } from '../utils/helpers.js';
 
-export const VendorStore = () => {
+export const SellerStore = () => {
   const { slug } = useParams();
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,8 @@ export const VendorStore = () => {
     );
   }
 
-  const { vendor, products } = storeData;
-  const storefront = vendor.storefront || {};
+  const { seller, products } = storeData;
+  const storefront = seller.storefront || {};
 
   return (
     <div className="min-h-screen bg-app-bg animate-in fade-in duration-700">
@@ -49,7 +49,7 @@ export const VendorStore = () => {
         {storefront.banner ? (
           <img 
             src={storefront.banner} 
-            alt={`${vendor.brandName} Banner`} 
+            alt={`${seller.brandName} Banner`} 
             className="w-full h-full object-cover"
           />
         ) : (
@@ -61,25 +61,25 @@ export const VendorStore = () => {
         {/* Dark Overlay for Text Readability */}
         <div className="absolute inset-0 bg-black/40 bg-gradient-to-t from-app-bg via-transparent to-transparent"></div>
         
-        {/* Vendor Profile Picture & Name Overlay */}
+        {/* Seller Profile Picture & Name Overlay */}
         <div className="absolute bottom-0 left-0 w-full p-8 translate-y-1/4">
           <div className="max-w-7xl mx-auto flex items-end gap-6">
             <div className="w-32 h-32 rounded-[2rem] border-4 border-app-bg bg-surface-100 overflow-hidden shadow-2xl flex-shrink-0">
-              {vendor.avatar ? (
-                <img src={resolveImageUrl(vendor.avatar)} alt={vendor.brandName} className="w-full h-full object-cover" />
+              {seller.avatar ? (
+                <img src={resolveImageUrl(seller.avatar)} alt={seller.brandName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-brand-primary text-black text-4xl font-black uppercase">
-                  {(vendor.brandName || 'S')[0]}
+                  {(seller.brandName || 'S')[0]}
                 </div>
               )}
             </div>
             <div className="mb-8">
               <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic drop-shadow-lg">
-                {vendor.brandName || 'Verified Seller'}
+                {seller.brandName || 'Verified Seller'}
               </h1>
               <div className="flex items-center gap-4 mt-2">
                 <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-brand-primary bg-black/50 px-3 py-1 rounded-full backdrop-blur-md">
-                  <ShieldCheck className="h-3 w-3" /> Verified Partner
+                  <ShieldCheck className="h-3 w-3" /> Verified Seller
                 </span>
               </div>
             </div>

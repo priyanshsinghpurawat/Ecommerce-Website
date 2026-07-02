@@ -169,7 +169,7 @@ export const AdminLayout = () => {
                 className="hidden sm:flex items-center gap-3 px-6 py-2.5 bg-brand-primary text-black rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-90 hover:scale-105 transition-all shadow-[0_10px_30px_rgba(193,255,0,0.15)]"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Launch Resource
+                Launch product
               </Link>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Phone, Sparkles, Send } from 'lucide-react';
+import { Sparkles, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Logo } from './Logo.jsx';
 import { Link } from 'react-router-dom';
@@ -45,26 +45,22 @@ export const Footer = () => {
         </div>
 
         {/* Navigation */}
-        <div className="grid grid-cols-2 gap-6 lg:col-span-2">
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">Shop</h4>
-            <ul className="space-y-2.5">
-              <li><Link to="/shop" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Everything</Link></li>
-              <li><Link to="/shop?sort=latest" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">New Arrivals</Link></li>
-              <li><Link to="/shop?badge=sale" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Sale & Offers</Link></li>
-              <li><Link to="/shop?category=Footwear" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Footwear</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">Company</h4>
-            <ul className="space-y-2.5">
-              <li><Link to="/about" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">About Us</Link></li>
-              <li><Link to="/orders" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Track Orders</Link></li>
-              <li><Link to="/wishlist" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">My Wishlist</Link></li>
-              <li><Link to="/profile" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Account Details</Link></li>
-              <li><Link to="/login" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Sign In</Link></li>
-            </ul>
-          </div>
+        <div className="lg:col-span-2">
+          <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">NEED HELP</h4>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
+            <li><Link to="/contact" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Contact Us</Link></li>
+            <li><Link to="/about" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">About Us</Link></li>
+            <li><Link to="/orders" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Track Order</Link></li>
+            <li><Link to="/returns-policy" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Returns & Refunds</Link></li>
+            <li><Link to="/terms/sale" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Sale Terms</Link></li>
+            <li><Link to="/misc" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Miscellaneous</Link></li>
+            <li><Link to="/membership" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Membership</Link></li>
+            <li><Link to="/returns" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Exchange & Refund</Link></li>
+            <li><Link to="/shipping" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Shipping & Tracking</Link></li>
+            <li><Link to="/orders-payment-faq" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Orders & Payment</Link></li>
+            <li><Link to="/privacy" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Privacy Policy</Link></li>
+            <li><Link to="/terms" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Terms of Service</Link></li>
+          </ul>
         </div>
 
         {/* Newsletter & Contact */}
@@ -88,24 +84,12 @@ export const Footer = () => {
               </button>
             </form>
           </div>
-
-          <div className="space-y-3 pt-4 border-t border-surface-100/50">
-            <div className="flex items-start gap-2.5">
-              <MapPin className="h-4 w-4 text-brand-primary shrink-0 mt-0.5" />
-              <p className="text-sm text-app-text/55 font-medium">
-                Design Studio, C-Scheme,<br />Jaipur, Rajasthan, 302001
-              </p>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Phone className="h-4 w-4 text-brand-primary shrink-0" />
-              <p className="text-sm text-app-text/55 font-medium">+91 141 2345678</p>
-            </div>
-          </div>
+       
 
           <div className="pt-3 border-t border-surface-100/50 flex items-center gap-5">
-            <Link to="#" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Privacy</Link>
-            <Link to="#" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Terms</Link>
-            <Link to="#" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Shipping</Link>
+            <Link to="/privacy" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Privacy</Link>
+            <Link to="/terms" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Terms</Link>
+            <Link to="/shipping" className="text-[9px] font-black uppercase tracking-widest text-app-text/35 hover:text-brand-primary transition-colors">Shipping</Link>
           </div>
         </div>
       </div>

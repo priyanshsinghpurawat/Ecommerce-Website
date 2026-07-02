@@ -7,6 +7,7 @@ import { Variant } from '../models/variant.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
+import { LedgerTransaction } from '../models/ledger.model.js';
 import { asyncHandler, ApiError, ApiResponse, generateOrderNumber, calculateCouponDiscount, validateShippingAddress } from '../utils/helpers.js';
 import logger from '../config/logger.js';
 import { calculateOrderTotals, fetchAndValidateUserCart } from './order.controller.js';
@@ -291,6 +292,47 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     if (cart) {
       cart.items = [];
       await cart.save({ session: successSession });
+    }
+
+    // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
+    const vendorTotals = {};
+    for (const item of successOrder.items) {
+      if (item.vendor) {
+        const vid = item.vendor.toString();
+        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
+        vendorTotals[vid] += item.subtotal;
+      }
+    }
+
+    const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
+    const ledgerEntries = [];
+    
+    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
+      // 1. Credit Vendor for the sale (in paise)
+      const saleAmountPaise = Math.round(vendorTotal * 100);
+      ledgerEntries.push({
+        vendor: vendorId,
+        type: 'sale',
+        amount: saleAmountPaise,
+        order: successOrder._id,
+        status: 'cleared', // Razorpay payments are cleared instantly
+        description: `Order Revenue - #${successOrder.orderNumber}`
+      });
+
+      // 2. Debit Platform Commission (in paise)
+      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
+      ledgerEntries.push({
+        vendor: vendorId,
+        type: 'commission_fee',
+        amount: -commissionAmountPaise, // negative amount for debits
+        order: successOrder._id,
+        status: 'cleared', // Razorpay payments are cleared instantly
+        description: `Platform Fee (10%) - #${successOrder.orderNumber}`
+      });
+    }
+
+    if (ledgerEntries.length > 0) {
+      await LedgerTransaction.insertMany(ledgerEntries, { session: successSession });
     }
 
     await successSession.commitTransaction();
