@@ -24,3 +24,8 @@ export const clearCart = async () => {
   const { data } = await api.delete('/cart/clear');
   return data;
 };
+
+export const mergeCart = async (items) => {
+  const { data } = await api.post('/cart/merge', { items });
+  return data;
+};

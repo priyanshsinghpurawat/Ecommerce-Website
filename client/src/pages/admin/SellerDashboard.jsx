@@ -97,7 +97,7 @@ export const SellerDashboard = () => {
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-gray-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
       </div>
     );
   }
@@ -111,26 +111,26 @@ export const SellerDashboard = () => {
         <StatCard 
           title="Gross Revenue" 
           value={`₹${data.revenue.toLocaleString('en-IN')}`} 
-          icon={<DollarSign className="h-7 w-7 text-emerald-600" />} 
-          bg="bg-emerald-100"
+          icon={<DollarSign className="h-7 w-7 text-brand-primary" />} 
+          bg="bg-brand-primary/10"
         />
         <StatCard 
           title="Total Orders" 
           value={data.totalOrders} 
-          icon={<ShoppingCart className="h-7 w-7 text-blue-600" />} 
-          bg="bg-blue-100"
+          icon={<ShoppingCart className="h-7 w-7 text-brand-primary" />} 
+          bg="bg-brand-primary/10"
         />
         <StatCard 
           title="Active Listings" 
           value={data.totalProducts} 
-          icon={<Package className="h-7 w-7 text-purple-600" />} 
-          bg="bg-purple-100"
+          icon={<Package className="h-7 w-7 text-brand-primary" />} 
+          bg="bg-brand-primary/10"
         />
         <StatCard 
           title="Category Reach" 
           value={data.activeCategories} 
-          icon={<TrendingUp className="h-7 w-7 text-amber-600" />} 
-          bg="bg-amber-100"
+          icon={<TrendingUp className="h-7 w-7 text-brand-primary" />} 
+          bg="bg-brand-primary/10"
         />
       </div>
 
@@ -138,51 +138,51 @@ export const SellerDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Top Products */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-            <ArrowUpRight className="h-6 w-6 text-emerald-600" />
+        <div className="bg-surface-50/40 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+            <ArrowUpRight className="h-6 w-6 text-brand-primary" />
             Top Performing Products
           </h3>
           <div className="space-y-4">
             {data.topProducts.map((p, i) => (
-              <div key={i} className="flex items-center gap-5 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                <img src={p.image} alt={p.title} className="h-16 w-16 object-cover rounded-lg border border-gray-200" />
+              <div key={i} className="flex items-center gap-5 border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                <img src={p.image} alt={p.title} className="h-16 w-16 object-cover rounded-lg border border-white/10" />
                 <div className="flex-1">
-                  <p className="text-base font-semibold text-gray-900 line-clamp-1">{p.title}</p>
-                  <p className="text-sm font-medium text-gray-500 mt-1">{p.units} Units Sold</p>
+                  <p className="text-base font-semibold text-white line-clamp-1">{p.title}</p>
+                  <p className="text-sm font-medium text-white/50 mt-1">{p.units} Units Sold</p>
                 </div>
-                <p className="text-lg font-bold text-emerald-600">₹{p.revenue.toLocaleString('en-IN')}</p>
+                <p className="text-lg font-bold text-brand-primary">₹{p.revenue.toLocaleString('en-IN')}</p>
               </div>
             ))}
             {data.topProducts.length === 0 && (
-              <div className="py-8 text-center text-base text-gray-500">No sales data recorded yet.</div>
+              <div className="py-8 text-center text-base text-white/40">No sales data recorded yet.</div>
             )}
           </div>
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-            <Clock className="h-6 w-6 text-blue-600" />
+        <div className="bg-surface-50/40 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+            <Clock className="h-6 w-6 text-brand-primary" />
             Recent Orders
           </h3>
           <div className="space-y-4">
             {data.recentOrders.map((o) => (
-              <div key={o._id} className="flex items-center justify-between border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <div key={o._id} className="flex items-center justify-between border-b border-white/5 pb-4 last:border-0 last:pb-0">
                 <div>
-                  <p className="text-base font-semibold text-gray-900">Order #{o.orderNumber}</p>
-                  <p className="text-sm font-medium text-gray-500 mt-1">
+                  <p className="text-base font-semibold text-white">Order #{o.orderNumber}</p>
+                  <p className="text-sm font-medium text-white/50 mt-1">
                     {new Date(o.createdAt).toLocaleDateString()} &bull; <span className="capitalize">{o.status}</span>
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-gray-900">₹{o.vendorSubtotal.toLocaleString('en-IN')}</p>
-                  <p className="text-sm font-medium text-gray-500 mt-1">{o.items.length} items</p>
+                  <p className="text-lg font-bold text-white">₹{o.vendorSubtotal.toLocaleString('en-IN')}</p>
+                  <p className="text-sm font-medium text-white/50 mt-1">{o.items.length} items</p>
                 </div>
               </div>
             ))}
             {data.recentOrders.length === 0 && (
-              <div className="py-8 text-center text-base text-gray-500">No recent orders found.</div>
+              <div className="py-8 text-center text-base text-white/40">No recent orders found.</div>
             )}
           </div>
         </div>
@@ -193,13 +193,13 @@ export const SellerDashboard = () => {
 
 // --- Reusable UI Components (KISS Principle) ---
 const StatCard = ({ title, value, icon, bg }) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-5">
+  <div className="bg-surface-50/40 p-6 rounded-2xl border border-white/10 backdrop-blur-md flex items-center gap-5">
     <div className={`p-4 rounded-xl ${bg}`}>
       {icon}
     </div>
     <div>
-      <p className="text-sm font-semibold text-gray-600">{title}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+      <p className="text-sm font-semibold text-white/50">{title}</p>
+      <p className="text-2xl font-bold text-white mt-1">{value}</p>
     </div>
   </div>
 );

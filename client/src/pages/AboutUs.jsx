@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Ruler, Scissors, Sparkles, MoveRight, Layers, ShieldCheck } from 'lucide-react';
+import { SEO } from '../components/SEO.jsx';
 
 export const AboutUs = () => {
   return (
     <div className="min-h-screen bg-app-bg text-app-text pt-24 pb-16">
+      <SEO title="About Us" description="Learn about MensVibe — premium streetwear brand for men." />
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         
         {/* Header Section */}

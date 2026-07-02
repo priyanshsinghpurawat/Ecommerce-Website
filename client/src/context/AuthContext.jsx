@@ -120,9 +120,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const registerUser = async (name, email, password) => {
+  const registerUser = async (name, email, password, role = 'user') => {
     try {
-      const body = await authService.register(name, email, password);
+      const body = await authService.register(name, email, password, role);
       return handleAuthSuccess(body);
     } catch (error) {
       return { success: false, error: getErrorMessage(error, 'Registration failed.') };
@@ -135,6 +135,24 @@ export const AuthProvider = ({ children }) => {
       return handleAuthSuccess(body);
     } catch (error) {
       return { success: false, error: getErrorMessage(error, 'Google login failed.') };
+    }
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      const body = await authService.forgotPassword(email);
+      return { success: true, message: body?.message || 'Check your email for the reset link.' };
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error, 'Failed to send reset email.') };
+    }
+  };
+
+  const resetPassword = async (token, password) => {
+    try {
+      const body = await authService.resetPassword(token, password);
+      return handleAuthSuccess(body);
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error, 'Failed to reset password.') };
     }
   };
 
@@ -160,7 +178,9 @@ export const AuthProvider = ({ children }) => {
         loginUser,
         registerUser,
         loginWithGoogle,
-        logoutUser
+        logoutUser,
+        forgotPassword,
+        resetPassword
       }}
     >
       {children}

@@ -15,7 +15,8 @@ export const registerSchema = z.object({
     ),
     { message: 'Invalid phone number' }
   ),
-  brandName: z.string().optional()
+  brandName: z.string().optional(),
+  role: z.enum(['user', 'seller']).optional().default('user')
 });
 
 export const loginSchema = z.object({
@@ -25,4 +26,18 @@ export const loginSchema = z.object({
 
 export const googleLoginSchema = z.object({
   idToken: z.string().min(1, 'Google token is required')
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
+    ),
 });

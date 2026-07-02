@@ -37,12 +37,6 @@ export const deleteProduct = async (id) => {
   return data;
 };
 
-export const getProductColors = async () => {
-  // NOTE: backend exposes /products/filters (not /colors)
-  const { data } = await api.get('/products/filters');
-  return data;
-};
-
 // Variant API calls
 export const getProductVariants = async (productId) => {
   const { data } = await api.get(`/products/${productId}/variants`);
@@ -76,5 +70,21 @@ export const toggleSkuLock = async (variantId) => {
 
 export const bulkUpdateStock = async (updates) => {
   const { data } = await api.patch('/variants/bulk-stock', { updates });
+  return data;
+};
+
+// Review API calls
+export const getProductReviews = async (productId) => {
+  const { data } = await api.get(`/products/${productId}/reviews`);
+  return data;
+};
+
+export const submitReview = async (productId, reviewData) => {
+  const { data } = await api.post(`/products/${productId}/reviews`, reviewData);
+  return data;
+};
+
+export const deleteReview = async (reviewId) => {
+  const { data } = await api.delete(`/reviews/${reviewId}`);
   return data;
 };

@@ -4,16 +4,16 @@ import { useAuth } from '../hooks/useAuth.js';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
-  ClipboardList,
   LogOut, 
   User, 
   Menu, 
   X,
   Plus,
-  Tag,
+  ClipboardList,
+  Wallet,
   Link2,
-  Store,
-  Wallet
+  Tag,
+  Store
 } from 'lucide-react';
 import { Logo } from './Logo.jsx';
 

@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import { User, LogOut, LayoutDashboard, ShoppingBag, Package, Search, Menu, X, Heart, Moon, Sun, ChevronDown, Zap, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Search, Heart, ChevronDown, Zap, Loader2, X, ShoppingBag, User, Package, LogOut, Menu } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
-import { useTheme } from '../context/ThemeContext.jsx';
 import { useCategories } from '../hooks/useCategories.js';
 import { useSubcategories } from '../hooks/useSubcategories.js';
 import { getProducts } from '../services/product.service.js';
@@ -61,7 +60,6 @@ export const Navbar = () => {
   const { user, isAuthenticated, logoutUser } = useAuth();
   const { cartItemsCount } = useCart();
   const { wishlist } = useWishlist();
-  const { theme, toggleTheme } = useTheme();
   const { categories, fetchCategories } = useCategories();
   const { subcategories, fetchSubcategories } = useSubcategories();
   const navigate = useNavigate();
@@ -159,7 +157,7 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 glass shadow-nav transition-all duration-300">
-      <div className="border-b border-black/5 dark:border-white/5">
+      <div className="border-b border-white/5">
         <div className="w-full px-4 h-14 flex items-center justify-between gap-4">
 
           {/* 1. 3D BADGE MONOGRAM LOGO SECTION */}
@@ -222,8 +220,8 @@ export const Navbar = () => {
                       >
                         <img
                           src={resolveImageUrl(product.images?.[0] || product.image)}
-                          alt=""
-                          className="h-8 w-8 rounded-lg object-cover bg-white/10 border border-white/5"
+                          alt={product.title || 'Search result image'}
+                          className="h-10 w-10 rounded-lg object-cover bg-white/5 shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-bold text-white truncate">{product.title}</p>
@@ -268,10 +266,10 @@ export const Navbar = () => {
                 <NavLink
                   to="/street-drip"
                   className={({ isActive }) =>
-                    `px-4 py-1.5 text-xs font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1 rounded-full bg-brand-primary text-black shadow-lg shadow-brand-primary/15 transition-all hover:scale-105 active:scale-95 duration-200 mx-1.5`
+                    `px-4 py-1.5 text-xs font-black uppercase tracking-widest whitespace-nowrap flex items-center gap-1 rounded-full transition-all duration-200 mx-1.5 ${isActive ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/40' : 'bg-brand-primary text-black shadow-lg shadow-brand-primary/15 hover:scale-105 active:scale-95'}`
                   }
                 >
-                  <Zap className="h-3 w-3 fill-black text-black" />
+                  <Zap className={`h-3 w-3 ${location.pathname === '/street-drip' ? 'text-brand-primary fill-brand-primary' : 'fill-black text-black'}`} />
                   Street Drip
                 </NavLink>
 
@@ -311,14 +309,7 @@ export const Navbar = () => {
               </button>
             ) : null}
 
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-app-text/60 hover:bg-surface-50 hover:text-app-text transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-
-            <Link to="/wishlist" className="relative p-2 rounded-lg text-app-text/60 hover:bg-surface-50 hidden sm:block">
+            <NavLink to="/wishlist" className={({ isActive }) => `relative p-2 rounded-lg hidden sm:block transition-all ${isActive ? 'text-brand-primary bg-surface-100' : 'text-app-text/60 hover:bg-surface-50 hover:text-app-text'}`}>
               <motion.div
                 key={wishlist.length}
                 animate={HEART_ANIMATION}
@@ -331,9 +322,9 @@ export const Navbar = () => {
                   {wishlist.length}
                 </span>
               ) : null}
-            </Link>
+            </NavLink>
 
-            <Link to="/cart" className="relative p-2 rounded-lg text-app-text/60 hover:bg-surface-50">
+            <NavLink to="/cart" className={({ isActive }) => `relative p-2 rounded-lg transition-all ${isActive ? 'text-brand-primary bg-surface-100' : 'text-app-text/60 hover:bg-surface-50 hover:text-app-text'}`}>
               <motion.div
                 key={cartItemsCount}
                 animate={CART_ANIMATION}
@@ -346,30 +337,30 @@ export const Navbar = () => {
                   {cartItemsCount > 9 ? '9+' : cartItemsCount}
                 </span>
               ) : null}
-            </Link>
+            </NavLink>
 
             {/* AUTH ACTIONS OR PROFILE INITIAL AVATAR */}
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 {/* Admin/Seller Quick Dashboard button */}
                 {(user?.role === 'admin' || user?.role === 'seller') ? (
-                  <Link
+                  <NavLink
                     to={user.role === 'admin' ? '/admin/dashboard' : '/vendor/dashboard'}
-                    className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-xl bg-brand-primary text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-brand-primary/20"
+                    className={({ isActive }) => `hidden md:flex items-center gap-2 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isActive ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/40 shadow-none' : 'bg-brand-primary text-black shadow-lg shadow-brand-primary/20 hover:scale-105'}`}
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     {user.role === 'admin' ? 'Admin Console' : 'Vendor Station'}
-                  </Link>
+                  </NavLink>
                 ) : null}
 
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 bg-app-text/5 border border-surface-100 hover:bg-app-text/10 transition-all active:scale-95 cursor-pointer"
+                    className={`flex items-center gap-2 rounded-full pl-1 pr-2 py-1 transition-all active:scale-95 cursor-pointer ${location.pathname.startsWith('/profile') ? 'bg-brand-primary/20 border-brand-primary/40 text-brand-primary' : 'bg-app-text/5 border-surface-100 hover:bg-app-text/10'}`}
                   >
                     {user?.avatar ? (
                       <div className="h-7 w-7 rounded-full overflow-hidden border border-white/10 bg-white/5">
-                        <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                        <img src={user.avatar} alt={`${user.name || 'User'}'s avatar`} className="h-full w-full object-cover" />
                       </div>
                     ) : (
                       <div className="h-7 w-7 rounded-full bg-brand-primary text-black flex items-center justify-center font-black text-xs border border-brand-primary/20 uppercase">

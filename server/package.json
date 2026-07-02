@@ -10,7 +10,6 @@
     "build": "npm install --legacy-peer-deps",
     "dev": "nodemon index.js",
     "dev:clean": "nodemon index.js",
-    "seed": "node scripts/seeder.js",
     "test": "vitest run",
     "lint": "eslint ."
   },
@@ -34,6 +33,7 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
+    "nodemailer": "^9.0.3",
     "papaparse": "^5.5.3",
     "razorpay": "^2.9.6",
     "redis": "^6.0.0",

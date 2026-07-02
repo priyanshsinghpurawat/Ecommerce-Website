@@ -8,6 +8,7 @@ import { HeroCarousel } from '../components/HeroCarousel.jsx';
 import { ProductShowcase } from '../components/ProductShowcase.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
 import { CATEGORY_BANNERS, FEATURED_SUBCATEGORY_NAMES } from '../constants/showcase.js';
+import { SEO } from '../components/SEO.jsx';
 import { Flame, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getCache, setCache } from '../utils/helpers.js';
@@ -232,7 +233,7 @@ export const Home = () => {
       </motion.div>
 
       {/* Infinite Scrolling Brand Ethos Marquee */}
-      <div className="w-full overflow-hidden bg-white/[0.02] dark:bg-black/[0.1] py-8 border-y border-white/5 select-none -mx-4 md:mx-0">
+      <div className="w-full overflow-hidden bg-white/[0.02] py-8 border-y border-white/5 select-none -mx-4 md:mx-0">
         <div className="animate-marquee whitespace-nowrap text-2xl md:text-4xl font-black uppercase tracking-[0.3em] italic flex gap-4">
           <span className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] animate-pulse">
             MENSVIBE STUDIO · <span className="text-brand-primary drop-shadow-none">DRIP OR DROWN</span> · JAIPUR CREATIVE LAB · <span className="text-brand-primary drop-shadow-none">LIMITED RELEASES</span> · STREETWEAR REVOLUTION · &nbsp;

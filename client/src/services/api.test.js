@@ -82,7 +82,8 @@ describe('Frontend API Clients and Handlers', () => {
       expect(api.post).toHaveBeenCalledWith('/auth/register', {
         name: 'Test User',
         email: 'test@example.com',
-        password: 'pass123'
+        password: 'pass123',
+        role: 'user'
       });
       expect(data.success).toBe(true);
     });

@@ -72,9 +72,11 @@ export const UrgencyNudge = ({
           <div className="flex items-center gap-3">
             <PulseDot />
             <span className="text-sm font-black uppercase tracking-tight text-white italic">
-              {currentSize && Number(currentSize.stock) === 0
-                ? `Size ${selectedSize} is sold out`
-                : `Only ${stockLeft} left in size ${selectedSize}`}
+              {!selectedSize
+                ? `Only ${stockLeft} left in stock`
+                : currentSize && Number(currentSize.stock) === 0
+                  ? `Size ${selectedSize} is sold out`
+                  : `Only ${stockLeft} left in size ${selectedSize}`}
             </span>
           </div>
           <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider pl-5">

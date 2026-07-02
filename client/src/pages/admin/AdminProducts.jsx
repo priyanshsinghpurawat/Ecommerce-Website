@@ -313,7 +313,7 @@ export const AdminProducts = () => {
                     <span className="text-sm font-bold text-app-text">{selectedProduct.rating || '0.0'}</span>
                     <span className="text-xs text-app-text/40">({selectedProduct.reviewCount || 0} reviews)</span>
                   </div>
-                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${selectedProduct.stock > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                  <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${selectedProduct.stock > 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
                     {selectedProduct.stock > 0 ? `In Stock (${selectedProduct.stock})` : 'Out of Stock'}
                   </div>
                 </div>

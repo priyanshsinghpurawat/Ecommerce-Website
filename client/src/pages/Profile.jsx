@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { 
-  getProfile, updateProfile, 
+  getProfile, updateProfile, uploadAvatar,
   addAddress, updateAddress, deleteAddress, setDefaultAddress,
 } from '../services/user.service.js';
 import { getMyOrders } from '../services/order.service.js';
 import { 
   Loader2, User, MapPin, Package, Heart, Save, Plus, Trash2, 
   CheckCircle2, ChevronRight, ShoppingBag, Clock, ShieldCheck, 
-  ExternalLink, Edit3, X, MapPinOff, Sparkles
+  ExternalLink, Edit3, X, MapPinOff, Sparkles, Camera
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth.js';
@@ -25,6 +25,7 @@ export const Profile = () => {
   const initialTab = searchParams.get('tab') || 'dashboard';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Sync state to URL params
   useEffect(() => {
@@ -40,6 +41,12 @@ export const Profile = () => {
     phone: '',
     avatar: ''
   });
+
+  // Avatar Upload State
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Address Modal State
   const [addressModalOpen, setAddressModalOpen] = useState(false);
@@ -124,6 +131,42 @@ export const Profile = () => {
       toast.error('Sync failed.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAvatarFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error('Image must be under 5MB.');
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) {
+      return toast.error('Use JPG, PNG, WEBP or AVIF.');
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return;
+    setUploadingAvatar(true);
+    try {
+      const res = await uploadAvatar(avatarFile);
+      if (res?.success) {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+        setProfileForm(prev => ({ ...prev, avatar: res.data.avatar }));
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        toast.success('Avatar uploaded.');
+      }
+    } catch {
+      toast.error('Upload failed.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -218,7 +261,7 @@ export const Profile = () => {
         <div className="relative group shrink-0">
           <div className="h-24 w-24 rounded-[2rem] overflow-hidden border-2 border-brand-primary/20 bg-app-bg flex items-center justify-center shadow-2xl transition-transform group-hover:scale-105">
             {user?.avatar ? (
-              <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+              <img src={user.avatar} alt={`${user.name || 'User'}'s avatar`} className="h-full w-full object-cover" />
             ) : (
               <div className="h-full w-full bg-brand-primary text-black flex items-center justify-center font-black text-3xl">
                 {user?.name ? user.name[0].toUpperCase() : 'U'}
@@ -297,14 +340,58 @@ export const Profile = () => {
                   <h2 className="text-sm font-black uppercase tracking-widest text-brand-primary italic">Personal Details</h2>
                   <form onSubmit={handleProfileSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-app-text/40">Avatar URL</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-app-text/40">Profile Avatar</label>
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="relative group flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:border-brand-primary/30 transition-all cursor-pointer"
+                      >
+                        <div className="h-16 w-16 rounded-xl overflow-hidden bg-brand-primary flex items-center justify-center shrink-0">
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="Preview" className="h-full w-full object-cover" />
+                          ) : profileForm.avatar ? (
+                            <img src={profileForm.avatar} alt="Current avatar" className="h-full w-full object-cover" />
+                          ) : (
+                            <Camera className="h-6 w-6 text-black" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-app-text truncate">
+                            {avatarFile ? avatarFile.name : 'Click to select image'}
+                          </p>
+                          <p className="text-[9px] font-bold text-app-text/30 uppercase mt-0.5">JPG, PNG, WEBP or AVIF &bull; Max 5MB</p>
+                        </div>
+                        {avatarFile && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAvatarFile(null);
+                              setAvatarPreview(null);
+                            }}
+                            className="p-1.5 rounded-lg bg-black text-white/40 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                       <input
-                        name="avatar"
-                        value={profileForm.avatar}
-                        onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
-                        className="w-full rounded-2xl glass-input px-5 py-3.5 text-xs font-bold focus:outline-none"
-                        placeholder="Profile Image URL"
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        onChange={handleAvatarFileChange}
+                        className="hidden"
                       />
+                      {avatarFile && (
+                        <button
+                          type="button"
+                          onClick={handleAvatarUpload}
+                          disabled={uploadingAvatar}
+                          className="w-full flex items-center justify-center gap-2 mt-2 rounded-2xl border border-brand-primary/40 bg-brand-primary/10 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/20 transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          {uploadingAvatar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                          Upload Avatar
+                        </button>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-app-text/40">Display Name</label>
@@ -398,23 +485,25 @@ export const Profile = () => {
                 {orders.length > 0 ? (
                   <div className="space-y-4">
                     {orders.slice(0, 2).map((order) => (
-                      <div key={order._id} className="flex items-center justify-between p-5 rounded-2xl glass-card-premium group hover:!border-brand-primary/30 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-app-text flex items-center justify-center text-brand-primary">
-                            <ShoppingBag className="h-5 w-5" />
+                      <Link to={`/orders/${order._id}`} key={order._id} className="block cursor-pointer">
+                        <div className="flex items-center justify-between p-5 rounded-2xl glass-card-premium group hover:!border-brand-primary/30 transition-all">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-xl bg-app-text flex items-center justify-center text-brand-primary">
+                              <ShoppingBag className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase text-app-text">Order {order.orderNumber}</p>
+                              <p className="text-[9px] font-bold text-app-text/30 uppercase mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase text-app-text">Order {order.orderNumber}</p>
-                            <p className="text-[9px] font-bold text-app-text/30 uppercase mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          <div className="flex items-center gap-6">
+                            <span className="text-xs font-black text-app-text">₹{order.total.toLocaleString()}</span>
+                            <div className="p-1">
+                              <ChevronRight className="h-4 w-4 text-app-text/20 group-hover:text-brand-primary" />
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6">
-                          <span className="text-xs font-black text-app-text">₹{order.total.toLocaleString()}</span>
-                          <button onClick={() => setActiveTab('orders')} className="p-1 cursor-pointer">
-                            <ChevronRight className="h-4 w-4 text-app-text/20 group-hover:text-brand-primary" />
-                          </button>
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                     <button onClick={() => setActiveTab('orders')} className="w-full py-3 text-[9px] font-black uppercase tracking-[0.2em] text-brand-primary hover:underline cursor-pointer">View All History</button>
                   </div>
@@ -432,7 +521,7 @@ export const Profile = () => {
               {orders.length > 0 ? (
                 <div className="space-y-4">
                   {orders.map((order) => (
-                    <div key={order._id} className="block rounded-[2rem] glass-card-premium p-6 hover:!border-brand-primary/40 transition-all group">
+                    <Link to={`/orders/${order._id}`} key={order._id} className="block rounded-[2rem] glass-card-premium p-6 hover:!border-brand-primary/40 transition-all group cursor-pointer">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                           <div className="h-12 w-12 rounded-2xl bg-[#1a1a1a] flex items-center justify-center text-brand-primary border border-white/5 shadow-2xl transition-all group-hover:scale-110">
@@ -457,12 +546,12 @@ export const Profile = () => {
                           }`}>
                             {order.status}
                           </span>
-                          <button className="p-3 rounded-2xl bg-app-bg text-app-text/20 hover:text-brand-primary group-hover:bg-app-text transition-all cursor-pointer">
+                          <div className="p-3 rounded-2xl bg-app-bg text-app-text/20 group-hover:text-brand-primary group-hover:bg-app-text transition-all">
                              <ExternalLink className="h-5 w-5" />
-                          </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (

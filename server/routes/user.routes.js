@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getProfile,
   updateProfile,
+  uploadAvatar,
   getWishlist,
   addToWishlist,
   removeFromWishlist,
@@ -19,6 +20,7 @@ import { getPublicVendorStore } from '../controllers/storefront.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { updateUserSchema, addressSchema } from '../validators/index.js';
+import { upload, requireCloudinary } from '../middleware/upload.middleware.js';
 
 const router = Router();
 
@@ -175,6 +177,32 @@ router.get('/me', verifyJWT, getProfile);
  *         description: Profile updated successfully
  */
 router.put('/me', verifyJWT, validate({ body: updateUserSchema }), updateProfile);
+
+/**
+ * @openapi
+ * /api/v3/users/me/avatar:
+ *   post:
+ *     summary: Upload profile avatar image
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - avatar
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ */
+router.post('/me/avatar', verifyJWT, requireCloudinary, upload.single('avatar'), uploadAvatar);
 
 // Address book routes
 

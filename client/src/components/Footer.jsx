@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MapPin, Phone, Camera, MessageSquare, Share2, Sparkles, Send } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Phone, Sparkles, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Logo } from './Logo.jsx';
+import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -31,18 +31,8 @@ export const Footer = () => {
           </Link>
           <p className="text-sm text-app-text/55 leading-relaxed max-w-xs font-medium">
             Premium streetwear, sportswear, and handcrafted footwear. Quality-obsessed, customer-driven.
+
           </p>
-          <div className="flex items-center gap-3">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-surface-200 flex items-center justify-center text-app-text/40 hover:text-brand-primary hover:border-brand-primary transition-all">
-              <Camera className="h-4 w-4" />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-surface-200 flex items-center justify-center text-app-text/40 hover:text-brand-primary hover:border-brand-primary transition-all">
-              <MessageSquare className="h-4 w-4" />
-            </a>
-            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-surface-200 flex items-center justify-center text-app-text/40 hover:text-brand-primary hover:border-brand-primary transition-all">
-              <Share2 className="h-4 w-4" />
-            </a>
-          </div>
           <div className="pt-1">
             <p className="text-sm font-black uppercase text-brand-primary flex items-center gap-2">
               <Sparkles className="h-4 w-4" /> Exclusive Offer
@@ -88,7 +78,7 @@ export const Footer = () => {
                 placeholder="Your email address"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm rounded-xl border border-surface-200 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:border-brand-primary transition-colors shadow-inner"
+                className="w-full px-3 py-2.5 text-sm rounded-xl border border-white/10 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:border-brand-primary transition-colors shadow-inner"
               />
               <button
                 type="submit"

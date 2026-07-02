@@ -10,6 +10,7 @@ import { initInventoryCron } from './utils/cron.js';
 import { clearCacheByPattern } from './utils/cache.js';
 import logger from './config/logger.js';
 
+
 const startServer = async () => {
   try {
     // Parallelize DB and Redis connections to avoid blocking

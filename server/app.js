@@ -27,22 +27,69 @@ import subcategoryRouter from './routes/subcategory.routes.js';
 import variantRouter from './routes/variant.routes.js';
 import affiliateRouter from './routes/affiliate.routes.js';
 import billingRouter from './routes/billing.routes.js';
+import reviewRouter from './routes/review.routes.js';
 
 const app = express();
 
-app.disable('x-powered-by');
-
+// NOTE: helmet already removes x-powered-by — no need for app.disable()
 if (ENV.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
+// Build CSP directives — upgradeInsecureRequests must be conditionally spread
+// because passing `null` as a directive value crashes helmet's CSP builder.
+const cspDirectives = {
+  defaultSrc:  ["'none'"],
+  scriptSrc:   ["'none'"],
+  styleSrc:    ["'none'"],
+  imgSrc:      ["'none'"],
+  connectSrc:  [
+    "'self'",
+    'https://api.razorpay.com',
+    'https://res.cloudinary.com',
+    'https://oauth2.googleapis.com',
+    'https://accounts.google.com',
+  ],
+  frameSrc:    ["'none'"],
+  objectSrc:   ["'none'"],
+  baseUri:     ["'self'"],
+  formAction:  ["'none'"],
+  ...(ENV.NODE_ENV === 'production' && { upgradeInsecureRequests: [] }),
+};
+
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  // CORP: 'same-site' is correct for a pure JSON API server.
+  crossOriginResourcePolicy: { policy: 'same-site' },
+
+  // COOP: allow OAuth popup flows (Google sign-in)
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
-  // Enforce HTTPS for 1 year including subdomains (production only)
+
+  // HSTS: enforce HTTPS for 1 year + preload in production
   strictTransportSecurity: ENV.NODE_ENV === 'production'
-    ? { maxAge: 31536000, includeSubDomains: true }
-    : false
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false,
+
+  // CSP: disabled in dev so Swagger UI (which loads its own scripts/styles
+  // from Express) isn't blocked. In production, strict 'none' API policy.
+  contentSecurityPolicy: ENV.NODE_ENV !== 'development'
+    ? { directives: cspDirectives }
+    : false,
+
+  // X-XSS-Protection: explicitly disabled — modern browsers ignore it and
+  // legacy parsers can be exploited by "1; mode=block".
+  xXssProtection: false,
+
+  // Referrer-Policy: don't leak full URL to third-party origins
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+
+  // X-Frame-Options: deny embedding in any iframe
+  frameguard: { action: 'deny' },
+
+  // X-Content-Type-Options: nosniff
+  xContentTypeOptions: true,
+
+  // X-Permitted-Cross-Domain-Policies: deny Flash/PDF cross-domain access
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
 }));
 
 // General rate limiter for all routes
@@ -55,7 +102,7 @@ const generalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  max: 20,
   message: { success: false, message: 'Too many login attempts. Wait a few minutes.' },
   skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
 });
@@ -264,12 +311,13 @@ app.use("/api/v3/auth", authLimiter, authRouter);
 app.use("/api/v3/users", userRouter);
 app.use("/api/v3/categories", categoryRouter);
 app.use("/api/v3/products", productRouter);
+app.use("/api/v3", reviewRouter);  // routes: /products/:id/reviews, /reviews/:reviewId
 app.use("/api/v3/cart", cartRouter);
 app.use("/api/v3/coupons", couponRouter);
 app.use("/api/v3/orders", orderRouter);
 app.use("/api/v3/payments", paymentRouter);
 app.use("/api/v3/subcategories", subcategoryRouter);
-app.use("/api/v3", variantRouter);
+app.use("/api/v3", variantRouter);  // routes: /products/:id/variants, /variants/:id
 app.use("/api/v3/affiliates", affiliateRouter);
 app.use("/api/v3/billing", billingRouter);
 

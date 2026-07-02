@@ -105,6 +105,10 @@ async function migrateBatch(products, session) {
     await Variant.insertMany(variantDocs, { session, ordered: false });
   }
 
+  for (const product of products) {
+    await Product.recalculateVariantSummary(product._id, session);
+  }
+
   return variantDocs.length;
 }
 
@@ -181,8 +185,6 @@ async function runMigration() {
 
       console.log(`Processed: ${processedCount}/${checkpoint.totalProducts} products, ${totalVariants} variants created`);
     }
-
-    await Product.recalculateVariantSummary(lastId);
 
     await MigrationCheckpoint.updateOne(
       { version: MIGRATION_VERSION },

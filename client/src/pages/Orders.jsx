@@ -5,11 +5,11 @@ import { Loader2, Package, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const statusColors = {
-  pending: 'bg-amber-50 text-amber-700 border-amber-100',
+  pending: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
   confirmed: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
-  shipped: 'bg-blue-50 text-blue-700 border-blue-100',
+  shipped: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
   delivered: 'bg-surface-50 text-app-text border-surface-100',
-  cancelled: 'bg-red-50 text-red-600 border-red-100'
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/20'
 };
 
 export const Orders = () => {
@@ -63,7 +63,7 @@ export const Orders = () => {
             <Link
               key={order._id}
               to={`/orders/${order._id}`}
-              className="block rounded-2xl border border-white/60 bg-surface-50/40 p-5 shadow-soft backdrop-blur-md hover:-translate-y-0.5 hover:shadow-md transition-all"
+              className="block rounded-2xl border border-white/10 bg-surface-50/40 p-5 shadow-soft backdrop-blur-md hover:-translate-y-0.5 hover:shadow-md transition-all"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

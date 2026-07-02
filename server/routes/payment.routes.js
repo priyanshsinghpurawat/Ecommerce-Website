@@ -10,8 +10,8 @@ import rateLimit from 'express-rate-limit';
 const router = Router();
 
 const paymentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Strict limit for checkouts/verifications
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   message: { success: false, message: 'Too many payment requests. Please try again later.' },
   skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
 });

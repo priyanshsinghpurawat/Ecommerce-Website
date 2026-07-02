@@ -8,6 +8,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import confetti from 'canvas-confetti';
+import { SEO } from '../components/SEO.jsx';
 
 
 const loginSchema = z.object({
@@ -140,6 +141,7 @@ export const Login = () => {
       className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('/auth-bg.png')" }}
     >
+      <SEO title="Sign In" description="Sign in to your MensVibe account." />
       <div className="absolute inset-0 bg-black/60"></div>
       <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
         <div className="mb-8 text-center">
@@ -248,12 +250,15 @@ export const Login = () => {
               />
               <span className="text-xs text-white/70 font-medium">Remember my email</span>
             </label>
+            <Link to="/forgot-password" className="text-xs text-white/50 hover:text-white transition-colors">
+              Forgot password?
+            </Link>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-app-text py-3 text-sm font-semibold text-black hover:bg-app-text-hover disabled:opacity-50 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50 transition-colors shadow-lg shadow-brand-primary/20"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
           </button>

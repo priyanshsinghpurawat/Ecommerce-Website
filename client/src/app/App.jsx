@@ -6,7 +6,6 @@ import { ErrorBoundary } from '../components/ErrorBoundary.jsx';
 
 // Context Providers
 import { AuthProvider } from '../context/AuthContext.jsx';
-import { ThemeProvider } from '../context/ThemeContext.jsx';
 import { CartProvider } from '../context/CartContext.jsx';
 import { WishlistProvider } from '../context/WishlistContext.jsx';
 import { SocketProvider } from '../context/SocketContext.jsx';
@@ -25,6 +24,8 @@ const StreetDrip = lazy(() => import('../pages/StreetDrip.jsx').then(m => ({ def
 const ProductDetails = lazy(() => import('../pages/ProductDetails.jsx').then(m => ({ default: m.ProductDetails })));
 const Login = lazy(() => import('../pages/Login.jsx').then(m => ({ default: m.Login })));
 const Register = lazy(() => import('../pages/Register.jsx').then(m => ({ default: m.Register })));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword.jsx').then(m => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import('../pages/ResetPassword.jsx').then(m => ({ default: m.ResetPassword })));
 const Cart = lazy(() => import('../pages/Cart.jsx').then(m => ({ default: m.Cart })));
 const Orders = lazy(() => import('../pages/Orders.jsx').then(m => ({ default: m.Orders })));
 const OrderDetail = lazy(() => import('../pages/OrderDetail.jsx').then(m => ({ default: m.OrderDetail })));
@@ -74,7 +75,6 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <ScrollToTop />
-        <ThemeProvider>
           <AuthProvider>
             <SocketProvider>
               <CartProvider>
@@ -107,7 +107,9 @@ function App() {
                       <Route path="product/:id" element={<ProductDetails />} />
                       <Route path="login" element={<Login />} />
                       <Route path="register" element={<Register />} />
-                      <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                      <Route path="forgot-password" element={<ForgotPassword />} />
+                      <Route path="reset-password/:token" element={<ResetPassword />} />
+                      <Route path="cart" element={<Cart />} />
                       <Route path="wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
                       <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
                       <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
@@ -162,7 +164,6 @@ function App() {
               </CartProvider>
             </SocketProvider>
           </AuthProvider>
-        </ThemeProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

@@ -106,7 +106,7 @@ export const AdminCategories = () => {
           <div className="h-40 w-full bg-surface-100/50 rounded-xl" />
         </div>
       ) : categories.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-surface-50/40 shadow-soft backdrop-blur-md">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-surface-100 bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-app-text/45">
@@ -131,7 +131,7 @@ export const AdminCategories = () => {
                       </button>
                       <button
                         onClick={() => handleDelete(cat)}
-                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm"
+                        className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500 hover:text-black transition-all shadow-sm"
                         title="Delete Category"
                         disabled={actionLoading}
                       >

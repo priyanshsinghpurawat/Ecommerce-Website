@@ -661,6 +661,7 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
         { $inc: { stock: item.quantity } },
         opts
       );
+      await Product.recalculateVariantSummary(item.product, session);
     } else {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: item.quantity, soldCount: -item.quantity }
@@ -676,6 +677,7 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
         { $inc: { stock: -item.quantity } },
         { new: true, ...opts }
       );
+      await Product.recalculateVariantSummary(item.product, session);
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
@@ -713,6 +715,7 @@ async function restoreStockForOrder(order, session) {
   const sortedItems = [...order.items].sort((a, b) =>
     (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
   );
+  const productsToRecalculate = new Set();
 
   for (const item of sortedItems) {
     if (item.status !== 'cancelled') {
@@ -735,13 +738,22 @@ async function restoreStockForOrder(order, session) {
           { $inc: { stock: item.quantity } },
           session ? { session } : {}
         );
+        productsToRecalculate.add(item.product.toString());
       } else {
         await Product.findByIdAndUpdate(item.product, {
           $inc: { stock: item.quantity, soldCount: -item.quantity }
         }, session ? { session } : {});
       }
-      item.status = 'cancelled';
+      
+      // Preserve 'returned' status for refunded items instead of overwriting to 'cancelled'
+      if (item.status !== 'returned') {
+        item.status = 'cancelled';
+      }
     }
+  }
+
+  for (const prodId of productsToRecalculate) {
+    await Product.recalculateVariantSummary(prodId, session);
   }
 }
 
@@ -749,6 +761,7 @@ async function reDeductStockForOrder(order, session) {
   const sortedItems = [...order.items].sort((a, b) =>
     (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
   );
+  const productsToRecalculate = new Set();
 
   for (const item of sortedItems) {
     // Resolve variant
@@ -772,6 +785,7 @@ async function reDeductStockForOrder(order, session) {
         { $inc: { stock: -item.quantity } },
         opts
       );
+      productsToRecalculate.add(item.product.toString());
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
@@ -783,6 +797,7 @@ async function reDeductStockForOrder(order, session) {
     if (!updated) {
       // Rollback any items already deducted in this loop
       const deductedItems = sortedItems.slice(0, sortedItems.indexOf(item));
+      const rollbackProducts = new Set();
       for (const prev of deductedItems) {
         let prevVariant = null;
         if (prev.variant) {
@@ -802,14 +817,22 @@ async function reDeductStockForOrder(order, session) {
             { $inc: { stock: prev.quantity } },
             session ? { session } : {}
           );
+          rollbackProducts.add(prev.product.toString());
         } else {
           await Product.findByIdAndUpdate(prev.product, {
             $inc: { stock: prev.quantity, soldCount: -prev.quantity }
           }, session ? { session } : {});
         }
       }
+      for (const prodId of rollbackProducts) {
+        await Product.recalculateVariantSummary(prodId, session);
+      }
       throw new ApiError(400, `Cannot reinstate order. Product "${item.title}" is out of stock.`);
     }
+  }
+
+  for (const prodId of productsToRecalculate) {
+    await Product.recalculateVariantSummary(prodId, session);
   }
 }
 

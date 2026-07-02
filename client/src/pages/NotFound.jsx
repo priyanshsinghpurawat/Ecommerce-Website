@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { SEO } from '../components/SEO.jsx';
 
 export const NotFound = () => {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center min-h-[60vh]">
+      <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />
       <div className="relative mb-8">
         <h1 className="text-[120px] sm:text-[160px] font-black text-app-text/5 leading-none select-none tracking-tighter">
           404

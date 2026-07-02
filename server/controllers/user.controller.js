@@ -2,6 +2,8 @@ import { User } from '../models/user.model.js';
 import { Order } from '../models/order.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
+import { uploadBufferToCloudinary } from '../utils/cloudinaryUpload.js';
+import { deleteFromCloudinary } from '../middleware/upload.middleware.js';
 
 /**
  * @desc    Get all vendors (Admin)
@@ -396,6 +398,39 @@ export const updateProfile = asyncHandler(async (req, res) => {
   const updated = await User.findById(user._id).select('-password');
 
   return res.status(200).json(new ApiResponse(200, updated, 'Profile updated successfully'));
+});
+
+/**
+ * @desc    Upload profile avatar image
+ * @route   POST /api/v3/users/me/avatar
+ * @access  Private
+ */
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(400, 'No image file provided. Send a single image under the "avatar" field.');
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  // Delete previous Cloudinary avatar if it exists
+  if (user.avatar && user.avatar.includes('res.cloudinary.com')) {
+    await deleteFromCloudinary(user.avatar);
+  }
+
+  const avatarUrl = await uploadBufferToCloudinary(req.file.buffer, {
+    folder: 'mensvibe/avatars',
+    filename: `avatar_${user._id.toString()}`
+  });
+
+  user.avatar = avatarUrl;
+  await user.save();
+
+  const updated = await User.findById(user._id).select('-password');
+
+  return res.status(200).json(new ApiResponse(200, updated, 'Avatar uploaded successfully'));
 });
 
 /**

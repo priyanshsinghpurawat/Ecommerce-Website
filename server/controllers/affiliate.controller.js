@@ -82,3 +82,19 @@ export const trackClick = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, null, "Click tracked"));
 });
+
+/**
+ * @desc    Delete an affiliate tracking link
+ * @route   DELETE /api/v3/affiliates/:id
+ * @access  Private/Seller
+ */
+export const deleteAffiliateLink = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const link = await AffiliateLink.findOneAndDelete({ _id: id, vendor: req.user._id });
+  
+  if (!link) {
+    throw new ApiError(404, "Affiliate link not found or you don't have permission to delete it.");
+  }
+  
+  return res.status(200).json(new ApiResponse(200, null, "Affiliate link deleted successfully"));
+});

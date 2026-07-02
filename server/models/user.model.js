@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -74,7 +75,9 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
       }
-    ]
+    ],
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date }
   },
   {
     timestamps: true
@@ -109,6 +112,21 @@ userSchema.methods.generateAccessToken = function () {
       expiresIn: ENV.JWT_EXPIRY
     }
   );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    { _id: this._id },
+    ENV.JWT_REFRESH_SECRET || ENV.JWT_SECRET,
+    { expiresIn: ENV.JWT_REFRESH_EXPIRY }
+  );
+};
+
+userSchema.methods.generatePasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+  return resetToken;
 };
 
 export const User = mongoose.model("User", userSchema);

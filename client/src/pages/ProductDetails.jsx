@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById, getProductVariants } from '../services/product.service.js';
+import { getProductById, getProductVariants, getProductReviews, submitReview } from '../services/product.service.js';
 import { 
   Loader2, ArrowLeft, Star, Heart, ShoppingBag, Clock, Check, X, 
   ShieldCheck, Sparkles, Shield, Share2, ChevronDown, ChevronUp, Camera 
@@ -10,6 +10,7 @@ import { resolveImageUrl, getDiscountPercent } from '../utils/helpers.js';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { SEO } from '../components/SEO.jsx';
 import { useWishlist } from '../hooks/useWishlist.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether.jsx';
@@ -99,6 +100,8 @@ export const ProductDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const handleWishlist = async () => {
     if (!isAuthenticated) {
@@ -119,20 +122,21 @@ export const ProductDetails = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/product/${id}` } });
-      return;
-    }
-    
     // Ensure size is selected before adding to cart
     if (sizingData.sizeOptions.length > 0 && !selectedSize) {
       toast.error('Please select a size first.');
-      // Optional: shake animation or scroll to sizes could go here
       return;
     }
 
     setCartLoading(true);
-    const res = await addToCart(product._id, 1, { size: selectedSize, color: selectedColor });
+    const res = await addToCart(product._id, 1, {
+      size: selectedSize,
+      color: selectedColor,
+      price: product.price,
+      discountedPrice: product.discountedPrice,
+      title: product.title,
+      image: product.images?.[0] || product.image,
+    });
     setCartLoading(false);
     if (res.success) {
       toast.success(`Added ${product.title} (${selectedSize}) to bag!`);
@@ -192,60 +196,52 @@ export const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
-  // Load reviews from localStorage or seed mock reviews
+  // Load reviews from API
   useEffect(() => {
     if (!id) return;
-    const key = `mv_reviews_${id}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      setReviews(JSON.parse(stored));
-    } else {
-      const initialReviews = [
-        {
-          id: 'rev-1',
-          name: 'Aarav Sharma',
-          rating: 5,
-          comment: 'Absolutely love the quality and fit of this jacket. The street drip aesthetics are top notch. Worth every rupee!',
-          date: '2026-06-15'
-        },
-        {
-          id: 'rev-2',
-          name: 'Karan Malhotra',
-          rating: 4,
-          comment: 'Very premium packaging and fast delivery. The fabric is thick and comfortable. I went one size up for an oversized fit.',
-          date: '2026-06-18'
-        },
-        {
-          id: 'rev-3',
-          name: 'Rohan Verma',
-          rating: 5,
-          comment: 'The acid-green details look crazy in person. Definitely ordering from MensVibe again.',
-          date: '2026-06-20'
+    let cancelled = false;
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const res = await getProductReviews(id);
+        if (!cancelled && res?.success) {
+          setReviews(res.data);
         }
-      ];
-      localStorage.setItem(key, JSON.stringify(initialReviews));
-      setReviews(initialReviews);
-    }
+      } catch {
+        // Reviews may not exist yet — that's fine
+      } finally {
+        if (!cancelled) setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+    return () => { cancelled = true; };
   }, [id]);
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
     if (!reviewComment.trim()) {
       toast.error('Please enter a comment.');
       return;
     }
-    const newReview = {
-      id: `rev-${Date.now()}`,
-      name: isAuthenticated ? (user?.name || 'Anonymous User') : 'Guest Reviewer',
-      rating: reviewRating,
-      comment: reviewComment,
-      date: new Date().toISOString().split('T')[0]
-    };
-    const updated = [newReview, ...reviews];
-    localStorage.setItem(`mv_reviews_${id}`, JSON.stringify(updated));
-    setReviews(updated);
-    setReviewComment('');
-    toast.success('Thank you! Review submitted.');
+    setReviewSubmitting(true);
+    try {
+      const res = await submitReview(id, { rating: reviewRating, comment: reviewComment.trim() });
+      if (res?.success) {
+        setReviews((prev) => [res.data, ...prev]);
+        setReviewComment('');
+        setReviewRating(5);
+        toast.success('Thank you! Review submitted.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to submit review.';
+      toast.error(msg);
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const relatedItems = product?.relatedProducts || [];
@@ -426,6 +422,7 @@ export const ProductDetails = () => {
 
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700">
+      <SEO title={product?.title || 'Product Details'} description={product?.description?.slice(0, 160) || 'View product details at MensVibe.'} />
       <Link
         to="/shop"
         className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-app-text/40 hover:text-app-text transition-colors"
@@ -467,7 +464,7 @@ export const ProductDetails = () => {
                         : 'border-border-base hover:border-app-text/50'
                     }`}
                   >
-                    <img src={resolveImageUrl(img, 200)} className="h-full w-full object-cover" alt="" />
+                    <img src={resolveImageUrl(img, 200)} className="h-full w-full object-cover" alt={product?.title || 'Product thumbnail'} />
                   </button>
                 ))}
               </div>
@@ -856,11 +853,11 @@ export const ProductDetails = () => {
           <div className="flex items-center gap-3">
             <div className="flex text-brand-primary">
               {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} className="h-4 w-4 fill-current" />
+                <Star key={s} className={`h-4 w-4 ${s <= Math.round(product?.rating || 0) ? 'fill-current' : ''}`} />
               ))}
             </div>
             <span className="text-xs font-black uppercase text-white/60">
-              {reviews.length} Ratings Verified
+              {product?.reviewCount || reviews.length} Ratings Verified
             </span>
           </div>
         </div>
@@ -902,9 +899,10 @@ export const ProductDetails = () => {
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-brand-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-brand-primary/10 cursor-pointer"
+                disabled={reviewSubmitting}
+                className="w-full py-3.5 bg-brand-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-brand-primary/10 cursor-pointer disabled:opacity-50"
               >
-                Submit Review
+                {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
             </form>
             
@@ -912,11 +910,15 @@ export const ProductDetails = () => {
 
           {/* Review List */}
           <div className="lg:col-span-2 space-y-4">
-            {reviews.length > 0 ? (
+            {reviewsLoading ? (
+              <div className="py-20 text-center border border-dashed border-white/10 rounded-[2rem]">
+                <Loader2 className="h-6 w-6 animate-spin text-white/30 mx-auto" />
+              </div>
+            ) : reviews.length > 0 ? (
               reviews.map((rev) => {
                 const initials = rev.name ? rev.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
                 return (
-                  <div key={rev.id} className="p-6 rounded-[2rem] glass-card-premium space-y-4 hover:border-white/15 transition-all">
+                  <div key={rev._id} className="p-6 rounded-[2rem] glass-card-premium space-y-4 hover:border-white/15 transition-all">
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-brand-primary flex items-center justify-center text-black font-black text-xs">

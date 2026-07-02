@@ -1,7 +1,7 @@
 import { Subcategory } from '../models/subcategory.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiResponse } from '../utils/helpers.js';
-import { getCache, setCache } from '../utils/cache.js';
+import { getCache, setCache, deleteCache } from '../utils/cache.js';
 
 export const getSubcategories = asyncHandler(async (req, res) => {
   const { category } = req.query;
@@ -51,10 +51,8 @@ export const createSubcategory = asyncHandler(async (req, res) => {
   }
   
   const subcategory = await Subcategory.create({ name, category });
-  const cacheKey = `subcategories:cat=${category}`;
-  const allCacheKey = 'subcategories:cat=all';
-  await setCache(cacheKey, null, 0); // clear cache
-  await setCache(allCacheKey, null, 0);
+  await deleteCache(`subcategories:cat=${category}`);
+  await deleteCache('subcategories:cat=all');
 
   return res.status(201).json(new ApiResponse(201, subcategory, 'Subcategory created'));
 });
@@ -69,11 +67,11 @@ export const updateSubcategory = asyncHandler(async (req, res) => {
   }
 
   // Clear cache for old and new category
-  await setCache(`subcategories:cat=${subcategory.category}`, null, 0);
+  await deleteCache(`subcategories:cat=${subcategory.category}`);
   if (category) {
-    await setCache(`subcategories:cat=${category}`, null, 0);
+    await deleteCache(`subcategories:cat=${category}`);
   }
-  await setCache('subcategories:cat=all', null, 0);
+  await deleteCache('subcategories:cat=all');
 
   if (name) subcategory.name = name;
   if (category) subcategory.category = category;
@@ -90,8 +88,8 @@ export const deleteSubcategory = asyncHandler(async (req, res) => {
     return res.status(404).json(new ApiResponse(404, null, 'Subcategory not found'));
   }
 
-  await setCache(`subcategories:cat=${subcategory.category}`, null, 0);
-  await setCache('subcategories:cat=all', null, 0);
+  await deleteCache(`subcategories:cat=${subcategory.category}`);
+  await deleteCache('subcategories:cat=all');
 
   return res.status(200).json(new ApiResponse(200, null, 'Subcategory deleted'));
 });

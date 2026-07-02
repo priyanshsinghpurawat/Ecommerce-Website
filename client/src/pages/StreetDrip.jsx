@@ -65,33 +65,7 @@ export const StreetDrip = () => {
           description: 'Reinforced Multi-Pocket',
           keywords: ['cargo', 'grey', 'pant']
         }
-      ]
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1600&auto=format&fit=crop',
-      title: 'INDUSTRIAL UTILITY',
-      subtitle: 'VOL. 02',
-      description: 'Heavy fleece, distressed denim, and raw-edge patchwork designed for high-contrast layering.',
-      hotspots: [
-        {
-          id: 'hoodie',
-          cx: 470,
-          cy: 380,
-          productTitle: 'Heavyweight Sand Hoodie',
-          label: 'Heavyweight Hoodie',
-          description: '400 GSM Double-Layered Fleece',
-          keywords: ['hoodie', 'sand', 'heavyweight', 'fleece']
-        },
-        {
-          id: 'jeans',
-          cx: 460,
-          cy: 700,
-          productTitle: 'Black Slim Denim',
-          label: 'Patchwork Jeans',
-          description: 'Raw Edge Distressing',
-          keywords: ['denim', 'jean', 'black', 'patchwork']
-        }
+        
       ]
     }
   ], []);

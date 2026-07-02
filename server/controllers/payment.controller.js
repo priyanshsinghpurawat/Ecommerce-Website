@@ -55,7 +55,29 @@ export const createCheckout = asyncHandler(async (req, res) => {
   const cart = await fetchAndValidateUserCart(req.user._id);
   const calculations = await calculateOrderTotals(cart, couponCode, req.user._id);
 
-  // Transactionally reserve stock up-front to prevent overselling
+  // 1. Pre-generate IDs to avoid locking the DB during network requests
+  const orderId = new mongoose.Types.ObjectId();
+  const orderNumber = generateOrderNumber();
+
+  // 2. Call Razorpay API before opening the database transaction
+  const razorpay = getRazorpay();
+  const amountPaise = Math.round(calculations.total * 100);
+  let rzOrder;
+  
+  try {
+    rzOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: orderId.toString(),
+      notes: { orderNumber }
+    });
+  } catch (paymentErr) {
+    logger.error('Razorpay order creation failed:', paymentErr);
+    // Fail immediately, no database state has been mutated yet.
+    throw new ApiError(502, `Payment gateway error. Please try again. ${paymentErr?.error?.description || paymentErr.message || ''}`);
+  }
+
+  // 3. Transactionally reserve stock and save the order
   const session = await mongoose.startSession();
   session.startTransaction();
   let committed = false;
@@ -81,6 +103,8 @@ export const createCheckout = asyncHandler(async (req, res) => {
       a.product.toString().localeCompare(b.product.toString())
     );
 
+    const productsToRecalculate = new Set();
+
     for (const item of sortedOrderItems) {
       // Resolve variant
       let variant = null;
@@ -102,6 +126,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
           { $inc: { stock: -item.quantity } },
           { new: true, session }
         );
+        productsToRecalculate.add(item.product.toString());
       } else {
         updated = await Product.findOneAndUpdate(
           { _id: item.product, stock: { $gte: item.quantity } },
@@ -115,8 +140,14 @@ export const createCheckout = asyncHandler(async (req, res) => {
       }
     }
 
+    // Recalculate variant summaries inside the transaction
+    for (const prodId of productsToRecalculate) {
+      await Product.recalculateVariantSummary(prodId, session);
+    }
+
     const [order] = await Order.create([{
-      orderNumber: generateOrderNumber(),
+      _id: orderId,
+      orderNumber,
       user: req.user._id,
       items: calculations.orderItems,
       subtotal: calculations.subtotal,
@@ -127,6 +158,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
       couponCode: calculations.appliedCouponCode,
       shippingAddress,
       paymentMethod: 'razorpay',
+      razorpayOrderId: rzOrder.id,
       paymentStatus: 'pending',
       status: 'pending'
     }], { session });
@@ -134,30 +166,6 @@ export const createCheckout = asyncHandler(async (req, res) => {
     await session.commitTransaction();
     committed = true;
     session.endSession();
-
-    const razorpay = getRazorpay();
-    const amountPaise = Math.round(calculations.total * 100);
-    let rzOrder;
-    try {
-      rzOrder = await razorpay.orders.create({
-        amount: amountPaise,
-        currency: 'INR',
-        receipt: order._id.toString(),
-        notes: { orderNumber: order.orderNumber }
-      });
-      order.razorpayOrderId = rzOrder.id;
-      await order.save();
-    } catch {
-      order.paymentStatus = 'failed';
-      order.status = 'cancelled';
-      await order.save();
-      try {
-        await restoreStock(order.items);
-      } catch (restoreError) {
-        logger.error('Failed to restore stock after Razorpay failure', { error: restoreError.message, orderId: order._id });
-      }
-      throw new ApiError(502, 'Payment gateway error. Please try again.');
-    }
 
     return res.status(201).json(
       new ApiResponse(201, {

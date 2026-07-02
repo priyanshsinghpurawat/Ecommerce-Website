@@ -228,7 +228,7 @@ export const AdminCoupons = () => {
       </div>
 
       {/* Filters bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center rounded-2xl border border-white/60 bg-surface-50/40 p-4 shadow-soft">
+      <div className="flex flex-col sm:flex-row gap-4 items-center rounded-2xl border border-white/10 bg-surface-50/40 p-4 shadow-soft">
         
         {/* Search */}
         <div className="relative flex-1 w-full">
@@ -270,7 +270,7 @@ export const AdminCoupons = () => {
           <div className="h-40 w-full bg-surface-100/50 rounded-xl" />
         </div>
       ) : coupons.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-surface-50/40 shadow-soft backdrop-blur-md">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
@@ -334,8 +334,8 @@ export const AdminCoupons = () => {
                         onClick={() => handleToggleStatus(coupon)}
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-all hover:scale-105 ${
                           coupon.isActive 
-                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100' 
-                            : 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25' 
+                            : 'bg-red-500/15 text-red-400 border border-red-500/20 hover:bg-red-500/25'
                         }`}
                         title={coupon.isActive ? "Deactivate Coupon" : "Activate Coupon"}
                       >
@@ -353,7 +353,7 @@ export const AdminCoupons = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(coupon)}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-black transition-all shadow-sm"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500 hover:text-black transition-all shadow-sm"
                           title="Delete Coupon"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

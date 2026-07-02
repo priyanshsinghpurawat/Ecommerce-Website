@@ -24,3 +24,17 @@ export const cartItemIdParamSchema = {
     itemId: mongoId,
   })
 };
+
+const guestCartItem = z.object({
+  productId: mongoId,
+  variantId: mongoId.optional(),
+  quantity: z.number().int().positive(),
+  size: z.string().optional(),
+  color: z.string().optional(),
+});
+
+export const mergeCartSchema = {
+  body: z.object({
+    items: z.array(guestCartItem).min(1, 'Cart must have at least one item'),
+  })
+};

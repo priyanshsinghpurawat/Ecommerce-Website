@@ -14,7 +14,7 @@ export const ProductCardSkeleton = () => {
 
 export const DashboardTableSkeleton = () => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/60 bg-surface-50/40 shadow-soft backdrop-blur-md animate-pulse">
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-surface-50/40 shadow-soft backdrop-blur-md animate-pulse">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>

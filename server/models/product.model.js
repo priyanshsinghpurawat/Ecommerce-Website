@@ -182,9 +182,10 @@ productSchema.pre('validate', async function (next) {
   next();
 });
 
-productSchema.statics.recalculateVariantSummary = async function (productId) {
+productSchema.statics.recalculateVariantSummary = async function (productId, session = null) {
   const Variant = mongoose.model('Variant');
-  const agg = await Variant.aggregate([
+  
+  let aggQuery = Variant.aggregate([
     { $match: { product: productId, deletedAt: null, status: 'active' } },
     {
       $group: {
@@ -204,6 +205,12 @@ productSchema.statics.recalculateVariantSummary = async function (productId) {
       }
     }
   ]);
+
+  if (session) {
+    aggQuery = aggQuery.session(session);
+  }
+
+  const agg = await aggQuery;
 
   const summary = agg[0] || {
     minPrice: 0,
@@ -242,7 +249,8 @@ productSchema.statics.recalculateVariantSummary = async function (productId) {
         },
         stock: summary.totalInventory || 0
       }
-    }
+    },
+    { session }
   );
 };
 

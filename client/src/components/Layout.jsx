@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, useLocation, Link, NavLink } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Link, NavLink } from 'react-router-dom';
 import { Navbar } from './Navbar.jsx';
 import { Footer } from './Footer.jsx';
 import { ScrollProgress } from './ScrollProgress.jsx';
@@ -7,12 +7,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home as HomeIcon, ShoppingBag, Heart, User, Sparkles } from 'lucide-react';
 import { useCart } from '../hooks/useCart.js';
 import { useWishlist } from '../hooks/useWishlist.js';
+import { useAuth } from '../hooks/useAuth.js';
 import api from '../services/api.js';
 
 export const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cartItemsCount } = useCart();
   const { wishlist } = useWishlist();
+  const { user, isAuthenticated } = useAuth();
+
+  // Role-based landing redirect: only redirect on initial home-page hit,
+  // so admin/seller can still browse the store via logo or direct URL.
+  useEffect(() => {
+    if (isAuthenticated && location.pathname === '/') {
+      if (user?.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (user?.role === 'seller') {
+        navigate('/vendor/dashboard', { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate, location.pathname]);
 
   // Affiliate Link Interceptor
   useEffect(() => {
@@ -51,13 +66,13 @@ export const Layout = () => {
 
       {/* Mobile Bottom Navigation Bar (premium floating app-like experience) */}
       <div className="fixed bottom-6 left-0 right-0 z-40 lg:hidden px-6 pointer-events-none">
-        <nav className="mx-auto max-w-sm pointer-events-auto flex items-center justify-around h-16 rounded-[2rem] bg-black/90 dark:bg-surface-50/95 backdrop-blur-2xl border border-white/10 dark:border-surface-200/50 shadow-[0_20px_50px_rgba(0,0,0,0.3)] px-4">
+        <nav className="mx-auto max-w-sm pointer-events-auto flex items-center justify-around h-16 rounded-[2rem] bg-black/90 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] px-4">
           
           <NavLink
             to="/"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-300 ${
-                isActive ? 'text-brand-primary scale-110' : 'text-white/40 dark:text-app-text/40 hover:text-white/70'
+                isActive ? 'text-brand-primary scale-110' : 'text-white/40 hover:text-white/70'
               }`
             }
           >
@@ -69,7 +84,7 @@ export const Layout = () => {
             to="/shop"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-300 ${
-                isActive ? 'text-brand-primary scale-110' : 'text-white/40 dark:text-app-text/40 hover:text-white/70'
+                isActive ? 'text-brand-primary scale-110' : 'text-white/40 hover:text-white/70'
               }`
             }
           >
@@ -81,7 +96,7 @@ export const Layout = () => {
             to="/cart"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-300 relative ${
-                isActive ? 'text-brand-primary scale-110' : 'text-white/40 dark:text-app-text/40 hover:text-white/70'
+                isActive ? 'text-brand-primary scale-110' : 'text-white/40 hover:text-white/70'
               }`
             }
           >
@@ -100,7 +115,7 @@ export const Layout = () => {
             to="/wishlist"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-300 relative ${
-                isActive ? 'text-brand-primary scale-110' : 'text-white/40 dark:text-app-text/40 hover:text-white/70'
+                isActive ? 'text-brand-primary scale-110' : 'text-white/40 hover:text-white/70'
               }`
             }
           >
@@ -119,7 +134,7 @@ export const Layout = () => {
             to="/profile"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 py-1 text-center transition-all duration-300 ${
-                isActive ? 'text-brand-primary scale-110' : 'text-white/40 dark:text-app-text/40 hover:text-white/70'
+                isActive ? 'text-brand-primary scale-110' : 'text-white/40 hover:text-white/70'
               }`
             }
           >

@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { getProducts } from '../../services/product.service.js';
 import api from '../../services/api.js';
 import { toast } from 'react-hot-toast';
-import { Link2, Copy, BarChart3, TrendingUp, Plus, Loader2, Download } from 'lucide-react';
+import { Link2, Copy, BarChart3, TrendingUp, Plus, Loader2, Download, Trash2 } from 'lucide-react';
 
 export const SellerAffiliates = () => {
   const { user } = useAuth();
@@ -61,6 +61,18 @@ export const SellerAffiliates = () => {
     const fullUrl = `${window.location.origin}${url}`;
     navigator.clipboard.writeText(fullUrl);
     toast.success('Copied to clipboard!');
+  };
+
+  const handleDeleteLink = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this affiliate link?')) return;
+    
+    try {
+      await api.delete(`/affiliates/${id}`);
+      setLinks(links.filter(link => link._id !== id));
+      toast.success('Link deleted successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete link');
+    }
   };
 
   if (loading) {
@@ -146,6 +158,13 @@ export const SellerAffiliates = () => {
                         title="Copy Link"
                       >
                         <Copy className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLink(link._id)}
+                        className="p-1.5 rounded-lg bg-error/10 text-error hover:bg-error/20 transition-colors"
+                        title="Delete Link"
+                      >
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>

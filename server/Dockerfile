@@ -10,8 +10,8 @@ RUN npm ci --legacy-peer-deps
 # Copy the rest of the application
 COPY . .
 
-# Expose port (default 5000)
-EXPOSE 5000
+# Expose port (default 3000)
+EXPOSE 3000
 
 # Start the application
 CMD ["npm", "start"]

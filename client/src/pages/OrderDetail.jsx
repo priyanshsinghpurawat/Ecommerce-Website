@@ -94,12 +94,12 @@ export const OrderDetail = () => {
         </div>
         {(() => {
           const STATUS_CLASSES = {
-            pending: 'bg-amber-50 text-amber-700 border-amber-100',
-            confirmed: 'bg-blue-50 text-blue-700 border-blue-100',
-            partially_shipped: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-            shipped: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+            pending: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+            confirmed: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+            partially_shipped: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20',
+            shipped: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20',
             delivered: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
-            cancelled: 'bg-red-50 text-red-700 border-red-100'
+            cancelled: 'bg-red-500/15 text-red-400 border-red-500/20'
           };
           const cls = STATUS_CLASSES[order.status] || 'bg-surface-50 text-app-text/70 border-surface-200';
           return (
@@ -111,7 +111,7 @@ export const OrderDetail = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-3xl border border-white/60 bg-surface-50/40 overflow-hidden shadow-soft">
+        <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-surface-50/40 overflow-hidden shadow-soft">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-surface-100 bg-surface-50/30 text-[10px] font-bold uppercase tracking-wider text-app-text/45">
@@ -151,7 +151,7 @@ export const OrderDetail = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/60 bg-surface-50/40 p-5 shadow-soft space-y-3 text-xs">
+          <div className="rounded-2xl border border-white/10 bg-surface-50/40 p-5 shadow-soft space-y-3 text-xs">
             <h3 className="font-bold uppercase tracking-wider text-[10px] text-app-text">Order Summary</h3>
             <div className="flex justify-between text-app-text/60">
               <span>Subtotal</span>
@@ -181,7 +181,7 @@ export const OrderDetail = () => {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/60 bg-surface-50/40 p-5 shadow-soft text-xs">
+          <div className="rounded-2xl border border-white/10 bg-surface-50/40 p-5 shadow-soft text-xs">
             <h3 className="font-bold uppercase tracking-wider text-[10px] text-app-text flex items-center gap-1.5 mb-3">
               <MapPin className="h-3.5 w-3.5" />
               Shipping Address
@@ -195,7 +195,7 @@ export const OrderDetail = () => {
           </div>
 
           {/* Order Tracking Timeline */}
-          <div className="rounded-2xl border border-white/60 bg-surface-50/40 p-5 shadow-soft">
+          <div className="rounded-2xl border border-white/10 bg-surface-50/40 p-5 shadow-soft">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold uppercase tracking-wider text-[10px] text-app-text">Order Status</h3>
               <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-primary/10 border border-brand-primary/20">

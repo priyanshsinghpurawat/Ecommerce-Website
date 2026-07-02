@@ -2,6 +2,7 @@ import { Variant } from '../models/variant.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 import { VariantFactory } from '../services/variantFactory.js';
+import mongoose from 'mongoose';
 
 /**
  * @desc    Generate variant matrix from product options
@@ -163,10 +164,12 @@ export const updateVariantStock = asyncHandler(async (req, res) => {
 export const getProductVariants = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const product = await Product.findById(id);
+  const isObjectId = mongoose.Types.ObjectId.isValid(id);
+  const filter = isObjectId ? { _id: id } : { slug: id };
+  const product = await Product.findOne(filter);
   if (!product) throw new ApiError(404, 'Product not found');
 
-  const variants = await Variant.find({ product: id, deletedAt: null })
+  const variants = await Variant.find({ product: product._id, deletedAt: null })
     .sort({ createdAt: 1 });
 
   return res

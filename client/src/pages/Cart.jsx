@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { SEO } from '../components/SEO.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingBag, 
@@ -117,8 +118,8 @@ export const Cart = () => {
     }
   };
 
-  const handleRemove = async (productId) => {
-    const res = await removeFromCart(productId);
+  const handleRemove = async (itemId) => {
+    const res = await removeFromCart(itemId);
     if (res.success) {
       toast.success('Item removed from cart.');
     } else {
@@ -272,6 +273,10 @@ export const Cart = () => {
   };
 
   const handleProceedCheckout = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/cart' } });
+      return;
+    }
     if (!showCheckout) {
       setShowCheckout(true);
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
@@ -310,29 +315,34 @@ export const Cart = () => {
     toast.success('Coupon removed.');
   };
 
+  const couponDebounceRef = useRef(null);
+
   useEffect(() => {
     if (appliedCoupon) {
       if (cartItemsCount === 0 || cartTotal === 0) {
         setAppliedCoupon(null);
         return;
       }
-      
-      const reapply = async () => {
+
+      if (couponDebounceRef.current) clearTimeout(couponDebounceRef.current);
+
+      couponDebounceRef.current = setTimeout(async () => {
         try {
           const response = await applyCoupon(appliedCoupon.code, cartTotal, cart.items);
           if (response && response.success) {
             setAppliedCoupon(response.data);
           }
         } catch (err) {
-          // If it fails (e.g. min spend not met anymore), remove the coupon
           setAppliedCoupon(null);
           const msg = err.response?.data?.message || 'Coupon removed due to updated cart total.';
           toast.error(msg);
         }
-      };
-      
-      reapply();
+      }, 600);
     }
+
+    return () => {
+      if (couponDebounceRef.current) clearTimeout(couponDebounceRef.current);
+    };
   }, [cartTotal, cartItemsCount]);
 
   const billData = useMemo(() => {
@@ -342,22 +352,21 @@ export const Cart = () => {
     return { baseAmount, gstAmount, grandTotal };
   }, [cartTotal, appliedCoupon]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !cart?.items?.length) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center p-6">
         <div className="h-16 w-16 bg-surface-50 rounded-full flex items-center justify-center text-app-text/45 mb-4 shadow-soft">
           <ShoppingBag className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-app-text mb-2">Sign in to see your bag</h2>
+        <h2 className="text-xl font-bold text-app-text mb-2">Your bag is empty</h2>
         <p className="text-sm text-app-text/55 max-w-sm mb-6 leading-relaxed">
-          Your cart is tied to your account so it stays put between visits.
+          Add some items to get started.
         </p>
         <Link 
-          to="/login"
-          state={{ from: '/cart' }}
+          to="/shop"
           className="rounded-2xl bg-app-text px-6 py-3 font-sans text-xs font-bold uppercase tracking-wider text-black hover:bg-app-text-hover shadow-lg shadow-app-text/20 transition-all duration-300"
         >
-          Sign in
+          Start Shopping
         </Link>
       </div>
     );
@@ -365,6 +374,7 @@ export const Cart = () => {
 
   return (
     <div className="space-y-8 pb-16">
+      <SEO title="Shopping Cart" description="Review your items before checkout." />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -669,19 +679,25 @@ export const Cart = () => {
                 ) : null}
               </div>
 
-              {/* Guarantee / Security info */}
-              <div className="rounded-2xl bg-surface-50/40 border border-white/10 p-3.5 flex items-start gap-3">
-                <Lock className="h-4 w-4 text-app-text/45 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-app-text">Secure Checkout</p>
-                  <p className="text-[10px] text-app-text/40 font-sans leading-relaxed mt-0.5">
-                    Your transaction is secure. SSL-encrypted checkout details are configured natively.
-                  </p>
-                </div>
-              </div>
+          {/* Guarantee / Security info */}
+          <div className="rounded-2xl bg-surface-50/40 border border-white/10 p-3.5 flex items-start gap-3">
+            <Lock className="h-4 w-4 text-app-text/45 mt-0.5" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-app-text">Secure Checkout</p>
+              <p className="text-[10px] text-app-text/40 font-sans leading-relaxed mt-0.5">
+                Your transaction is secure. SSL-encrypted checkout details are configured natively.
+              </p>
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                <button
+          {!isAuthenticated && (
+            <div className="rounded-2xl bg-brand-primary/10 border border-brand-primary/20 p-3 text-center">
+              <p className="text-xs font-bold text-brand-primary">Sign in to proceed to checkout</p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <button
                   onClick={handleProceedCheckout}
                   disabled={checkoutLoading || updatingItemId !== null}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-primary py-3.5 font-sans text-xs font-black uppercase tracking-widest text-black hover:opacity-90 disabled:opacity-50 transition-colors shadow-lg shadow-brand-primary/10 cursor-pointer"

@@ -33,7 +33,7 @@ export const HeroCarousel = () => {
   const renderImage = (src, className = '') => (
     <img
       src={src}
-      alt=""
+      alt="Hero banner"
       loading={index === 0 ? 'eager' : 'lazy'}
       onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_street.png'; }}
       className={className}
@@ -61,7 +61,7 @@ export const HeroCarousel = () => {
                 <Link key={i} to={[slide.link1, slide.link2, slide.link3][i] || slide.link} className="relative h-full w-full overflow-hidden block">
                   <img
                     src={img}
-                    alt=""
+                    alt={slide.title || 'Hero slide'}
                     className="w-full h-full object-cover object-top"
                   />
                 </Link>
@@ -70,7 +70,7 @@ export const HeroCarousel = () => {
           ) : (
             <img
               src={slide.image}
-              alt=""
+              alt={slide.title || 'Hero slide'}
               className="absolute inset-0 h-full w-full object-cover object-top"
               onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_street.png'; }}
             />

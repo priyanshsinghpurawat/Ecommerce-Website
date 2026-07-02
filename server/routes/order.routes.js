@@ -7,7 +7,6 @@ import {
   updateOrderStatus,
   getOrderAnalytics,
   exportOrdersCSV,
-  requestReturn,
   processReturn
 } from '../controllers/order.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
@@ -84,17 +83,6 @@ router.post('/', verifyJWT, validate({ body: createOrderSchema }), createOrder);
  *                 $ref: '#/components/schemas/Order'
  */
 router.get('/my', verifyJWT, getMyOrders);
-
-/**
- * @openapi
- * /api/v3/orders/{id}/items/{itemId}/return:
- *   post:
- *     summary: Request a return for an order item
- *     tags: [Orders]
- *     security:
- *       - BearerAuth: []
- */
-router.post('/:id/items/:itemId/return', verifyJWT, requestReturn);
 
 /**
  * @openapi

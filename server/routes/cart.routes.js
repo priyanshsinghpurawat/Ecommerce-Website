@@ -4,18 +4,19 @@ import {
   addToCart, 
   updateCartItemQuantity, 
   removeFromCart, 
-  clearCart 
+  clearCart, 
+  mergeCart 
 } from '../controllers/cart.controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
-import { addToCartSchema, updateCartQuantitySchema, cartItemIdParamSchema } from '../validators/cart.schema.js';
+import { addToCartSchema, updateCartQuantitySchema, cartItemIdParamSchema, mergeCartSchema } from '../validators/cart.schema.js';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
 const cartLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 30,
   message: { success: false, message: 'Too many cart requests. Please try again later.' },
   skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
 });
@@ -138,5 +139,7 @@ router.delete('/remove/:itemId', validate(cartItemIdParamSchema), removeFromCart
  *         description: Cart cleared successfully
  */
 router.delete('/clear', clearCart);
+
+router.post('/merge', validate(mergeCartSchema), mergeCart);
 
 export default router;

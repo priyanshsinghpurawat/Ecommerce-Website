@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { GoogleLogin } from '@react-oauth/google';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SEO } from '../components/SEO.jsx';
 
 const registerSchema = z.object({
   name: z
@@ -20,7 +21,13 @@ const registerSchema = z.object({
     .min(1, 'Email is required')
     .email('Invalid email address')
     .toLowerCase(),
-  password: z.string().min(6, 'Password must be at least 6 characters')
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+      'Password must contain uppercase, lowercase, number & special character (@$!%*?&)'
+    )
 });
 
 export const Register = () => {
@@ -31,6 +38,7 @@ export const Register = () => {
   const [capsLockActive, setCapsLockActive] = useState(false);
   const [serverError, setServerError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [registerRole, setRegisterRole] = useState('user');
 
   // Initialize react-hook-form
   const {
@@ -58,7 +66,6 @@ export const Register = () => {
   const calculatePasswordStrength = (pass) => {
     if (!pass) return 0;
     let score = 0;
-    if (pass.length >= 6) score += 1;
     if (pass.length >= 8) score += 1;
     if (/[0-9]/.test(pass)) score += 1;
     if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
@@ -100,7 +107,7 @@ export const Register = () => {
 
   const onSubmit = async (data) => {
     setServerError('');
-    const result = await registerUser(data.name, data.email, data.password);
+    const result = await registerUser(data.name, data.email, data.password, registerRole);
 
     if (result.success) {
       toast.success('Account ready — happy shopping.');
@@ -145,6 +152,7 @@ export const Register = () => {
       className="flex min-h-screen items-center justify-center px-4 py-12 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('/auth-bg.png')" }}
     >
+      <SEO title="Create Account" description="Create your MensVibe account to start shopping." />
       <div className="absolute inset-0 bg-black/60"></div>
       <div className="w-full max-w-md rounded-2xl border border-white/20 bg-black/20 p-8 shadow-2xl backdrop-blur-md relative z-10">
         <div className="mb-8 text-center">
@@ -304,10 +312,19 @@ export const Register = () => {
             )}
           </div>
 
+          <div className="flex gap-2 p-1 rounded-xl bg-black/40 border border-white/10">
+            <button type="button" onClick={() => setRegisterRole('user')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${registerRole === 'user' ? 'bg-brand-primary text-black' : 'text-white/50 hover:text-white'}`}
+            >Customer</button>
+            <button type="button" onClick={() => setRegisterRole('seller')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${registerRole === 'seller' ? 'bg-brand-primary text-black' : 'text-white/50 hover:text-white'}`}
+            >Seller</button>
+          </div>
+
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-app-text py-3 text-sm font-semibold text-black hover:bg-app-text-hover disabled:opacity-50 transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-primary py-3 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50 transition-colors shadow-lg shadow-brand-primary/20"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
           </button>

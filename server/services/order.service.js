@@ -47,6 +47,7 @@ export async function resolveVariant(item, session = null) {
 export async function deductStock(items, session) {
   const variantOps = [];
   const productOps = [];
+  const productsToRecalculate = new Set();
 
   // Sort items by product/variant ID to prevent database deadlocks
   const sortedItems = [...items].sort((a, b) => {
@@ -70,6 +71,7 @@ export async function deductStock(items, session) {
           update: { $inc: { stock: -item.quantity } }
         }
       });
+      productsToRecalculate.add(productId.toString());
     } else {
       const product = await Product.findById(productId).session(session);
       if (!product || product.stock < item.quantity) {
@@ -97,6 +99,13 @@ export async function deductStock(items, session) {
       throw new ApiError(400, "Some items became out of stock during checkout. Please try again.");
     }
   }
+
+  // Recalculate variant summaries for all affected products
+  if (productsToRecalculate.size > 0) {
+    for (const prodId of productsToRecalculate) {
+      await Product.recalculateVariantSummary(prodId, session);
+    }
+  }
 }
 
 /**
@@ -105,9 +114,11 @@ export async function deductStock(items, session) {
 export async function restoreStock(items, session) {
   const variantUpdates = [];
   const productUpdates = [];
+  const productsToRecalculate = new Set();
 
   for (const item of items) {
     const variant = await resolveVariant(item, session);
+    const productId = item.product?._id || item.product;
     if (variant) {
       variantUpdates.push({
         updateOne: {
@@ -115,10 +126,11 @@ export async function restoreStock(items, session) {
           update: { $inc: { stock: item.quantity } }
         }
       });
+      productsToRecalculate.add(productId.toString());
     } else {
       productUpdates.push({
         updateOne: {
-          filter: { _id: item.product?._id || item.product },
+          filter: { _id: productId },
           update: { $inc: { stock: item.quantity } }
         }
       });
@@ -130,6 +142,13 @@ export async function restoreStock(items, session) {
   }
   if (productUpdates.length > 0) {
     await Product.bulkWrite(productUpdates, { session });
+  }
+
+  // Recalculate variant summaries for all affected products
+  if (productsToRecalculate.size > 0) {
+    for (const prodId of productsToRecalculate) {
+      await Product.recalculateVariantSummary(prodId, session);
+    }
   }
 }
 

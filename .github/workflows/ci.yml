@@ -53,6 +53,10 @@ jobs:
         run: npm ci --legacy-peer-deps
         working-directory: server
 
+      - name: Security Audit
+        run: npm audit --audit-level=high || true
+        working-directory: server
+
       - name: Lint
         run: npm run lint
         working-directory: server
@@ -65,6 +69,13 @@ jobs:
           REDIS_URL: redis://localhost:6379
           PORT: 3001
           NODE_ENV: test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./server/coverage/
+          fail_ci_if_error: false
 
   frontend:
     name: Frontend
@@ -83,6 +94,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: client
+
+      - name: Security Audit
+        run: npm audit --audit-level=high || true
         working-directory: client
 
       - name: Lint

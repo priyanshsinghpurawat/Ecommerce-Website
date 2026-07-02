@@ -18,6 +18,8 @@ const envSchema = z.object({
   MONGODB_URI_TEST: z.string().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRY: z.string().default('7d'),
+  JWT_REFRESH_SECRET: z.string().min(32).optional(),
+  JWT_REFRESH_EXPIRY: z.string().default('7d'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   COOKIE_SECRET: z.string().optional(),
   REDIS_URL: z.string().optional(),
@@ -29,6 +31,11 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   CORS_ORIGIN: z.string().optional(),
   RATE_LIMIT_WINDOW_MS: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().transform(Number).optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -64,6 +71,8 @@ export const ENV = parsed.success
       MONGODB_URI_TEST: process.env.MONGODB_URI_TEST,
       JWT_SECRET: process.env.JWT_SECRET,
       JWT_EXPIRY: process.env.JWT_EXPIRY || '7d',
+      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+      JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY || '7d',
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       COOKIE_SECRET: process.env.COOKIE_SECRET,
       REDIS_URL: process.env.REDIS_URL,
@@ -75,6 +84,11 @@ export const ENV = parsed.success
       CORS_ORIGIN: process.env.CORS_ORIGIN,
       RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
       SERVER_URL: process.env.SERVER_URL,
+      SMTP_HOST: process.env.SMTP_HOST,
+      SMTP_PORT: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
+      SMTP_USER: process.env.SMTP_USER,
+      SMTP_PASS: process.env.SMTP_PASS,
+      EMAIL_FROM: process.env.EMAIL_FROM,
     };
 
 // Production startup guard — prevent silent failures with missing critical secrets

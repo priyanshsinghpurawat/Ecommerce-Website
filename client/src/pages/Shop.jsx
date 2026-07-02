@@ -7,6 +7,7 @@ import { useSubcategories } from '../hooks/useSubcategories.js';
 import { getProductFilters } from '../services/product.service.js';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { ProductCardSkeleton } from '../components/Skeleton.jsx';
+import { SEO } from '../components/SEO.jsx';
 import { Search, SlidersHorizontal, ChevronUp, ChevronDown, X, ShoppingBag } from 'lucide-react';
 
 /* ── Inline SVG category icons ── */
@@ -204,7 +205,7 @@ export const Shop = () => {
 
       {hasActiveFilters ? (
         <button type="button" onClick={clearAllFilters}
-          className="w-full mt-2 rounded-xl border border-red-200 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 transition-colors"
+          className="w-full mt-2 rounded-xl border border-red-500/30 py-2.5 text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500/10 transition-colors"
         >Clear All Filters</button>
       ) : null}
     </div>
@@ -212,6 +213,7 @@ export const Shop = () => {
 
   return (
     <div className="space-y-8 pb-16">
+      <SEO title="Shop" description="Browse our full collection of streetwear, drip clothing, and accessories for men." />
       {/* ── MAIN LAYOUT: Sidebar + Grid ── */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
@@ -324,7 +326,7 @@ export const Shop = () => {
             </div>
           ) : null}
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
           {/* Product Grid */}
           {loading ? (

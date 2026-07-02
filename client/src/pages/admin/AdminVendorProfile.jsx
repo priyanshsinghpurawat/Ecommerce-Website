@@ -61,7 +61,7 @@ export const AdminVendorProfile = () => {
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                  vendor.isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+                  vendor.isActive ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-red-500/15 text-red-400 border-red-500/20'
                 }`}>
                   {vendor.isActive ? 'Active Merchant' : 'Merchant Suspended'}
                 </span>
@@ -180,8 +180,8 @@ export const AdminVendorProfile = () => {
                       <p className="text-[8px] font-bold text-app-text/30 uppercase tracking-tighter">{o.vendorItemsCount} Items</p>
                     </div>
                     <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${
-                      o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : 
-                      o.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                      o.status === 'delivered' ? 'bg-emerald-500/15 text-emerald-400' : 
+                      o.status === 'cancelled' ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'
                     }`}>
                       {o.status}
                     </span>

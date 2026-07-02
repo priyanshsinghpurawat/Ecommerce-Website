@@ -276,6 +276,78 @@ export const removeFromCart = asyncHandler(async (req, res) => {
  * @route   DELETE /api/v3/cart/clear
  * @access  Private
  */
+/**
+ * @desc    Merge guest cart items into user's cart after login
+ * @route   POST /api/v3/cart/merge
+ * @access  Private
+ */
+export const mergeCart = asyncHandler(async (req, res) => {
+  const { items } = req.body;
+
+  let cart = await Cart.findOne({ user: req.user._id });
+
+  for (const guestItem of items) {
+    const product = await Product.findById(guestItem.productId);
+    if (!product) continue;
+
+    // Resolve stock
+    let variantDoc = null;
+    let availableStock = product.stock;
+
+    if (guestItem.variantId) {
+      variantDoc = await Variant.findById(guestItem.variantId);
+      if (variantDoc) availableStock = variantDoc.stock;
+    } else if (guestItem.size || guestItem.color) {
+      const query = { product: guestItem.productId, deletedAt: null };
+      if (guestItem.color) query['optionValues.Color'] = guestItem.color;
+      if (guestItem.size) query['optionValues.Size'] = guestItem.size;
+      variantDoc = await Variant.findOne(query);
+      if (variantDoc) availableStock = variantDoc.stock;
+    }
+
+    const safeQty = Math.min(guestItem.quantity, availableStock);
+    if (safeQty < 1) continue;
+
+    const variantRef = variantDoc?._id || null;
+    const sizeVal = guestItem.size || '';
+    const colorVal = guestItem.color || '';
+
+    // Try to find existing matching item
+    const existingIdx = cart?.items?.findIndex(item =>
+      item.product.toString() === guestItem.productId &&
+      (variantRef ? item.variant?.toString() === variantRef.toString() : true) &&
+      (item.size || '') === sizeVal &&
+      (item.color || '') === colorVal
+    );
+
+    if (existingIdx !== undefined && existingIdx >= 0) {
+      const newQty = Math.min(
+        (cart.items[existingIdx].quantity || 0) + safeQty,
+        availableStock
+      );
+      cart.items[existingIdx].quantity = newQty;
+    } else {
+      if (!cart) {
+        cart = new Cart({ user: req.user._id, items: [] });
+      }
+      cart.items.push({
+        product: guestItem.productId,
+        variant: variantRef,
+        quantity: safeQty,
+        size: sizeVal,
+        color: colorVal,
+      });
+    }
+  }
+
+  if (cart) await cart.save();
+
+  const populatedCart = await getPopulatedCart(req.user._id);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, mapCartForResponse(populatedCart), 'Guest cart merged successfully'));
+});
+
 export const clearCart = asyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) {

@@ -1,37 +1,71 @@
-/** WHY: Global state for the shopping cart (adding items, clearing, subtotal). */
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
 import * as cartService from '../services/cart.service.js';
 
+const GUEST_CART_KEY = 'guest_cart';
+
+const loadGuestCart = () => {
+  try {
+    const raw = localStorage.getItem(GUEST_CART_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveGuestCart = (items) => {
+  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+};
+
+const clearGuestCart = () => {
+  localStorage.removeItem(GUEST_CART_KEY);
+};
+
+/**
+ * Generate a stable local ID for guest cart items so React keys don't flicker.
+ */
+let localIdCounter = Date.now();
+const nextLocalId = () => `guest_${++localIdCounter}`;
+
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const [cart, setCart] = useState(null);
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Helper to compute aggregates from cart items
   const computeAggregates = (items = []) => {
     let count = 0;
     let total = 0;
-
-    items.forEach((item) => {
+    for (const item of items) {
       if (item.product) {
         count += item.quantity;
-        const hasDiscount = item.product.discountedPrice !== null && item.product.discountedPrice !== undefined;
+        const hasDiscount = item.product.discountedPrice != null;
         const price = hasDiscount ? item.product.discountedPrice : item.product.price;
         total += price * item.quantity;
       }
-    });
-
+    }
     setCartItemsCount(count);
     setCartTotal(total);
   };
 
+  // Build a fake cart shape from guest items for the UI
+  const buildGuestCart = useCallback((guestItems) => {
+    return { _id: null, user: null, items: guestItems };
+  }, []);
+
   const fetchCart = useCallback(async () => {
+    if (!isAuthenticated) {
+      const guestItems = loadGuestCart();
+      setCart(buildGuestCart(guestItems));
+      computeAggregates(guestItems);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -55,24 +89,80 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  }, [isAuthenticated, buildGuestCart]);
+
+  // Merge guest cart into server cart when user logs in
+  const mergeGuestCart = useCallback(async () => {
+    const guestItems = loadGuestCart();
+    if (guestItems.length === 0) return;
+
+    try {
+      const payload = guestItems.map((item) => ({
+        productId: item.product._id || item.productId,
+        variantId: item.variant || item.variantId || undefined,
+        quantity: item.quantity,
+        size: item.size || '',
+        color: item.color || '',
+      }));
+      await cartService.mergeCart(payload);
+      clearGuestCart();
+    } catch {
+      // Non-fatal — guest items that fail merge stay in localStorage
+    }
   }, []);
 
-  // Fetch cart automatically when authenticated
+  // On auth change: fetch server cart or load guest cart
   useEffect(() => {
     if (isAuthenticated) {
-      fetchCart();
+      mergeGuestCart().finally(() => fetchCart());
     } else {
-      setCart(null);
-      setCartItemsCount(0);
-      setCartTotal(0);
+      const guestItems = loadGuestCart();
+      setCart(buildGuestCart(guestItems));
+      computeAggregates(guestItems);
     }
-  }, [isAuthenticated, fetchCart]);
+  }, [isAuthenticated, fetchCart, mergeGuestCart, buildGuestCart]);
+
+  // Need a re-fetch when user identity changes (e.g. after registration)
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchCart();
+    }
+  }, [user?._id]);
 
   const addToCart = async (productId, quantity = 1, metadata = {}) => {
-    if (!isAuthenticated) {
-      return { success: false, error: 'Please log in to add items to your cart.' };
-    }
     setError(null);
+
+    if (!isAuthenticated) {
+      // Guest path: store in localStorage
+      const guestItems = loadGuestCart();
+      const existingIdx = guestItems.findIndex(
+        (item) =>
+          item.productId === productId &&
+          (item.variantId || null) === (metadata.variantId || null) &&
+          (item.size || '') === (metadata.size || '') &&
+          (item.color || '') === (metadata.color || '')
+      );
+
+      if (existingIdx >= 0) {
+        guestItems[existingIdx].quantity += quantity;
+      } else {
+        guestItems.push({
+          _id: nextLocalId(),
+          productId,
+          product: { _id: productId, price: metadata.price || 0, discountedPrice: metadata.discountedPrice ?? null, image: metadata.image || '', title: metadata.title || 'Item' },
+          variantId: metadata.variantId || null,
+          quantity,
+          size: metadata.size || '',
+          color: metadata.color || '',
+        });
+      }
+
+      saveGuestCart(guestItems);
+      setCart(buildGuestCart(guestItems));
+      computeAggregates(guestItems);
+      return { success: true };
+    }
+
     try {
       const response = await cartService.addToCart(productId, quantity, metadata);
       if (response && response.success) {
@@ -88,8 +178,20 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = async (itemId, quantity) => {
-    if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     setError(null);
+
+    if (!isAuthenticated) {
+      const guestItems = loadGuestCart();
+      const item = guestItems.find((i) => i._id === itemId);
+      if (item) {
+        item.quantity = quantity;
+        saveGuestCart(guestItems);
+        setCart(buildGuestCart(guestItems));
+        computeAggregates(guestItems);
+      }
+      return { success: true };
+    }
+
     try {
       const response = await cartService.updateCartItemQuantity(itemId, quantity);
       if (response && response.success) {
@@ -105,8 +207,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (itemId) => {
-    if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     setError(null);
+
+    if (!isAuthenticated) {
+      let guestItems = loadGuestCart();
+      guestItems = guestItems.filter((i) => i._id !== itemId);
+      saveGuestCart(guestItems);
+      setCart(buildGuestCart(guestItems));
+      computeAggregates(guestItems);
+      return { success: true };
+    }
+
     try {
       const response = await cartService.removeFromCart(itemId);
       if (response && response.success) {
@@ -122,8 +233,15 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
-    if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     setError(null);
+
+    if (!isAuthenticated) {
+      clearGuestCart();
+      setCart(buildGuestCart([]));
+      computeAggregates([]);
+      return { success: true };
+    }
+
     try {
       const response = await cartService.clearCart();
       if (response && response.success) {
@@ -156,7 +274,7 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         removeFromCart,
         clearCart,
-        clearLocalCart
+        clearLocalCart,
       }}
     >
       {children}
