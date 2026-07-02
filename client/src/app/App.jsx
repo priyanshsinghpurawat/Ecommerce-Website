@@ -141,7 +141,7 @@ function App() {
                     </Route>
 
                     <Route
-                      path="/vendor"
+                      path="/seller"
                       element={
                         <SellerRoute>
                           <SellerLayout />
