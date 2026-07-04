@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import slugify from 'slugify';
-import { ENV } from '../config/env.js';
 
 const userSchema = new mongoose.Schema(
   {

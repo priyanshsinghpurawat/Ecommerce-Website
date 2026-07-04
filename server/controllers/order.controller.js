@@ -23,7 +23,6 @@ import {
   calculateOrderTotals,
   createLedgerEntries,
 } from '../services/order.service.js';
-import { calculateCouponDiscount } from '../services/coupon.service.js';
 
 const VALID_ORDER_STATUSES = [
   'confirmed',
