@@ -4,6 +4,10 @@ import { z } from 'zod';
 if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
   process.env.JWT_SECRET =
     process.env.JWT_SECRET || 'test-jwt-secret-key-must-be-at-least-32-chars-long';
+<<<<<<< HEAD
+=======
+  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mensvibe-test';
+>>>>>>> 95584cd6e57b1ea6e3abe8b21644efdbade6efa1
   process.env.PORT = '3000';
   process.env.CORS_ORIGIN = 'http://localhost:3000';
 }
