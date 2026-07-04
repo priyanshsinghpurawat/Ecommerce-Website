@@ -49,6 +49,8 @@ const cspDirectives = {
     'https://accounts.google.com',
     'https://api.postalpincode.in',
     'https://api.zippopotam.us',
+    '74.220.50.0/24',
+    '74.220.58.0/24',
   ],
   frameSrc: ["'self'", 'https://accounts.google.com'],
   objectSrc: ["'none'"],
@@ -116,9 +118,8 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin || ENV.NODE_ENV !== 'production') return callback(null, true);
-      if (configuredOrigins?.includes(origin)) {
-        return callback(null, true);
-      }
+      if (!configuredOrigins?.length) return callback(null, true);
+      if (configuredOrigins.includes(origin)) return callback(null, true);
       callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true,

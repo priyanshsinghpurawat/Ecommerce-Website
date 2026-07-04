@@ -283,7 +283,7 @@ export const Shop = () => {
                 {filters.badge === 'sale' ? 'Flash Sale' : activeSub ? activeSub.name : activeCat ? activeCat.name : 'Shop Everything'}
               </h1>
               <p className="text-sm text-app-text/50 mt-1">
-                {pagination.totalProducts != null ? `${pagination.totalProducts} products` : 'Browse our collection'}
+                {pagination.totalItems != null ? `${pagination.totalItems} products` : 'Browse our collection'}
               </p>
             </div>
             <div className="flex items-center gap-3">

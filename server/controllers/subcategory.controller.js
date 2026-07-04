@@ -1,3 +1,4 @@
+import slugify from 'slugify';
 import { Subcategory } from '../models/subcategory.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
@@ -10,6 +11,21 @@ export const getSubcategories = asyncHandler(async (req, res) => {
     .populate('category', 'name slug')
     .sort({ name: 1 })
     .lean();
+
+  // Auto-heal: subcategories created before the slug hook was added have no slug.
+  // Generate and persist slugs so the Home page section lookups (subBySlug.linen) work.
+  const healPromises = [];
+  subcategories = subcategories.map((sub) => {
+    if (!sub.slug && sub.name) {
+      const generatedSlug = slugify(sub.name, { lower: true, strict: true });
+      healPromises.push(
+        Subcategory.findByIdAndUpdate(sub._id, { slug: generatedSlug }).catch(() => null),
+      );
+      return { ...sub, slug: generatedSlug };
+    }
+    return sub;
+  });
+  if (healPromises.length > 0) await Promise.all(healPromises);
 
   // Attach a product image to each subcategory
   const subcategoryIds = subcategories.map((s) => s._id);
