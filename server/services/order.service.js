@@ -176,7 +176,7 @@ export async function createLedgerEntries(
   for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
     const saleAmountPaise = Math.round(vendorTotal * 100);
     ledgerEntries.push({
-      vendor: vendorId,
+      seller: vendorId,
       type: 'sale',
       amount: saleAmountPaise,
       order: orderId,
@@ -186,7 +186,7 @@ export async function createLedgerEntries(
 
     const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
     ledgerEntries.push({
-      vendor: vendorId,
+      seller: vendorId,
       type: 'commission_fee',
       amount: -commissionAmountPaise,
       order: orderId,
