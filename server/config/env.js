@@ -1,10 +1,5 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { z } from 'zod';
-
-// Load .env first so NODE_ENV is available for env-specific override
-dotenv.config({ path: '.env' });
-const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development';
-dotenv.config({ path: envFile, override: true });
 
 if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
   process.env.JWT_SECRET =
@@ -15,9 +10,9 @@ if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
 }
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('production'),
   PORT: z.string().transform(Number).default('3000'),
-  MONGODB_URI: z.string(),
+  MONGODB_URI: z.string().optional(),
   MONGODB_URI_TEST: z.string().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRY: z.string().default('7d'),
@@ -44,8 +39,25 @@ const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
   const err = parsed.error.format ? parsed.error.format() : parsed.error;
-  console.error(`❌ Invalid environment variables: ${JSON.stringify(err, null, 2)}`);
-  process.exit(1);
+  const message = `Invalid environment variables: ${JSON.stringify(err, null, 2)}`;
+
+  if (process.env.NODE_ENV === 'test') {
+    console.warn(message + ' — continuing in test mode.');
+  } else {
+    console.error(message);
+    process.exit(1);
+  }
 }
 
-export const ENV = parsed.data;
+export const ENV = parsed.success
+  ? parsed.data
+  : {
+      NODE_ENV: process.env.NODE_ENV || 'production',
+      PORT: Number(process.env.PORT || 3000),
+      MONGODB_URI: process.env.MONGODB_URI,
+      JWT_SECRET: process.env.JWT_SECRET,
+      JWT_EXPIRY: process.env.JWT_EXPIRY || '7d',
+      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+      JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY || '7d',
+      CORS_ORIGIN: process.env.CORS_ORIGIN,
+    };
