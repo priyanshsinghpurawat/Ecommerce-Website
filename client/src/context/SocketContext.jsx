@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../hooks/useAuth.js';
 
@@ -7,9 +7,6 @@ const SocketContext = createContext(null);
 export const SocketProvider = ({ children }) => {
   const { user } = useAuth();
   const [socket, setSocket] = useState(null);
-  // WHY: useRef holds the live socket instance for cleanup.
-  // Without this, the `else if (socket)` branch reads the stale initial
-  // `null` from the closure — socket would never disconnect on logout.
   const socketRef = useRef(null);
 
   useEffect(() => {

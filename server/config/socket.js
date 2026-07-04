@@ -19,8 +19,8 @@ export const setupSocket = (io) => {
     try {
       // Accept token only from the auth payload or httpOnly cookie.
       // Never from query string — URL tokens appear in server logs and browser history.
-      const token = socket.handshake.auth?.token ||
-                    parseCookie(socket.handshake.headers?.cookie, 'token');
+      const token =
+        socket.handshake.auth?.token || parseCookie(socket.handshake.headers?.cookie, 'token');
 
       if (!token) {
         return next(new Error('Authentication error'));

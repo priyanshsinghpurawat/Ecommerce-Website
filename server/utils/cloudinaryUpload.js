@@ -27,8 +27,8 @@ export const uploadBufferToCloudinary = (buffer, opts = {}) =>
       return reject(
         new ApiError(
           503,
-          'Image uploads need Cloudinary. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET to server/.env'
-        )
+          'Image uploads need Cloudinary. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET to server/.env',
+        ),
       );
     }
     if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
@@ -40,13 +40,13 @@ export const uploadBufferToCloudinary = (buffer, opts = {}) =>
         folder: opts.folder || DEFAULT_FOLDER,
         resource_type: 'image',
         public_id: opts.filename ? opts.filename.replace(/\.[^.]+$/, '') : undefined,
-        transformation: [{ width: 1600, height: 2000, crop: 'limit', quality: 'auto:good' }]
+        transformation: [{ width: 1600, height: 2000, crop: 'limit', quality: 'auto:good' }],
       },
       (err, result) => {
         if (err) return reject(new ApiError(502, `Image upload failed: ${err.message}`));
         if (!result?.secure_url) return reject(new ApiError(502, 'Cloudinary returned no URL.'));
         resolve(result.secure_url);
-      }
+      },
     );
 
     Readable.from(buffer).pipe(stream);
@@ -61,8 +61,6 @@ export const uploadBufferToCloudinary = (buffer, opts = {}) =>
 export const uploadFilesToCloudinary = async (files = [], opts = {}) => {
   if (!files.length) return [];
   return Promise.all(
-    files.map((f) =>
-      uploadBufferToCloudinary(f.buffer, { ...opts, filename: f.originalname })
-    )
+    files.map((f) => uploadBufferToCloudinary(f.buffer, { ...opts, filename: f.originalname })),
   );
 };

@@ -5,44 +5,46 @@ const migrationCheckpointSchema = new mongoose.Schema(
     version: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     lastProductId: {
       type: mongoose.Schema.Types.ObjectId,
-      default: null
+      default: null,
     },
     status: {
       type: String,
       enum: ['pending', 'running', 'completed', 'failed', 'rolled_back'],
-      default: 'pending'
+      default: 'pending',
     },
     totalProducts: {
       type: Number,
-      default: 0
+      default: 0,
     },
     processedProducts: {
       type: Number,
-      default: 0
+      default: 0,
     },
     totalVariants: {
       type: Number,
-      default: 0
+      default: 0,
     },
-    errors: [{
-      productId: mongoose.Schema.Types.ObjectId,
-      message: String,
-      timestamp: { type: Date, default: Date.now }
-    }],
+    errors: [
+      {
+        productId: mongoose.Schema.Types.ObjectId,
+        message: String,
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
     startedAt: {
       type: Date,
-      default: Date.now
+      default: Date.now,
     },
     completedAt: {
       type: Date,
-      default: null
-    }
+      default: null,
+    },
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'migration_checkpoints' },
 );
 
 export const MigrationCheckpoint = mongoose.model('MigrationCheckpoint', migrationCheckpointSchema);

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { SEO } from '../components/SEO.jsx';
@@ -12,7 +11,9 @@ export const NotFound = () => {
           404
         </h1>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-6xl sm:text-7xl">🔍</span>
+          <span className="text-6xl sm:text-7xl text-app-text/10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </span>
         </div>
       </div>
 

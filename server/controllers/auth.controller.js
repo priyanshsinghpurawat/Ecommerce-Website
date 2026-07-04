@@ -6,6 +6,11 @@ import { RefreshToken } from '../models/refreshToken.model.js';
 import { OAuth2Client } from 'google-auth-library';
 import { ENV } from '../config/env.js';
 import { sendPasswordResetEmail } from '../utils/email.js';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  generatePasswordResetToken,
+} from '../utils/jwt.js';
 
 const client = new OAuth2Client(ENV.GOOGLE_CLIENT_ID);
 
@@ -26,7 +31,7 @@ const refreshCookieOptions = {
 
 const createRefreshTokenDoc = async (userId) => {
   const user = await User.findById(userId);
-  const refreshToken = user.generateRefreshToken();
+  const refreshToken = generateRefreshToken(user);
   const decoded = jwt.decode(refreshToken);
   await RefreshToken.create({
     user: userId,
@@ -46,15 +51,13 @@ const sendAuthResponse = async (res, statusCode, user, accessToken, message) => 
     .json(new ApiResponse(statusCode, { user }, message));
 };
 
-
-
 export const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
 
   try {
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: ENV.GOOGLE_CLIENT_ID
+      audience: ENV.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
@@ -73,7 +76,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
         email,
         avatar: picture,
         password: crypto.randomBytes(32).toString('hex'),
-        role: 'user'
+        role: 'user',
       });
     } else {
       if (!user.avatar) {
@@ -82,7 +85,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
       }
     }
 
-    const token = user.generateAccessToken();
+    const token = generateAccessToken(user);
 
     return await sendAuthResponse(res, 200, buildSafeUser(user), token, 'Welcome back via Google.');
   } catch {
@@ -91,7 +94,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
 });
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
   const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
   if (existingUser) {
@@ -102,10 +105,10 @@ export const registerUser = asyncHandler(async (req, res) => {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     password,
-    role: role === 'seller' ? 'seller' : 'user'
+    role: 'user',
   });
 
-  const token = user.generateAccessToken();
+  const token = generateAccessToken(user);
 
   return await sendAuthResponse(res, 201, buildSafeUser(user), token, 'Account created.');
 });
@@ -123,7 +126,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, 'Email or password is wrong.');
   }
 
-  const token = user.generateAccessToken();
+  const token = generateAccessToken(user);
 
   return await sendAuthResponse(res, 200, buildSafeUser(user), token, 'Welcome back.');
 });
@@ -138,10 +141,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user) {
-    return res.status(200).json(new ApiResponse(200, null, 'If that email is registered, a reset link has been sent.'));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, 'If that email is registered, a reset link has been sent.'));
   }
 
-  const resetToken = user.generatePasswordResetToken();
+  const resetToken = generatePasswordResetToken(user);
   await user.save({ validateBeforeSave: false });
 
   const clientUrl = ENV.CORS_ORIGIN?.replace(/\/+$/, '') || 'http://localhost:5173';
@@ -149,7 +154,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   try {
     await sendPasswordResetEmail(user.email, resetUrl);
-    return res.status(200).json(new ApiResponse(200, null, 'If that email is registered, a reset link has been sent.'));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, 'If that email is registered, a reset link has been sent.'));
   } catch {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
@@ -177,9 +184,15 @@ export const resetPassword = asyncHandler(async (req, res) => {
   user.resetPasswordExpire = undefined;
   await user.save();
 
-  const jwtToken = user.generateAccessToken();
+  const jwtToken = generateAccessToken(user);
 
-  return await sendAuthResponse(res, 200, buildSafeUser(user), jwtToken, 'Password reset successfully.');
+  return await sendAuthResponse(
+    res,
+    200,
+    buildSafeUser(user),
+    jwtToken,
+    'Password reset successfully.',
+  );
 });
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -200,10 +213,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      incomingToken,
-      ENV.JWT_REFRESH_SECRET || ENV.JWT_SECRET
-    );
+    const decoded = jwt.verify(incomingToken, ENV.JWT_REFRESH_SECRET || ENV.JWT_SECRET);
 
     const user = await User.findById(decoded._id);
     if (!user) {
@@ -214,7 +224,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     stored.revoked = true;
     await stored.save();
 
-    const newAccessToken = user.generateAccessToken();
+    const newAccessToken = generateAccessToken(user);
     const newRefreshToken = await createRefreshTokenDoc(user._id);
 
     return res
@@ -229,10 +239,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 export const revokeAllSessions = asyncHandler(async (req, res) => {
-  await RefreshToken.updateMany(
-    { user: req.user._id, revoked: false },
-    { revoked: true }
-  );
+  await RefreshToken.updateMany({ user: req.user._id, revoked: false }, { revoked: true });
 
   return res
     .status(200)

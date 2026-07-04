@@ -1,5 +1,4 @@
 
-/** WHY: React entry point. Mounts the app and global providers to the DOM. */
 import { createRoot } from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
 import { GoogleOAuthProvider } from '@react-oauth/google'

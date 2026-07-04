@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   getCoupons, 
   createCoupon, 
@@ -240,7 +240,7 @@ export const AdminCoupons = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pl-10 font-sans text-xs text-app-text focus:outline-none"
+            className="w-full rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pl-10 font-sans text-xs text-app-text focus:outline-none focus:ring-2 focus:ring-brand-primary"
           />
           <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-app-text/45" />
         </div>
@@ -253,7 +253,7 @@ export const AdminCoupons = () => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className="w-full appearance-none rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pr-10 font-sans text-xs text-app-text focus:outline-none"
+            className="w-full appearance-none rounded-full border border-surface-200 bg-surface-50 px-4 py-2 pr-10 font-sans text-xs text-app-text focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Status: All</option>
             <option value="active">Status: Active</option>

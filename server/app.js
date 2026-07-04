@@ -1,4 +1,3 @@
-/** WHY: Configures Express middleware, security, and main API routes. */
 import express from 'express';
 import mongoose from 'mongoose';
 import swaggerUi from 'swagger-ui-express';
@@ -28,106 +27,111 @@ import variantRouter from './routes/variant.routes.js';
 import affiliateRouter from './routes/affiliate.routes.js';
 import billingRouter from './routes/billing.routes.js';
 import reviewRouter from './routes/review.routes.js';
+import newsletterRouter from './routes/newsletter.routes.js';
 
 const app = express();
 
-// NOTE: helmet already removes x-powered-by — no need for app.disable()
 if (ENV.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// Build CSP directives — upgradeInsecureRequests must be conditionally spread
-// because passing `null` as a directive value crashes helmet's CSP builder.
 const cspDirectives = {
-  defaultSrc:  ["'none'"],
-  scriptSrc:   ["'none'"],
-  styleSrc:    ["'none'"],
-  imgSrc:      ["'none'"],
-  connectSrc:  [
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+  styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://via.placeholder.com'],
+  fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+  connectSrc: [
     "'self'",
     'https://api.razorpay.com',
     'https://res.cloudinary.com',
     'https://oauth2.googleapis.com',
     'https://accounts.google.com',
+    'https://api.postalpincode.in',
+    'https://api.zippopotam.us',
   ],
-  frameSrc:    ["'none'"],
-  objectSrc:   ["'none'"],
-  baseUri:     ["'self'"],
-  formAction:  ["'none'"],
+  frameSrc: ["'self'", 'https://accounts.google.com'],
+  objectSrc: ["'none'"],
+  baseUri: ["'self'"],
+  formAction: ["'self'"],
   ...(ENV.NODE_ENV === 'production' && { upgradeInsecureRequests: [] }),
 };
 
-app.use(helmet({
-  // CORP: 'same-site' is correct for a pure JSON API server.
-  crossOriginResourcePolicy: { policy: 'same-site' },
+app.use(
+  helmet({
+    // CORP: 'same-site' is correct for a pure JSON API server.
+    crossOriginResourcePolicy: { policy: 'same-site' },
 
-  // COOP: allow OAuth popup flows (Google sign-in)
-  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    // COOP: allow OAuth popup flows (Google sign-in)
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
 
-  // HSTS: enforce HTTPS for 1 year + preload in production
-  strictTransportSecurity: ENV.NODE_ENV === 'production'
-    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
-    : false,
+    // HSTS: enforce HTTPS for 1 year + preload in production
+    strictTransportSecurity:
+      ENV.NODE_ENV === 'production'
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
 
-  // CSP: disabled in dev so Swagger UI (which loads its own scripts/styles
-  // from Express) isn't blocked. In production, strict 'none' API policy.
-  contentSecurityPolicy: ENV.NODE_ENV !== 'development'
-    ? { directives: cspDirectives }
-    : false,
+    // CSP: disabled in dev so Swagger UI (which loads its own scripts/styles
+    // from Express) isn't blocked. In production, strict 'none' API policy.
+    contentSecurityPolicy: ENV.NODE_ENV !== 'development' ? { directives: cspDirectives } : false,
 
-  // X-XSS-Protection: explicitly disabled — modern browsers ignore it and
-  // legacy parsers can be exploited by "1; mode=block".
-  xXssProtection: false,
+    // X-XSS-Protection: explicitly disabled — modern browsers ignore it and
+    // legacy parsers can be exploited by "1; mode=block".
+    xXssProtection: false,
 
-  // Referrer-Policy: don't leak full URL to third-party origins
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    // Referrer-Policy: don't leak full URL to third-party origins
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 
-  // X-Frame-Options: deny embedding in any iframe
-  frameguard: { action: 'deny' },
+    // X-Frame-Options: deny embedding in any iframe
+    frameguard: { action: 'deny' },
 
-  // X-Content-Type-Options: nosniff
-  xContentTypeOptions: true,
+    // X-Content-Type-Options: nosniff
+    xContentTypeOptions: true,
 
-  // X-Permitted-Cross-Domain-Policies: deny Flash/PDF cross-domain access
-  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-}));
+    // X-Permitted-Cross-Domain-Policies: deny Flash/PDF cross-domain access
+    permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+  }),
+);
 
 // General rate limiter for all routes
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: ENV.NODE_ENV === 'production' ? 500 : 5000,
   message: { success: false, message: 'Too many requests. Please try again later.' },
-  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
+  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { success: false, message: 'Too many login attempts. Wait a few minutes.' },
-  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
+  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
-const configuredOrigins = ENV.CORS_ORIGIN?.split(',').map((o) => o.trim()).filter(Boolean);
+const configuredOrigins = ENV.CORS_ORIGIN?.split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (configuredOrigins?.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error(`CORS blocked origin: ${origin}`));
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || ENV.NODE_ENV !== 'production') return callback(null, true);
+      if (configuredOrigins?.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true,
+  }),
+);
 
-app.use(express.json({ limit: "100kb" }));
-app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 app.use(compression());
 app.use(mongoSanitize());
 app.use(morgan(ENV.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Production audit logger — logs non-GET requests
 if (ENV.NODE_ENV === 'production') {
   app.use((req, res, next) => {
     if (req.method !== 'GET') {
@@ -142,7 +146,6 @@ if (ENV.NODE_ENV === 'production') {
   });
 }
 
-// Apply general rate limit to all routes
 app.use(generalLimiter);
 
 // =========================================================================
@@ -195,10 +198,10 @@ const swaggerOptions = {
                   state: { type: 'string' },
                   zipCode: { type: 'string' },
                   country: { type: 'string' },
-                  isDefault: { type: 'boolean' }
-                }
-              }
-            }
+                  isDefault: { type: 'boolean' },
+                },
+              },
+            },
           },
         },
         Product: {
@@ -216,7 +219,10 @@ const swaggerOptions = {
             rating: { type: 'number' },
             reviewCount: { type: 'number' },
             soldCount: { type: 'number' },
-            badge: { type: 'string', enum: ['', 'new-arrival', 'sale', 'street-drip', 'limited-edition'] },
+            badge: {
+              type: 'string',
+              enum: ['', 'new-arrival', 'sale', 'street-drip', 'limited-edition'],
+            },
             category: { type: 'string' },
             subcategory: { type: 'string' },
             gender: { type: 'string', enum: ['men', 'women', 'unisex'] },
@@ -232,10 +238,10 @@ const swaggerOptions = {
                   sku: { type: 'string' },
                   stock: { type: 'number' },
                   price: { type: 'number' },
-                  images: { type: 'array', items: { type: 'string' } }
-                }
-              }
-            }
+                  images: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
           },
         },
         Coupon: {
@@ -295,41 +301,38 @@ const swaggerOptions = {
       },
     },
   },
-  // Tell Swagger to scan this file and route files for documentation comments
-  apis: ['./app.js', './routes/*.js'], 
+  apis: ['./app.js', './routes/*.js'],
 };
 
 if (ENV.NODE_ENV !== 'production') {
-  // Lazy evaluation: Only parse files for Swagger documentation in Dev/Staging environments.
-  // In production, parsing hundreds of files synchronously blocks the Node event loop and slows down deployment.
   const swaggerDocs = swaggerJsdoc(swaggerOptions);
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 }
 
 // Route declarations
-app.use("/api/v3/auth", authLimiter, authRouter);
-app.use("/api/v3/users", userRouter);
-app.use("/api/v3/categories", categoryRouter);
-app.use("/api/v3/products", productRouter);
-app.use("/api/v3", reviewRouter);  // routes: /products/:id/reviews, /reviews/:reviewId
-app.use("/api/v3/cart", cartRouter);
-app.use("/api/v3/coupons", couponRouter);
-app.use("/api/v3/orders", orderRouter);
-app.use("/api/v3/payments", paymentRouter);
-app.use("/api/v3/subcategories", subcategoryRouter);
-app.use("/api/v3", variantRouter);  // routes: /products/:id/variants, /variants/:id
-app.use("/api/v3/affiliates", affiliateRouter);
-app.use("/api/v3/billing", billingRouter);
+app.use('/api/v3/auth', authLimiter, authRouter);
+app.use('/api/v3/users', userRouter);
+app.use('/api/v3/categories', categoryRouter);
+app.use('/api/v3/products', productRouter);
+app.use('/api/v3', reviewRouter); // routes: /products/:id/reviews, /reviews/:reviewId
+app.use('/api/v3/cart', cartRouter);
+app.use('/api/v3/coupons', couponRouter);
+app.use('/api/v3/orders', orderRouter);
+app.use('/api/v3/payments', paymentRouter);
+app.use('/api/v3/subcategories', subcategoryRouter);
+app.use('/api/v3', variantRouter); // routes: /products/:id/variants, /variants/:id
+app.use('/api/v3/affiliates', affiliateRouter);
+app.use('/api/v3/billing', billingRouter);
+app.use('/api/v3/newsletter', newsletterRouter);
 
 // Root fallback route
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   res.json({ ok: true, service: 'mensvibe-api', version: '1.0.0' });
 });
 
-
 const startTime = Date.now();
 
-app.get("/api/v3/health", (req, res) => {
+app.get('/api/v3/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatus = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
 
@@ -338,11 +341,10 @@ app.get("/api/v3/health", (req, res) => {
     uptime: Math.round((Date.now() - startTime) / 1000),
     timestamp: new Date().toISOString(),
     db: dbStatus[dbState] || 'unknown',
-    memory: process.memoryUsage().rss
+    memory: process.memoryUsage().rss,
   });
 });
 
-// Centralized error handling middleware (must be mounted last)
 app.use(errorHandler);
 
 export { app };

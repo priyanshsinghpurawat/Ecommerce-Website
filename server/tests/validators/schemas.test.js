@@ -13,23 +13,33 @@ describe('Auth Validators', () => {
     });
 
     it('rejects short name', () => {
-      expect(() => registerSchema.parse({ name: 'T', email: 'a@b.com', password: 'Pass@1234' })).toThrow();
+      expect(() =>
+        registerSchema.parse({ name: 'T', email: 'a@b.com', password: 'Pass@1234' }),
+      ).toThrow();
     });
 
     it('rejects invalid email', () => {
-      expect(() => registerSchema.parse({ name: 'Test', email: 'not-email', password: 'Pass@1234' })).toThrow();
+      expect(() =>
+        registerSchema.parse({ name: 'Test', email: 'not-email', password: 'Pass@1234' }),
+      ).toThrow();
     });
 
     it('rejects weak password (no uppercase)', () => {
-      expect(() => registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'pass@1234' })).toThrow();
+      expect(() =>
+        registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'pass@1234' }),
+      ).toThrow();
     });
 
     it('rejects weak password (no special char)', () => {
-      expect(() => registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'Pass12345' })).toThrow();
+      expect(() =>
+        registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'Pass12345' }),
+      ).toThrow();
     });
 
     it('rejects short password', () => {
-      expect(() => registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'P@1a' })).toThrow();
+      expect(() =>
+        registerSchema.parse({ name: 'Test', email: 'a@b.com', password: 'P@1a' }),
+      ).toThrow();
     });
 
     it('accepts optional phone', () => {
@@ -38,7 +48,11 @@ describe('Auth Validators', () => {
     });
 
     it('normalizes email to lowercase', () => {
-      const result = registerSchema.parse({ name: 'Test', email: 'TEST@TEST.COM', password: 'Pass@1234' });
+      const result = registerSchema.parse({
+        name: 'Test',
+        email: 'TEST@TEST.COM',
+        password: 'Pass@1234',
+      });
       expect(result.email).toBe('test@test.com');
     });
   });
@@ -75,7 +89,7 @@ describe('Cart Validators', () => {
         productId: '507f1f77bcf86cd799439011',
         quantity: 2,
         size: 'M',
-        color: 'Red'
+        color: 'Red',
       });
       expect(result.productId).toBe('507f1f77bcf86cd799439011');
       expect(result.quantity).toBe(2);
@@ -91,13 +105,15 @@ describe('Cart Validators', () => {
     });
 
     it('rejects non-positive quantity', () => {
-      expect(() => addToCartSchema.body.parse({ productId: '507f1f77bcf86cd799439011', quantity: 0 })).toThrow();
+      expect(() =>
+        addToCartSchema.body.parse({ productId: '507f1f77bcf86cd799439011', quantity: 0 }),
+      ).toThrow();
     });
 
     it('accepts optional variantId', () => {
       const result = addToCartSchema.body.parse({
         productId: '507f1f77bcf86cd799439011',
-        variantId: '507f1f77bcf86cd799439012'
+        variantId: '507f1f77bcf86cd799439012',
       });
       expect(result.variantId).toBe('507f1f77bcf86cd799439012');
     });
@@ -107,16 +123,18 @@ describe('Cart Validators', () => {
     it('accepts valid body', () => {
       const result = updateCartQuantitySchema.body.parse({
         itemId: '507f1f77bcf86cd799439011',
-        quantity: 3
+        quantity: 3,
       });
       expect(result.quantity).toBe(3);
     });
 
     it('rejects zero quantity', () => {
-      expect(() => updateCartQuantitySchema.body.parse({
-        itemId: '507f1f77bcf86cd799439011',
-        quantity: 0
-      })).toThrow();
+      expect(() =>
+        updateCartQuantitySchema.body.parse({
+          itemId: '507f1f77bcf86cd799439011',
+          quantity: 0,
+        }),
+      ).toThrow();
     });
   });
 });
@@ -140,7 +158,7 @@ describe('Coupon Validators', () => {
       const result = createCouponSchema.parse({
         code: 'SAVE10',
         discountType: 'percentage',
-        discountValue: 10
+        discountValue: 10,
       });
       expect(result.code).toBe('SAVE10');
     });
@@ -149,17 +167,19 @@ describe('Coupon Validators', () => {
       const result = createCouponSchema.parse({
         code: 'FLAT100',
         discountType: 'flat',
-        discountValue: 100
+        discountValue: 100,
       });
       expect(result.discountType).toBe('flat');
     });
 
     it('rejects negative discount', () => {
-      expect(() => createCouponSchema.parse({
-        code: 'BAD',
-        discountType: 'percentage',
-        discountValue: -5
-      })).toThrow();
+      expect(() =>
+        createCouponSchema.parse({
+          code: 'BAD',
+          discountType: 'percentage',
+          discountValue: -5,
+        }),
+      ).toThrow();
     });
   });
 });
@@ -173,8 +193,8 @@ describe('Order Validators', () => {
         street: '123 Main St',
         city: 'Mumbai',
         state: 'MH',
-        zipCode: '400001'
-      }
+        zipCode: '400001',
+      },
     };
 
     it('accepts valid order', () => {
@@ -184,23 +204,27 @@ describe('Order Validators', () => {
     it('normalizes phone number in shipping address', () => {
       const result = createOrderSchema.parse({
         ...validOrder,
-        shippingAddress: { ...validOrder.shippingAddress, phone: '+919876543210' }
+        shippingAddress: { ...validOrder.shippingAddress, phone: '+919876543210' },
       });
       expect(result.shippingAddress.phone).toBe('9876543210');
     });
 
     it('rejects invalid phone', () => {
-      expect(() => createOrderSchema.parse({
-        ...validOrder,
-        shippingAddress: { ...validOrder.shippingAddress, phone: '12345' }
-      })).toThrow();
+      expect(() =>
+        createOrderSchema.parse({
+          ...validOrder,
+          shippingAddress: { ...validOrder.shippingAddress, phone: '12345' },
+        }),
+      ).toThrow();
     });
 
     it('rejects invalid PIN code', () => {
-      expect(() => createOrderSchema.parse({
-        ...validOrder,
-        shippingAddress: { ...validOrder.shippingAddress, zipCode: '12345' }
-      })).toThrow();
+      expect(() =>
+        createOrderSchema.parse({
+          ...validOrder,
+          shippingAddress: { ...validOrder.shippingAddress, zipCode: '12345' },
+        }),
+      ).toThrow();
     });
 
     it('defaults paymentMethod to cod', () => {

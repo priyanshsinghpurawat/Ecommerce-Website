@@ -6,7 +6,7 @@ import {
   getProductById,
   getFrequentlyBoughtTogether,
   updateProduct,
-  deleteProduct
+  deleteProduct,
 } from '../controllers/product.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { uploadAny, requireCloudinary } from '../middleware/upload.middleware.js';
@@ -108,7 +108,11 @@ router.get('/:id', validate({ params: productIdParamSchema }), getProductById);
  *       200:
  *         description: List of frequently bought together products
  */
-router.get('/:id/frequently-bought-together', validate({ params: productIdParamSchema }), getFrequentlyBoughtTogether);
+router.get(
+  '/:id/frequently-bought-together',
+  validate({ params: productIdParamSchema }),
+  getFrequentlyBoughtTogether,
+);
 
 // Auth-protected writes. Order matters:
 // 1) auth → 2) cloudinary precheck → 3) multer parse → 4) zod validate → 5) handler
@@ -166,7 +170,7 @@ router.post(
   requireCloudinary,
   uploadAny(),
   validate({ body: productBodySchema }),
-  createProduct
+  createProduct,
 );
 
 /**
@@ -218,7 +222,7 @@ router.put(
   requireCloudinary,
   uploadAny(),
   validate({ params: productIdParamSchema, body: productBodySchema }),
-  updateProduct
+  updateProduct,
 );
 
 /**
@@ -244,7 +248,7 @@ router.delete(
   verifyJWT,
   authorizeRoles('admin', 'seller'),
   validate({ params: productIdParamSchema }),
-  deleteProduct
+  deleteProduct,
 );
 
 export default router;

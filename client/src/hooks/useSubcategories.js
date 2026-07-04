@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react';
-import { getSubcategories } from '../services/subcategory.service.js';
+import {
+  getSubcategories,
+  createSubcategory,
+  updateSubcategory,
+  deleteSubcategory,
+} from '../services/subcategory.service.js';
 
 const subcategoriesCache = {
   data: null,
@@ -59,5 +64,20 @@ export const useSubcategories = () => {
     return fetchPromise;
   }, []);
 
-  return { subcategories, loading, error, fetchSubcategories };
+  const addSubcategory = useCallback(async (subData) => {
+    const res = await createSubcategory(subData);
+    return res;
+  }, []);
+
+  const editSubcategory = useCallback(async (id, subData) => {
+    const res = await updateSubcategory(id, subData);
+    return res;
+  }, []);
+
+  const removeSubcategory = useCallback(async (id) => {
+    const res = await deleteSubcategory(id);
+    return res;
+  }, []);
+
+  return { subcategories, loading, error, fetchSubcategories, addSubcategory, editSubcategory, removeSubcategory };
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { toast } from 'react-hot-toast';
 import { IndianRupee, ArrowUpRight, ArrowDownRight, Wallet, Receipt, Loader2, Download } from 'lucide-react';
@@ -35,7 +35,40 @@ export const SellerBilling = () => {
           <h2 className="text-xl font-black uppercase tracking-widest text-app-text italic">Financial <span className="text-brand-primary">Ledger</span></h2>
           <p className="text-[10px] text-muted font-bold uppercase tracking-widest mt-1">Track your revenue, platform fees, and payouts.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-surface-100 text-app-text border border-border-base rounded-xl font-black text-[10px] uppercase tracking-widest hover:border-brand-primary transition-all shadow-sm">
+        <button
+          onClick={async () => {
+            try {
+              const apiUrl = import.meta.env.VITE_API_URL || '';
+              const baseUrl = apiUrl ? apiUrl.replace(/\/api\/v3\/?$/, '') : window.location.origin;
+              const token = localStorage.getItem('authToken');
+              const response = await fetch(`${baseUrl}/api/v3/billing/my-ledger/export/xlsx`, {
+                headers: {
+                  'Authorization': token ? `Bearer ${token}` : ''
+                }
+              });
+              
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              
+              const blob = await response.blob();
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
+              link.setAttribute("download", `billing_statement_${new Date().toISOString().slice(0,10)}.xlsx`);
+              link.style.visibility = 'hidden';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              toast.success('Statement downloaded successfully');
+            } catch (err) {
+              console.error('Statement download error:', err);
+              toast.error('Failed to download statement. Please try again.');
+            }
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-surface-100 text-app-text border border-border-base rounded-xl font-black text-[10px] uppercase tracking-widest hover:border-brand-primary transition-all shadow-sm cursor-pointer"
+        >
           <Download className="h-3.5 w-3.5" />
           Download Statement
         </button>

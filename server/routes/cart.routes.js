@@ -1,15 +1,20 @@
 import { Router } from 'express';
-import { 
-  getCart, 
-  addToCart, 
-  updateCartItemQuantity, 
-  removeFromCart, 
-  clearCart, 
-  mergeCart 
+import {
+  getCart,
+  addToCart,
+  updateCartItemQuantity,
+  removeFromCart,
+  clearCart,
+  mergeCart,
 } from '../controllers/cart.controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
-import { addToCartSchema, updateCartQuantitySchema, cartItemIdParamSchema, mergeCartSchema } from '../validators/cart.schema.js';
+import {
+  addToCartSchema,
+  updateCartQuantitySchema,
+  cartItemIdParamSchema,
+  mergeCartSchema,
+} from '../validators/cart.schema.js';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();
@@ -18,7 +23,7 @@ const cartLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
   message: { success: false, message: 'Too many cart requests. Please try again later.' },
-  skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true'
+  skip: () => process.env.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 router.use(cartLimiter);

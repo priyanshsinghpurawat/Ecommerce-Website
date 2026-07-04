@@ -1,4 +1,3 @@
-/** WHY: Simple hook to access user data and auth functions from any component. */
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 

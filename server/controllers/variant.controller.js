@@ -82,7 +82,8 @@ export const bulkUpsertVariants = asyncHandler(async (req, res) => {
       if (existing) {
         // Update existing
         existing.price = v.price != null ? Number(v.price) : existing.price;
-        existing.compareAtPrice = v.compareAtPrice != null ? Number(v.compareAtPrice) : existing.compareAtPrice;
+        existing.compareAtPrice =
+          v.compareAtPrice != null ? Number(v.compareAtPrice) : existing.compareAtPrice;
         existing.stock = v.stock != null ? Number(v.stock) : existing.stock;
         existing.optionValues = new Map(Object.entries(optionValues));
         if (v.images) existing.images = v.images;
@@ -103,7 +104,7 @@ export const bulkUpsertVariants = asyncHandler(async (req, res) => {
           compareAtPrice: v.compareAtPrice != null ? Number(v.compareAtPrice) : null,
           stock: Number(v.stock) || 0,
           optionValues: new Map(Object.entries(optionValues)),
-          images: v.images || []
+          images: v.images || [],
         });
         created.push({ _id: newVariant._id, sku: newVariant.sku });
       }
@@ -115,14 +116,18 @@ export const bulkUpsertVariants = asyncHandler(async (req, res) => {
   // Recalculate product summary
   await Product.recalculateVariantSummary(product._id);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {
-      created,
-      updated,
-      errors,
-      summary: { created: created.length, updated: updated.length, failed: errors.length }
-    }, 'Bulk upsert completed'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        created,
+        updated,
+        errors,
+        summary: { created: created.length, updated: updated.length, failed: errors.length },
+      },
+      'Bulk upsert completed',
+    ),
+  );
 });
 
 /**
@@ -153,7 +158,13 @@ export const updateVariantStock = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { _id: variant._id, stock: variant.stock, sku: variant.sku }, 'Stock updated'));
+    .json(
+      new ApiResponse(
+        200,
+        { _id: variant._id, stock: variant.stock, sku: variant.sku },
+        'Stock updated',
+      ),
+    );
 });
 
 /**
@@ -169,12 +180,11 @@ export const getProductVariants = asyncHandler(async (req, res) => {
   const product = await Product.findOne(filter);
   if (!product) throw new ApiError(404, 'Product not found');
 
-  const variants = await Variant.find({ product: product._id, deletedAt: null })
-    .sort({ createdAt: 1 });
+  const variants = await Variant.find({ product: product._id, deletedAt: null }).sort({
+    createdAt: 1,
+  });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, variants, 'Variants retrieved'));
+  return res.status(200).json(new ApiResponse(200, variants, 'Variants retrieved'));
 });
 
 /**
@@ -200,9 +210,7 @@ export const deleteVariant = asyncHandler(async (req, res) => {
 
   await Product.recalculateVariantSummary(product._id);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, 'Variant deleted'));
+  return res.status(200).json(new ApiResponse(200, null, 'Variant deleted'));
 });
 
 /**
@@ -221,7 +229,13 @@ export const toggleSkuLock = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { _id: variant._id, skuLocked: variant.skuLocked }, `SKU ${variant.skuLocked ? 'locked' : 'unlocked'}`));
+    .json(
+      new ApiResponse(
+        200,
+        { _id: variant._id, skuLocked: variant.skuLocked },
+        `SKU ${variant.skuLocked ? 'locked' : 'unlocked'}`,
+      ),
+    );
 });
 
 /**
@@ -237,7 +251,7 @@ export const bulkUpdateStock = asyncHandler(async (req, res) => {
   }
 
   if (req.user.role === 'seller') {
-    const variantIds = updates.map(u => u.variantId);
+    const variantIds = updates.map((u) => u.variantId);
     const variants = await Variant.find({ _id: { $in: variantIds } }).populate('product', 'seller');
     for (const variant of variants) {
       if (!variant.product || variant.product.seller.toString() !== req.user._id.toString()) {
@@ -248,7 +262,5 @@ export const bulkUpdateStock = asyncHandler(async (req, res) => {
 
   const result = await Variant.bulkUpdateStock(updates);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, result, 'Stock updated'));
+  return res.status(200).json(new ApiResponse(200, result, 'Stock updated'));
 });

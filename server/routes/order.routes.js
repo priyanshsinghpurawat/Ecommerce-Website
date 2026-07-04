@@ -7,7 +7,7 @@ import {
   updateOrderStatus,
   getOrderAnalytics,
   exportOrdersCSV,
-  processReturn
+  processReturn,
 } from '../controllers/order.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -178,7 +178,13 @@ router.get('/', verifyJWT, authorizeRoles('admin', 'seller'), getAllOrders);
  *       200:
  *         description: Status updated successfully
  */
-router.patch('/:id/status', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: updateOrderStatusSchema }), updateOrderStatus);
+router.patch(
+  '/:id/status',
+  verifyJWT,
+  authorizeRoles('admin', 'seller'),
+  validate({ body: updateOrderStatusSchema }),
+  updateOrderStatus,
+);
 
 /**
  * @openapi
@@ -189,7 +195,12 @@ router.patch('/:id/status', verifyJWT, authorizeRoles('admin', 'seller'), valida
  *     security:
  *       - BearerAuth: []
  */
-router.put('/:id/items/:itemId/process-return', verifyJWT, authorizeRoles('admin', 'seller'), processReturn);
+router.put(
+  '/:id/items/:itemId/process-return',
+  verifyJWT,
+  authorizeRoles('admin', 'seller'),
+  processReturn,
+);
 
 /**
  * @openapi

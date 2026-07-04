@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getAllOrders, updateOrderStatus } from '../../services/order.service.js';
 import { Loader2, Package, Search, Eye, ArrowUpDown, ChevronDown, CheckCircle, Clock, Truck, XCircle, Download, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import api from '../../services/api.js';
 
 // State machine: defines which transitions are allowed from each status (matches backend)
@@ -21,6 +22,12 @@ export const SellerOrders = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    limit: 10
+  });
 
   // Modal Control
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -31,8 +38,13 @@ export const SellerOrders = () => {
     if (!user?._id) return;
     if (showLoading) setLoading(true);
     try {
-      const res = await getAllOrders({ search, status, seller: user._id });
-      if (res?.success) setOrders(res.data?.orders || res.data || []);
+      const res = await getAllOrders({ search, status, seller: user._id, page: pagination.currentPage, limit: pagination.limit });
+      if (res?.success) {
+        setOrders(res.data?.orders || res.data?.orders || []);
+        if (res.data?.pagination) {
+          setPagination(res.data.pagination);
+        }
+      }
     } catch {
       toast.error('Failed to load orders.');
     } finally {
@@ -42,7 +54,7 @@ export const SellerOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [user, search, status]);
+  }, [user, search, status, pagination.currentPage, pagination.limit]);
 
   const handleUpdateItemStatus = async (orderId, itemId, newStatus) => {
     setUpdatingId(orderId);

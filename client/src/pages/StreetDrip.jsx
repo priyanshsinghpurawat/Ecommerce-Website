@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getProducts } from '../services/product.service.js';
 import { ProductCard } from '../components/ProductCard.jsx';
@@ -154,7 +154,8 @@ export const StreetDrip = () => {
                   to={matchedProd ? `/product/${matchedProd.slug || matchedProd._id}` : '#grid-anchor'}
                   onMouseEnter={() => setActiveHotspot(spot.id)}
                   onMouseLeave={() => setActiveHotspot(null)}
-                  className="relative flex items-center justify-center w-8 h-8 focus:outline-none"
+                  aria-label={spot.label || 'View product'}
+                  className="relative flex items-center justify-center w-8 h-8 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-black rounded-full"
                 >
                   <span className="absolute inline-flex w-8 h-8 rounded-full bg-[#c1ff00]/30 animate-ping" />
                   <span className={`relative inline-flex w-5 h-5 rounded-full border-2 border-white shadow-lg items-center justify-center transition-all ${isActive ? 'bg-[#c1ff00] scale-110' : 'bg-[#c1ff00]'}`}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { 
   getProfile, updateProfile, uploadAvatar,
@@ -80,7 +80,7 @@ export const Profile = () => {
             avatar: u.avatar || ''
           });
         }
-        if (ordersRes?.success) setOrders(ordersRes.data || []);
+        if (ordersRes?.success) setOrders(ordersRes.data?.orders || []);
       } catch {
         toast.error('Failed to sync account data.');
       } finally {

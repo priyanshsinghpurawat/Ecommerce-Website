@@ -3,8 +3,13 @@ import { Variant } from '../models/variant.model.js';
 import mongoose from 'mongoose';
 import { Product } from '../models/product.model.js';
 import { ProductService } from '../services/product.service.js';
-import { asyncHandler, ApiError, ApiResponse, mapProductForResponse, safeJSON, getCacheHash } from '../utils/helpers.js';
-import { getCache, setCache, deleteCache, clearCacheByPattern } from '../utils/cache.js';
+import {
+  asyncHandler,
+  ApiError,
+  ApiResponse,
+  mapProductForResponse,
+  safeJSON,
+} from '../utils/helpers.js';
 
 /**
  * @desc   Create a product
@@ -12,7 +17,8 @@ import { getCache, setCache, deleteCache, clearCacheByPattern } from '../utils/c
  * @access Private/Admin/Seller
  */
 export const createProduct = asyncHandler(async (req, res) => {
-  const { title, description, price, discountedPrice, category, subcategory, stock, gender } = req.body;
+  const { title, description, price, discountedPrice, category, subcategory, stock, gender } =
+    req.body;
   const finalSellerId = req.user._id;
 
   const uploaded = await ProductService.uploadAndAssemble(req.files, req.body);
@@ -23,7 +29,8 @@ export const createProduct = asyncHandler(async (req, res) => {
       title,
       description,
       price: Number(price),
-      discountedPrice: discountedPrice === '' || discountedPrice == null ? null : Number(discountedPrice),
+      discountedPrice:
+        discountedPrice === '' || discountedPrice == null ? null : Number(discountedPrice),
       category,
       subcategory,
       gender: gender || 'men',
@@ -31,12 +38,7 @@ export const createProduct = asyncHandler(async (req, res) => {
       seller: finalSellerId,
       image: coverUrl || (galleryUrls[0] ?? undefined),
       images: galleryUrls,
-      variants,
-      ...(({ rating, reviewCount, ...safe }) => {
-        // Only admins may seed rating/reviewCount (mirrors updateProduct guard)
-        if (req.user.role === 'admin') return { ...safe, rating, reviewCount };
-        return safe;
-      })(ProductService.parseProductMeta(req.body))
+      ...ProductService.parseProductMeta(req.body, req.user.role),
     });
 
     const populated = await Product.findById(product._id)
@@ -45,11 +47,12 @@ export const createProduct = asyncHandler(async (req, res) => {
       .populate({ path: 'seller', select: 'name email' });
 
     await ProductService.syncStandaloneFromEmbedded(product._id, variants);
-    await clearCacheByPattern('products:');
 
     return res
       .status(201)
-      .json(new ApiResponse(201, mapProductForResponse(populated, req), 'Product created successfully'));
+      .json(
+        new ApiResponse(201, mapProductForResponse(populated, req), 'Product created successfully'),
+      );
   } catch (error) {
     await ProductService.rollbackUploads(uploaded);
     throw error;
@@ -62,32 +65,33 @@ export const createProduct = asyncHandler(async (req, res) => {
  * @access Public
  */
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search = '', category = '', subcategory = '', sort = 'latest', badge = '', seller = '', minPrice = '', maxPrice = '', color = '' } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    search = '',
+    category = '',
+    subcategory = '',
+    sort = 'latest',
+    badge = '',
+    seller = '',
+    minPrice = '',
+    maxPrice = '',
+    color = '',
+  } = req.query;
 
-  // Block object injection to prevent security leaks
   if (search && typeof search !== 'string') {
-    return res.status(400).send('We must block object injection to prevent security leaks');
+    throw new ApiError(400, 'Invalid search parameter');
   }
 
-  // Hash-based caching to prevent cache key bloat
-  const cacheHash = getCacheHash({ page, limit, search, category, subcategory, sort, badge, seller, minPrice, maxPrice, color });
-  const cacheKey = `products:${cacheHash}`;
-  
-  const cached = await getCache(cacheKey);
-  if (cached) {
-    return res.status(200).json(new ApiResponse(200, cached, 'Products retrieved successfully (cached)'));
-  }
-
-  // Optimized query building with proper parameter sanitization
-  const query = ProductService.buildCatalogQuery({ 
-    search: String(search).trim(), 
-    category, 
-    subcategory, 
-    badge, 
-    seller, 
-    minPrice: minPrice ? Number(minPrice) : undefined, 
-    maxPrice: maxPrice ? Number(maxPrice) : undefined, 
-    color 
+  const query = ProductService.buildCatalogQuery({
+    search: String(search).trim(),
+    category,
+    subcategory,
+    badge,
+    seller,
+    minPrice: minPrice ? Number(minPrice) : undefined,
+    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    color,
   });
   const sortOption = ProductService.getSortOption(sort);
 
@@ -99,11 +103,14 @@ export const getAllProducts = asyncHandler(async (req, res) => {
   // Batch operation for better performance
   const [totalProducts, products] = await Promise.all([
     Product.countDocuments(query),
-    Product.find(query).sort(sortOption).skip(skip).limit(limitNum)
+    Product.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limitNum)
       .populate({ path: 'category', select: 'name slug' })
       .populate({ path: 'subcategory', select: 'name slug' })
       .populate({ path: 'seller', select: 'name email' })
-      .lean()
+      .lean(),
   ]);
 
   const totalPages = Math.ceil(totalProducts / limitNum) || 1;
@@ -113,9 +120,8 @@ export const getAllProducts = asyncHandler(async (req, res) => {
 
   const payload = {
     products: products.map((p) => mapProductForResponse(p, req)),
-    pagination: { totalProducts, totalPages, currentPage: pageNum, limit: limitNum }
+    pagination: { totalProducts, totalPages, currentPage: pageNum, limit: limitNum },
   };
-  await setCache(cacheKey, payload, 300);
 
   return res.status(200).json(new ApiResponse(200, payload, 'Products retrieved successfully'));
 });
@@ -126,21 +132,21 @@ export const getAllProducts = asyncHandler(async (req, res) => {
  * @access Public
  */
 export const getProductFilters = asyncHandler(async (req, res) => {
-  const cacheKey = 'products:filters';
-  const cached = await getCache(cacheKey);
-  if (cached) {
-    return res.status(200).json(new ApiResponse(200, cached, 'Product filters retrieved successfully (cached)'));
-  }
-
   const raw = await Variant.distinct('optionValues.Color', { deletedAt: null });
-  const colors = [...new Set(
-    raw.filter(Boolean).map((c) => String(c).trim()).filter(Boolean)
-  )].sort();
+  const colors = [
+    ...new Set(
+      raw
+        .filter(Boolean)
+        .map((c) => String(c).trim())
+        .filter(Boolean),
+    ),
+  ].sort();
 
   const payload = { colors };
-  await setCache(cacheKey, payload, 3600);
 
-  return res.status(200).json(new ApiResponse(200, payload, 'Product filters retrieved successfully'));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, 'Product filters retrieved successfully'));
 });
 
 /**
@@ -150,9 +156,6 @@ export const getProductFilters = asyncHandler(async (req, res) => {
  */
 export const getProductById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const cacheKey = `product:id=${id}`;
-  const cached = await getCache(cacheKey);
-  if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Product details retrieved successfully (cached)'));
 
   const isObjectId = mongoose.Types.ObjectId.isValid(id);
   const filter = isObjectId ? { _id: id } : { slug: id };
@@ -164,8 +167,8 @@ export const getProductById = asyncHandler(async (req, res) => {
       path: 'relatedProducts',
       populate: [
         { path: 'category', select: 'name slug' },
-        { path: 'subcategory', select: 'name slug' }
-      ]
+        { path: 'subcategory', select: 'name slug' },
+      ],
     })
     .lean();
   if (!product) throw new ApiError(404, 'Product not found');
@@ -174,25 +177,27 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   if (crossSells.length < 4) {
     const fallbackCount = 8 - crossSells.length;
-    const existingIds = [product._id, ...crossSells.map(p => p._id)];
+    const existingIds = [product._id, ...crossSells.map((p) => p._id)];
 
     const subcatFallback = await Product.find({
       subcategory: product.subcategory?._id,
-      _id: { $nin: existingIds }
-    }).limit(fallbackCount)
+      _id: { $nin: existingIds },
+    })
+      .limit(fallbackCount)
       .populate({ path: 'category' })
       .populate({ path: 'subcategory' })
       .lean();
 
     crossSells = [...crossSells, ...subcatFallback];
-    
+
     if (crossSells.length < 4) {
       const remainingCount = 8 - crossSells.length;
-      const allIds = [product._id, ...crossSells.map(p => p._id)];
+      const allIds = [product._id, ...crossSells.map((p) => p._id)];
       const catFallback = await Product.find({
         category: product.category?._id,
-        _id: { $nin: allIds }
-      }).limit(remainingCount)
+        _id: { $nin: allIds },
+      })
+        .limit(remainingCount)
         .populate({ path: 'category' })
         .populate({ path: 'subcategory' })
         .lean();
@@ -202,11 +207,12 @@ export const getProductById = asyncHandler(async (req, res) => {
 
   const responseData = {
     ...mapProductForResponse(product, req),
-    relatedProducts: crossSells.map((p) => mapProductForResponse(p, req))
+    relatedProducts: crossSells.map((p) => mapProductForResponse(p, req)),
   };
 
-  await setCache(cacheKey, responseData, 600);
-  return res.status(200).json(new ApiResponse(200, responseData, 'Product details retrieved successfully'));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, responseData, 'Product details retrieved successfully'));
 });
 
 /**
@@ -216,10 +222,6 @@ export const getProductById = asyncHandler(async (req, res) => {
  */
 export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  const cacheKey = `product:fbt:id=${id}`;
-  const cached = await getCache(cacheKey);
-  if (cached) return res.status(200).json(new ApiResponse(200, cached, 'Frequently bought together products retrieved (cached)'));
 
   const isObjectId = mongoose.Types.ObjectId.isValid(id);
   const currentProduct = await Product.findOne(isObjectId ? { _id: id } : { slug: id }).lean();
@@ -234,11 +236,11 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: '$items.product',
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     { $sort: { count: -1 } },
-    { $limit: 4 }
+    { $limit: 4 },
   ]);
 
   let companionIds = frequentCompanions.map((c) => c._id);
@@ -246,7 +248,7 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
   if (companionIds.length > 0) {
     products = await Product.find({
-      _id: { $in: companionIds }
+      _id: { $in: companionIds },
     })
       .populate({ path: 'category', select: 'name slug' })
       .populate({ path: 'subcategory', select: 'name slug' })
@@ -254,7 +256,10 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
     // Maintain the order from aggregation
     products.sort((a, b) => {
-      return companionIds.findIndex(cid => cid.equals(a._id)) - companionIds.findIndex(cid => cid.equals(b._id));
+      return (
+        companionIds.findIndex((cid) => cid.equals(a._id)) -
+        companionIds.findIndex((cid) => cid.equals(b._id))
+      );
     });
   }
 
@@ -264,8 +269,9 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
 
     const fallback = await Product.find({
       subcategory: currentProduct?.subcategory,
-      _id: { $nin: existingIds }
-    }).limit(4 - products.length)
+      _id: { $nin: existingIds },
+    })
+      .limit(4 - products.length)
       .populate({ path: 'category', select: 'name slug' })
       .populate({ path: 'subcategory', select: 'name slug' })
       .lean();
@@ -274,9 +280,10 @@ export const getFrequentlyBoughtTogether = asyncHandler(async (req, res) => {
   }
 
   const payload = products.map((p) => mapProductForResponse(p, req));
-  await setCache(cacheKey, payload, 3600); // Cache for 1 hour
 
-  return res.status(200).json(new ApiResponse(200, payload, 'Frequently bought together products retrieved'));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, 'Frequently bought together products retrieved'));
 });
 
 /**
@@ -294,19 +301,22 @@ export const updateProduct = asyncHandler(async (req, res) => {
   }
 
   const keepGallery = safeJSON(req.body.existingImages, product.images || []);
-  const uploaded = await ProductService.uploadAndAssemble(req.files, req.body, { keepExisting: { gallery: keepGallery } });
+  const uploaded = await ProductService.uploadAndAssemble(req.files, req.body, {
+    keepExisting: { gallery: keepGallery },
+  });
   const { coverUrl, galleryUrls, variants } = uploaded;
 
   const previousCover = product.image;
   const previousGallery = product.images || [];
-  const previousVariantImages = (product.variants || []).flatMap((v) => v.images || []);
 
   try {
-    const { title, description, price, discountedPrice, category, subcategory, stock, gender } = req.body;
+    const { title, description, price, discountedPrice, category, subcategory, stock, gender } =
+      req.body;
     if (title) product.title = title;
     if (description) product.description = description;
     if (price !== undefined && price !== '') product.price = Number(price);
-    if (discountedPrice !== undefined) product.discountedPrice = discountedPrice === '' ? null : Number(discountedPrice);
+    if (discountedPrice !== undefined)
+      product.discountedPrice = discountedPrice === '' ? null : Number(discountedPrice);
     if (category) product.category = category;
     if (subcategory) product.subcategory = subcategory;
     if (gender) product.gender = gender;
@@ -314,12 +324,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
     const finalCover = coverUrl || req.body.existingCover || product.image;
     product.image = finalCover;
-    product.images = galleryUrls.filter(url => url !== finalCover);
-    if (Array.isArray(safeJSON(req.body.variantsMeta, null))) {
-      product.variants = variants;
-    }
+    product.images = galleryUrls.filter((url) => url !== finalCover);
 
-    const meta = ProductService.parseProductMeta(req.body);
+    const meta = ProductService.parseProductMeta(req.body, req.user.role);
     if (meta.badge !== undefined) product.badge = meta.badge;
     if (meta.relatedProducts !== undefined) product.relatedProducts = meta.relatedProducts;
 
@@ -330,19 +337,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
     await product.save();
 
-    // Cleanup unreferenced files from Cloudinary
-    const keptNow = new Set([
-      product.image,
-      ...product.images,
-      ...(product.variants || []).flatMap((v) => v.images || [])
-    ].filter(Boolean));
-    
     const toDelete = [
       previousCover && coverUrl ? previousCover : null,
-      ...previousGallery.filter((u) => !keptNow.has(u)),
-      ...previousVariantImages.filter((u) => !keptNow.has(u))
+      ...previousGallery.filter((u) => u !== product.image && !galleryUrls.includes(u)),
     ].filter(Boolean);
-    
+
     await ProductService.deleteImages(toDelete);
 
     const updated = await Product.findById(product._id)
@@ -350,12 +349,12 @@ export const updateProduct = asyncHandler(async (req, res) => {
       .populate({ path: 'subcategory', select: 'name slug' });
 
     await ProductService.syncStandaloneFromEmbedded(product._id, variants);
-    await clearCacheByPattern('products:');
-    await deleteCache(`product:id=${id}`);
 
     return res
       .status(200)
-      .json(new ApiResponse(200, mapProductForResponse(updated, req), 'Product updated successfully'));
+      .json(
+        new ApiResponse(200, mapProductForResponse(updated, req), 'Product updated successfully'),
+      );
   } catch (error) {
     await ProductService.rollbackUploads(uploaded);
     throw error;
@@ -376,10 +375,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'You are not authorized to delete this product');
   }
 
-  const imagesToDelete = [
-    product.image,
-    ...(product.images || [])
-  ].filter(Boolean);
+  const imagesToDelete = [product.image, ...(product.images || [])].filter(Boolean);
 
   // Soft-delete associated variants
   const variantImages = await Variant.find({ product: id, deletedAt: null }).select('images');
@@ -391,9 +387,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   await Product.findByIdAndDelete(id);
   await ProductService.deleteImages(imagesToDelete);
 
-  await clearCacheByPattern('products:');
-  await deleteCache(`product:id=${id}`);
-
-  return res.status(200).json(new ApiResponse(200, null, 'Product and its images deleted successfully'));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, 'Product and its images deleted successfully'));
 });
-

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getFrequentlyBoughtTogether } from '../services/product.service.js';
 import { ProductCard } from './ProductCard.jsx';
 import { Loader2, Sparkles } from 'lucide-react';

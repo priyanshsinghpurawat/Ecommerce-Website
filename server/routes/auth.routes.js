@@ -1,8 +1,24 @@
 import { Router } from 'express';
-import { registerUser, loginUser, googleLogin, getCurrentUser, logoutUser, forgotPassword, resetPassword, refreshAccessToken, revokeAllSessions } from '../controllers/auth.controller.js';
+import {
+  registerUser,
+  loginUser,
+  googleLogin,
+  getCurrentUser,
+  logoutUser,
+  forgotPassword,
+  resetPassword,
+  refreshAccessToken,
+  revokeAllSessions,
+} from '../controllers/auth.controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
-import { registerSchema, loginSchema, googleLoginSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/index.js';
+import {
+  registerSchema,
+  loginSchema,
+  googleLoginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../validators/index.js';
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMyOrders } from '../services/order.service.js';
 import { Loader2, Package, ArrowRight } from 'lucide-react';
@@ -20,7 +20,7 @@ export const Orders = () => {
     const load = async () => {
       try {
         const res = await getMyOrders();
-        if (res?.success) setOrders(res.data || []);
+        if (res?.success) setOrders(res.data?.orders || []);
       } catch {
         toast.error('Failed to load orders.');
       } finally {
@@ -47,7 +47,9 @@ export const Orders = () => {
 
       {orders.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 p-12 text-center">
-          <div className="text-5xl mb-4">📦</div>
+          <div className="h-16 w-16 bg-surface-50 rounded-full flex items-center justify-center text-app-text/45 mb-4 shadow-soft mx-auto">
+            <Package className="h-8 w-8" />
+          </div>
           <p className="text-sm font-bold text-app-text mb-1">No orders yet</p>
           <p className="text-xs text-app-text/45 mb-5">When you place an order, it'll show up here.</p>
           <Link

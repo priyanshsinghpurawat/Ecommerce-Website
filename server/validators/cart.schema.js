@@ -9,20 +9,20 @@ export const addToCartSchema = {
     quantity: z.number().int().positive().optional().default(1),
     size: z.string().optional(),
     color: z.string().optional(),
-  })
+  }),
 };
 
 export const updateCartQuantitySchema = {
   body: z.object({
     itemId: mongoId,
     quantity: z.number().int().positive(),
-  })
+  }),
 };
 
 export const cartItemIdParamSchema = {
   params: z.object({
     itemId: mongoId,
-  })
+  }),
 };
 
 const guestCartItem = z.object({
@@ -36,5 +36,5 @@ const guestCartItem = z.object({
 export const mergeCartSchema = {
   body: z.object({
     items: z.array(guestCartItem).min(1, 'Cart must have at least one item'),
-  })
+  }),
 };

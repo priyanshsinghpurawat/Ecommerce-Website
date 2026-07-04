@@ -5,8 +5,8 @@ export class VariantFactory {
   static generateMatrix(options, productCode) {
     if (!options || !options.length) return [];
 
-    const optionNames = options.map(o => o.name);
-    const optionValues = options.map(o => o.values);
+    const optionNames = options.map((o) => o.name);
+    const optionValues = options.map((o) => o.values);
 
     const combinations = this.cartesianProduct(optionValues);
 
@@ -23,15 +23,18 @@ export class VariantFactory {
         price: null,
         compareAtPrice: null,
         stock: 0,
-        images: []
+        images: [],
       };
     });
   }
 
   static cartesianProduct(arrays) {
-    return arrays.reduce((acc, curr) => {
-      return acc.flatMap(a => curr.map(c => [...a, c]));
-    }, [[]]);
+    return arrays.reduce(
+      (acc, curr) => {
+        return acc.flatMap((a) => curr.map((c) => [...a, c]));
+      },
+      [[]],
+    );
   }
 
   static generateBaseSKU(productCode, optionValues) {
@@ -60,11 +63,13 @@ export class VariantFactory {
       attempt++;
     }
 
-    throw new Error(`Unable to generate unique SKU for base: ${baseSKU} after ${maxAttempts} attempts`);
+    throw new Error(
+      `Unable to generate unique SKU for base: ${baseSKU} after ${maxAttempts} attempts`,
+    );
   }
 
   static generateSKUsForOptions(productCode, options) {
     const matrix = this.generateMatrix(options, productCode);
-    return matrix.map(m => m.sku);
+    return matrix.map((m) => m.sku);
   }
 }

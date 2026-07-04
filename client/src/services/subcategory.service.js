@@ -20,3 +20,5 @@ export const deleteSubcategory = async (id) => {
   const { data } = await api.delete(`/subcategories/${id}`);
   return data;
 };
+
+

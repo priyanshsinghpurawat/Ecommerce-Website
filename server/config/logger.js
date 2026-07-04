@@ -5,10 +5,7 @@ const isProd = ENV.NODE_ENV === 'production';
 
 const logger = winston.createLogger({
   level: isProd ? 'info' : 'debug',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   defaultMeta: { service: 'mensvibe-api' },
   transports: [
     new winston.transports.Console({
@@ -19,10 +16,10 @@ const logger = winston.createLogger({
             winston.format.printf(({ timestamp, level, message, ...meta }) => {
               const metaStr = Object.keys(meta).length > 1 ? ` ${JSON.stringify(meta)}` : '';
               return `${timestamp} ${level}: ${message}${metaStr}`;
-            })
-          )
-    })
-  ]
+            }),
+          ),
+    }),
+  ],
 });
 
 if (isProd) {

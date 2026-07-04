@@ -1,4 +1,3 @@
-import React from 'react';
 import { Truck, Zap, Tag } from 'lucide-react';
 
 const PROMOS = [

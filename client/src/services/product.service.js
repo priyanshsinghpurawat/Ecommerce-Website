@@ -43,33 +43,8 @@ export const getProductVariants = async (productId) => {
   return data;
 };
 
-export const generateVariants = async (productId, options) => {
-  const { data } = await api.post(`/products/${productId}/variants/generate`, { options });
-  return data;
-};
-
-export const bulkUpsertVariants = async (productId, variants) => {
-  const { data } = await api.post(`/products/${productId}/variants/bulk`, { variants });
-  return data;
-};
-
-export const updateVariantStock = async (variantId, stock) => {
-  const { data } = await api.patch(`/variants/${variantId}/stock`, { stock });
-  return data;
-};
-
 export const deleteVariant = async (variantId) => {
   const { data } = await api.delete(`/variants/${variantId}`);
-  return data;
-};
-
-export const toggleSkuLock = async (variantId) => {
-  const { data } = await api.patch(`/variants/${variantId}/sku-lock`);
-  return data;
-};
-
-export const bulkUpdateStock = async (updates) => {
-  const { data } = await api.patch('/variants/bulk-stock', { updates });
   return data;
 };
 
@@ -84,7 +59,4 @@ export const submitReview = async (productId, reviewData) => {
   return data;
 };
 
-export const deleteReview = async (reviewId) => {
-  const { data } = await api.delete(`/reviews/${reviewId}`);
-  return data;
-};
+

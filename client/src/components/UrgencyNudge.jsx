@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 // ─── Animated countdown ──────────────────────────────────────────────────────
@@ -37,6 +37,8 @@ const SizeChip = ({ size, selected, outOfStock, onClick }) => (
     type="button"
     onClick={() => !outOfStock && onClick(size)}
     disabled={outOfStock}
+    aria-label={outOfStock ? `Size ${size} out of stock` : `Select size ${size}`}
+    aria-pressed={selected}
     className={`text-[11px] font-black px-4 py-2.5 rounded-full border transition-all active:scale-95 duration-150 uppercase tracking-widest ${
       selected 
         ? "bg-brand-primary text-black border-brand-primary font-black shadow-[0_0_15px_rgba(193,255,0,0.3)] scale-105" 

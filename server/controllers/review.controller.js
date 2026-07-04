@@ -28,7 +28,7 @@ export const getProductReviews = asyncHandler(async (req, res) => {
     rating: r.rating,
     comment: r.comment,
     date: r.createdAt.toISOString().split('T')[0],
-    isOwn: req.user?._id?.toString() === r.user?._id?.toString()
+    isOwn: req.user?._id?.toString() === r.user?._id?.toString(),
   }));
 
   return res.status(200).json(new ApiResponse(200, payload, 'Reviews retrieved successfully'));
@@ -52,14 +52,17 @@ export const submitReview = asyncHandler(async (req, res) => {
 
   const existing = await Review.findOne({ product: productId, user: req.user._id });
   if (existing) {
-    throw new ApiError(409, 'You have already reviewed this product. You can edit your existing review.');
+    throw new ApiError(
+      409,
+      'You have already reviewed this product. You can edit your existing review.',
+    );
   }
 
   const review = await Review.create({
     product: productId,
     user: req.user._id,
     rating: Number(rating),
-    comment: comment.trim()
+    comment: comment.trim(),
   });
 
   await Review.recalculateProductRating(productId);
@@ -75,7 +78,7 @@ export const submitReview = asyncHandler(async (req, res) => {
     rating: populated.rating,
     comment: populated.comment,
     date: populated.createdAt.toISOString().split('T')[0],
-    isOwn: true
+    isOwn: true,
   };
 
   return res.status(201).json(new ApiResponse(201, payload, 'Review submitted successfully'));

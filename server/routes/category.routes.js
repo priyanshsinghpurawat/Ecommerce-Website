@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { 
-  createCategory, 
-  getAllCategories, 
-  getCategoryBySlug, 
-  updateCategory, 
-  deleteCategory 
+import {
+  createCategory,
+  getAllCategories,
+  getCategoryBySlug,
+  updateCategory,
+  deleteCategory,
 } from '../controllers/category.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -73,7 +73,13 @@ router.get('/:slug', getCategoryBySlug);
  *       201:
  *         description: Category created successfully
  */
-router.post('/', verifyJWT, authorizeRoles('admin'), validate({ body: createCategorySchema }), createCategory);
+router.post(
+  '/',
+  verifyJWT,
+  authorizeRoles('admin'),
+  validate({ body: createCategorySchema }),
+  createCategory,
+);
 
 /**
  * @openapi
@@ -104,7 +110,13 @@ router.post('/', verifyJWT, authorizeRoles('admin'), validate({ body: createCate
  *       200:
  *         description: Category updated successfully
  */
-router.put('/:id', verifyJWT, authorizeRoles('admin'), validate({ body: updateCategorySchema }), updateCategory);
+router.put(
+  '/:id',
+  verifyJWT,
+  authorizeRoles('admin'),
+  validate({ body: updateCategorySchema }),
+  updateCategory,
+);
 
 /**
  * @openapi

@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { generateAffiliateLink, getMyAffiliateLinks, trackClick, deleteAffiliateLink } from '../controllers/affiliate.controller.js';
+import {
+  generateAffiliateLink,
+  getMyAffiliateLinks,
+  trackClick,
+  deleteAffiliateLink,
+} from '../controllers/affiliate.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 
 const router = Router();

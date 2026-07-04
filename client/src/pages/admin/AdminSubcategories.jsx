@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCategories } from '../../hooks/useCategories.js';
 import { useSubcategories } from '../../hooks/useSubcategories.js';
 import { Modal } from '../../components/Modal.jsx';

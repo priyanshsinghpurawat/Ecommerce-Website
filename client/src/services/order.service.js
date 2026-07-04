@@ -20,6 +20,26 @@ export const createOrder = async (payload) => {
   return data;
 };
 
+export const createOrderWithTax = async (payload) => {
+  // Same API call but with taxAmount included for cases where client calculates tax
+  const storedTag = localStorage.getItem('mensvibe_affiliate_tag');
+  if (storedTag) {
+    try {
+      const parsed = JSON.parse(storedTag);
+      if (parsed.expiry > Date.now()) {
+        payload.attributionTag = parsed.tag;
+      } else {
+        localStorage.removeItem('mensvibe_affiliate_tag');
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
+  const { data } = await api.post('/orders', payload);
+  return data;
+};
+
 export const getMyOrders = async () => {
   const { data } = await api.get('/orders/my');
   return data;

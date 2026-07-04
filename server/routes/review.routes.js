@@ -9,11 +9,11 @@ const router = Router();
 
 const reviewBodySchema = z.object({
   rating: z.coerce.number().int().min(1).max(5),
-  comment: z.string().trim().min(1, 'Comment is required').max(1000)
+  comment: z.string().trim().min(1, 'Comment is required').max(1000),
 });
 
 const reviewIdParamSchema = z.object({
-  reviewId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid review ID format')
+  reviewId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid review ID format'),
 });
 
 /**
@@ -32,11 +32,7 @@ const reviewIdParamSchema = z.object({
  *       200:
  *         description: List of reviews
  */
-router.get(
-  '/products/:id/reviews',
-  validate({ params: productIdParamSchema }),
-  getProductReviews
-);
+router.get('/products/:id/reviews', validate({ params: productIdParamSchema }), getProductReviews);
 
 /**
  * @openapi
@@ -76,7 +72,7 @@ router.post(
   '/products/:id/reviews',
   verifyJWT,
   validate({ params: productIdParamSchema, body: reviewBodySchema }),
-  submitReview
+  submitReview,
 );
 
 /**
@@ -101,7 +97,7 @@ router.delete(
   '/reviews/:reviewId',
   verifyJWT,
   validate({ params: reviewIdParamSchema }),
-  deleteReview
+  deleteReview,
 );
 
 export default router;

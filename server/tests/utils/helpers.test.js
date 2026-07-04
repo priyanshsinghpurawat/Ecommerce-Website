@@ -1,11 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   ApiError,
-  ValidationError,
-  NotFoundError,
-  UnauthorizedError,
-  ForbiddenError,
-  ConflictError,
   ApiResponse,
   asyncHandler,
   slugify,
@@ -16,10 +11,9 @@ import {
   getUnitPrice,
   computeCartSubtotal,
   safeJSON,
-  getCacheHash,
   buildSafeUser,
   generateOrderNumber,
-  validateShippingAddress
+  validateShippingAddress,
 } from '../../utils/helpers.js';
 
 describe('ApiError', () => {
@@ -49,38 +43,6 @@ describe('ApiError', () => {
   });
 });
 
-describe('ApiError subclasses', () => {
-  it('ValidationError has 400 status', () => {
-    const err = new ValidationError('Invalid input');
-    expect(err.statusCode).toBe(400);
-    expect(err.message).toBe('Invalid input');
-  });
-
-  it('NotFoundError has 404 status', () => {
-    const err = new NotFoundError();
-    expect(err.statusCode).toBe(404);
-    expect(err.message).toBe('Resource not found');
-  });
-
-  it('UnauthorizedError has 401 status', () => {
-    const err = new UnauthorizedError();
-    expect(err.statusCode).toBe(401);
-    expect(err.message).toBe('Unauthorized request');
-  });
-
-  it('ForbiddenError has 403 status', () => {
-    const err = new ForbiddenError();
-    expect(err.statusCode).toBe(403);
-    expect(err.message).toBe('Access forbidden');
-  });
-
-  it('ConflictError has 409 status', () => {
-    const err = new ConflictError();
-    expect(err.statusCode).toBe(409);
-    expect(err.message).toBe('Conflict detected');
-  });
-});
-
 describe('ApiResponse', () => {
   it('creates a response with success true for 2xx status', () => {
     const res = new ApiResponse(200, { id: 1 }, 'OK');
@@ -93,44 +55,6 @@ describe('ApiResponse', () => {
   it('creates a response with success false for 4xx status', () => {
     const res = new ApiResponse(400, null, 'Bad');
     expect(res.success).toBe(false);
-  });
-
-  describe('static helpers', () => {
-    it('success() sends JSON response', () => {
-      const res = {
-        status: vi.fn().mockReturnThis(),
-        json: vi.fn()
-      };
-      ApiResponse.success(res, { user: 'test' }, 'OK', 200);
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalled();
-      const body = res.json.mock.calls[0][0];
-      expect(body.success).toBe(true);
-      expect(body.data).toEqual({ user: 'test' });
-    });
-
-    it('created() sends 201 response', () => {
-      const res = {
-        status: vi.fn().mockReturnThis(),
-        json: vi.fn()
-      };
-      ApiResponse.created(res, { id: 1 });
-      expect(res.status).toHaveBeenCalledWith(201);
-      const body = res.json.mock.calls[0][0];
-      expect(body.statusCode).toBe(201);
-    });
-
-    it('paginated() wraps items with pagination metadata', () => {
-      const res = {
-        status: vi.fn().mockReturnThis(),
-        json: vi.fn()
-      };
-      ApiResponse.paginated(res, [1, 2, 3], 1, 10, 25);
-      expect(res.status).toHaveBeenCalledWith(200);
-      const body = res.json.mock.calls[0][0];
-      expect(body.data.items).toEqual([1, 2, 3]);
-      expect(body.data.pagination).toEqual({ page: 1, limit: 10, total: 25, pages: 3 });
-    });
   });
 });
 
@@ -204,7 +128,9 @@ describe('validateIndianPhone', () => {
   });
 
   it('throws for invalid phone starting with 1-5', () => {
-    expect(() => validateIndianPhone('1234567890')).toThrow('Enter a valid 10-digit Indian mobile number');
+    expect(() => validateIndianPhone('1234567890')).toThrow(
+      'Enter a valid 10-digit Indian mobile number',
+    );
   });
 
   it('throws for short phone', () => {
@@ -267,7 +193,7 @@ describe('mapProductForResponse', () => {
   it('normalizes variant images', () => {
     const product = {
       image: 'test.jpg',
-      variants: [{ images: ['variant1.jpg', 'variant2.jpg'] }]
+      variants: [{ images: ['variant1.jpg', 'variant2.jpg'] }],
     };
     const result = mapProductForResponse(product);
     expect(result.variants[0].images[0]).toBe('/assets/variant1.jpg');
@@ -298,7 +224,7 @@ describe('computeCartSubtotal', () => {
   it('calculates subtotal from cart items', () => {
     const items = [
       { product: { price: 1000 }, quantity: 2 },
-      { product: { price: 500, discountedPrice: 300 }, quantity: 1 }
+      { product: { price: 500, discountedPrice: 300 }, quantity: 1 },
     ];
     expect(computeCartSubtotal(items)).toBe(2300);
   });
@@ -306,7 +232,7 @@ describe('computeCartSubtotal', () => {
   it('skips items without product', () => {
     const items = [
       { product: null, quantity: 1 },
-      { product: { price: 500 }, quantity: 1 }
+      { product: { price: 500 }, quantity: 1 },
     ];
     expect(computeCartSubtotal(items)).toBe(500);
   });
@@ -340,26 +266,6 @@ describe('safeJSON', () => {
   });
 });
 
-describe('getCacheHash', () => {
-  it('generates consistent hash for same params', () => {
-    const hash1 = getCacheHash({ a: '1', b: '2' });
-    const hash2 = getCacheHash({ a: '1', b: '2' });
-    expect(hash1).toBe(hash2);
-  });
-
-  it('generates different hash for different params', () => {
-    const hash1 = getCacheHash({ a: '1' });
-    const hash2 = getCacheHash({ a: '2' });
-    expect(hash1).not.toBe(hash2);
-  });
-
-  it('is order-independent', () => {
-    const hash1 = getCacheHash({ b: '2', a: '1' });
-    const hash2 = getCacheHash({ a: '1', b: '2' });
-    expect(hash1).toBe(hash2);
-  });
-});
-
 describe('buildSafeUser', () => {
   it('extracts safe fields from user object', () => {
     const user = {
@@ -375,7 +281,7 @@ describe('buildSafeUser', () => {
       addresses: [],
       wishlist: [],
       storefront: {},
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     const safe = buildSafeUser(user);
     expect(safe._id).toBe('123');
@@ -406,7 +312,7 @@ describe('validateShippingAddress', () => {
       street: '123 Main St',
       city: 'Mumbai',
       state: 'MH',
-      zipCode: '400001'
+      zipCode: '400001',
     };
     expect(() => validateShippingAddress(addr)).not.toThrow();
   });
@@ -423,7 +329,7 @@ describe('validateShippingAddress', () => {
       street: '123 Main St',
       city: 'Mumbai',
       state: 'MH',
-      zipCode: '400001'
+      zipCode: '400001',
     };
     expect(() => validateShippingAddress(addr)).toThrow();
   });
@@ -435,7 +341,7 @@ describe('validateShippingAddress', () => {
       street: '123 Main St',
       city: 'Mumbai',
       state: 'MH',
-      zipCode: '400001'
+      zipCode: '400001',
     };
     expect(() => validateShippingAddress(addr)).toThrow();
   });

@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { 
+import {
   getSubcategories,
   createSubcategory,
   updateSubcategory,
-  deleteSubcategory
+  deleteSubcategory,
 } from '../controllers/subcategory.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 

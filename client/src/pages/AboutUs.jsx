@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Ruler, Scissors, Sparkles, MoveRight, Layers, ShieldCheck } from 'lucide-react';
 import { SEO } from '../components/SEO.jsx';

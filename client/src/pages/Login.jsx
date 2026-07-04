@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,7 +93,7 @@ export const Login = () => {
         } else if (result.user?.role === 'admin') {
           navigate('/admin/dashboard');
         } else if (result.user?.role === 'seller') {
-          navigate('/vendor/dashboard');
+          navigate('/seller/dashboard');
         } else {
           navigate('/');
         }
@@ -124,7 +124,7 @@ export const Login = () => {
         } else if (result.user?.role === 'admin') {
           navigate('/admin/dashboard');
         } else if (result.user?.role === 'seller') {
-          navigate('/vendor/dashboard');
+          navigate('/seller/dashboard');
         } else {
           navigate('/');
         }
@@ -220,7 +220,7 @@ export const Login = () => {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-brand-primary z-10"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

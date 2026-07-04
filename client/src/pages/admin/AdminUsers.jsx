@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAllUsers, updateUserRole } from '../../services/user.service.js';
 import { Loader2, User as UserIcon, Shield, ShoppingBag, Mail, Hash, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Pagination } from '../../components/Pagination.jsx';
 
 export const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [openUserId, setOpenUserId] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalUsers: 0,
+    limit: 10
+  });
 
   useEffect(() => {
     const handleClose = () => setOpenUserId(null);
@@ -18,8 +25,13 @@ export const AdminUsers = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await getAllUsers();
-      if (res?.success) setUsers(res.data?.users || res.data || []);
+      const res = await getAllUsers({ page: pagination.currentPage, limit: pagination.limit });
+      if (res?.success) {
+        setUsers(res.data?.users || res.data?.users || []);
+        if (res.data?.pagination) {
+          setPagination(res.data.pagination);
+        }
+      }
     } catch {
       toast.error('Failed to load users.');
     } finally {
@@ -29,7 +41,7 @@ export const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [pagination.currentPage, pagination.limit]);
 
   const handleRoleChange = async (id, newRole) => {
     setUpdatingId(id);
@@ -69,33 +81,37 @@ export const AdminUsers = () => {
         <p className="text-xs text-app-text/50">Manage platform users, roles, and view their activity.</p>
       </div>
 
-      <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#121214]/50 backdrop-blur-xl shadow-soft">
-        <div className="overflow-x-auto">
+      <div className="rounded-[2rem] border border-white/10 bg-[#121214]/50 backdrop-blur-xl shadow-soft">
+        <div className="overflow-x-auto pb-32">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.15em] text-app-text/40">
-                <th className="px-6 py-4">User Details</th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4 text-center">Total Orders</th>
-                <th className="px-6 py-4 text-center">Status/Role</th>
-                <th className="px-6 py-4 text-center">Actions</th>
+                <th className="px-4 md:px-6 py-4 whitespace-nowrap">User Details</th>
+                <th className="px-4 md:px-6 py-4 hidden md:table-cell">Contact</th>
+                <th className="px-4 md:px-6 py-4 hidden sm:table-cell text-center">Total Orders</th>
+                <th className="px-4 md:px-6 py-4 text-center hidden sm:table-cell">Status/Role</th>
+                <th className="px-4 md:px-6 py-4 text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {users.map((u) => (
                 <tr key={u._id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center text-app-text/45 border border-white/10 shadow-sm">
+                      <div className="h-9 w-9 rounded-xl bg-white/5 flex-shrink-0 flex items-center justify-center text-app-text/45 border border-white/10 shadow-sm">
                         <UserIcon className="h-4 w-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-bold text-app-text">{u.name}</span>
-                        <span className="text-[9px] font-mono text-app-text/30 uppercase tracking-tighter">ID: {u._id}</span>
+                        <span className="font-bold text-app-text truncate max-w-[130px] sm:max-w-[200px]">{u.name}</span>
+                        <span className="text-[9px] font-mono text-app-text/30 uppercase tracking-tighter truncate max-w-[130px] sm:max-w-[200px]">ID: {u._id}</span>
+                        <span className="md:hidden mt-1 font-mono text-[10px] text-brand-primary/70 truncate max-w-[130px]">{u.email}</span>
+                        <span className="sm:hidden mt-1 inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border border-white/10 bg-white/5 text-white/70">
+                          {u.role}
+                        </span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4 hidden md:table-cell">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1.5 text-app-text/60">
                         <Mail className="h-3.5 w-3.5 text-brand-primary/70" />
@@ -109,7 +125,7 @@ export const AdminUsers = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4 hidden sm:table-cell text-center">
                     <div className="flex items-center justify-center">
                       <div className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 shadow-sm min-w-[65px]">
                         <ShoppingBag className="h-3.5 w-3.5 text-brand-primary" />
@@ -117,7 +133,7 @@ export const AdminUsers = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 md:px-6 py-4 text-center hidden sm:table-cell">
                     <div className="flex items-center justify-center">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border ${getRoleStyle(u.role)}`}>
                         {u.role === 'admin' && <Shield className="h-3 w-3 text-purple-400" />}
@@ -125,7 +141,7 @@ export const AdminUsers = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <button

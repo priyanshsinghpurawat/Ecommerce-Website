@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
 import * as wishlistService from '../services/user.service.js';
+import { toast } from 'react-hot-toast';
 
 export const WishlistContext = createContext();
 
@@ -8,10 +9,12 @@ export const WishlistProvider = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchWishlist = useCallback(async () => {
     if (!isAuthenticated) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await wishlistService.getWishlist();
       setWishlist(res?.data || []);
@@ -19,7 +22,8 @@ export const WishlistProvider = ({ children }) => {
       if (err?.response?.status === 401) {
         setWishlist([]);
       } else {
-        console.error('Failed to fetch wishlist', err);
+        setError('Failed to load wishlist.');
+        toast.error('Failed to load wishlist.');
       }
     } finally {
       setLoading(false);
@@ -50,7 +54,9 @@ export const WishlistProvider = ({ children }) => {
         return { success: true, action: 'added' };
       }
     } catch (err) {
-      return { success: false, error: 'Action failed' };
+      const msg = err?.response?.data?.message || 'Failed to update wishlist.';
+      toast.error(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -59,7 +65,7 @@ export const WishlistProvider = ({ children }) => {
   };
 
   return (
-    <WishlistContext.Provider value={{ wishlist, loading, toggleWishlist, isInWishlist, fetchWishlist }}>
+    <WishlistContext.Provider value={{ wishlist, loading, error, toggleWishlist, isInWishlist, fetchWishlist }}>
       {children}
     </WishlistContext.Provider>
   );

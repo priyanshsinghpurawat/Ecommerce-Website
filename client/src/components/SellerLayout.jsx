@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { 
@@ -28,13 +28,13 @@ export const SellerLayout = () => {
   };
 
   const navLinks = [
-    { to: '/vendor/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/vendor/products', label: 'My Products', icon: ShoppingBag },
-    { to: '/vendor/orders', label: 'Store Orders', icon: ClipboardList },
-    { to: '/vendor/billing', label: 'Billing & Payouts', icon: Wallet },
-    { to: '/vendor/affiliates', label: 'Affiliates', icon: Link2 },
-    { to: '/vendor/coupons', label: 'My Coupons', icon: Tag },
-    { to: '/vendor/storefront', label: 'Branding', icon: Store },
+    { to: '/seller/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/seller/products', label: 'My Products', icon: ShoppingBag },
+    { to: '/seller/orders', label: 'Store Orders', icon: ClipboardList },
+    { to: '/seller/billing', label: 'Billing & Payouts', icon: Wallet },
+    { to: '/seller/affiliates', label: 'Affiliates', icon: Link2 },
+    { to: '/seller/coupons', label: 'My Coupons', icon: Tag },
+    { to: '/seller/storefront', label: 'Branding', icon: Store },
   ];
 
   return (
@@ -73,19 +73,23 @@ export const SellerLayout = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border-base bg-app-text/5">
-          <div className="flex items-center gap-3 px-2 py-2">
+        <div className="p-4 border-t border-border-base bg-surface-100 flex flex-col gap-3">
+          <div className="flex items-center gap-3 px-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-200 border border-border-base">
               <User className="h-5 w-5 text-muted" />
             </div>
             <div className="truncate flex-1">
               <p className="text-sm font-black italic text-app-text truncate uppercase tracking-tighter">{user?.name || 'Seller User'}</p>
-              <p className="text-[10px] text-muted truncate font-bold">Partner Seller</p>
+              <p className="text-[10px] text-muted truncate font-bold uppercase tracking-widest">Partner Seller</p>
             </div>
-            <button onClick={handleLogout} className="p-2 text-muted hover:text-error transition-colors">
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
+          <button 
+            onClick={handleLogout} 
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-xs font-black uppercase tracking-widest text-muted hover:text-white hover:bg-error/80 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 border border-transparent hover:border-error group"
+          >
+            <LogOut className="h-4 w-4 text-error group-hover:text-white group-hover:-translate-x-1 transition-all" />
+            Secure Logout
+          </button>
         </div>
       </aside>
 
@@ -102,7 +106,7 @@ export const SellerLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-             <Link to="/vendor/products" className="flex items-center gap-2 px-4 py-2 bg-app-text text-app-bg rounded-xl font-black text-[10px] uppercase tracking-wider hover:opacity-90 transition-all shadow-lg">
+             <Link to="/seller/products/new" className="flex items-center gap-2 px-4 py-2 bg-app-text text-app-bg rounded-xl font-black text-[10px] uppercase tracking-wider hover:opacity-90 transition-all shadow-lg">
               <Plus className="h-4 w-4" />
               Add Product
             </Link>

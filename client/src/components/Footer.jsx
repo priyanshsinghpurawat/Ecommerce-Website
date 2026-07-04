@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Send } from 'lucide-react';
+import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Logo } from './Logo.jsx';
 import { Link } from 'react-router-dom';
@@ -7,14 +7,32 @@ import { Link } from 'react-router-dom';
 export const Footer = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
-  const handleSubscribe = (e) => {
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
       toast.error('Please enter a valid email address.');
       return;
     }
-    toast.success('Thank you for subscribing! Keep an eye on your inbox.');
-    setNewsletterEmail('');
+    setSubscribing(true);
+    try {
+      const res = await fetch('/api/v3/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      if (res.ok) {
+        toast.success('Thank you for subscribing! Keep an eye on your inbox.');
+        setNewsletterEmail('');
+      } else {
+        toast.error('Subscription failed. Please try again.');
+      }
+    } catch {
+      toast.error('Subscription failed. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -48,6 +66,7 @@ export const Footer = () => {
         <div className="lg:col-span-2">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">NEED HELP</h4>
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
+            <li><Link to="/shop" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Footwear</Link></li>
             <li><Link to="/contact" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Contact Us</Link></li>
             <li><Link to="/about" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">About Us</Link></li>
             <li><Link to="/orders" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Track Order</Link></li>
@@ -78,9 +97,10 @@ export const Footer = () => {
               />
               <button
                 type="submit"
-                className="bg-brand-primary hover:bg-brand-primary/90 text-black px-4 rounded-xl transition-all shadow-md"
+                disabled={subscribing}
+                className="bg-brand-primary hover:bg-brand-primary/90 text-black px-4 rounded-xl transition-all shadow-md disabled:opacity-50"
               >
-                <Send className="h-5 w-5" />
+                {subscribing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </button>
             </form>
           </div>

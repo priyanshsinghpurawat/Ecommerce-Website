@@ -4,10 +4,10 @@ import { fileURLToPath } from 'url';
 
 /**
  * UNIFIED TEST WATCHER
- * 
- * This script runs both the Client (Vitest) and Server (Node Test Runner) 
+ *
+ * This script runs both the Client (Vitest) and Server (Node Test Runner)
  * watchers simultaneously in a single terminal window.
- * 
+ *
  * It uses 'spawn' to run child processes and prefixes their output so
  * you can easily distinguish between frontend and backend messages.
  */
@@ -23,7 +23,7 @@ function runCommand(command, args, cwd, label) {
 
   process.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (line.trim()) {
         console.log(`[${label}] ${line.trim()}`);
       }
@@ -32,7 +32,7 @@ function runCommand(command, args, cwd, label) {
 
   process.stderr.on('data', (data) => {
     const lines = data.toString().split('\n');
-    lines.forEach(line => {
+    lines.forEach((line) => {
       if (line.trim()) {
         console.error(`[${label}] ${line.trim()}`);
       }
@@ -52,10 +52,10 @@ console.log('----------------------------------------------------');
  * MongoDB. Running them in parallel would cause database connection conflicts.
  */
 const serverProcess = runCommand(
-  'node', 
-  ['--test', '--watch', '--test-concurrency=1', 'tests/**/*.test.js'], 
-  path.join(rootDir, 'server'), 
-  'SERVER'
+  'node',
+  ['--test', '--watch', '--test-concurrency=1', 'tests/**/*.test.js'],
+  path.join(rootDir, 'server'),
+  'SERVER',
 );
 
 /**
@@ -63,10 +63,10 @@ const serverProcess = runCommand(
  * Runs Vitest in watch mode.
  */
 const clientProcess = runCommand(
-  'npm', 
-  ['run', 'test:watch'], 
-  path.join(rootDir, 'client'), 
-  'CLIENT'
+  'npm',
+  ['run', 'test:watch'],
+  path.join(rootDir, 'client'),
+  'CLIENT',
 );
 
 /**

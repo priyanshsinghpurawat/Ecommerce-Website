@@ -14,7 +14,7 @@ import {
   addAddress,
   updateAddress,
   deleteAddress,
-  setDefaultAddress
+  setDefaultAddress,
 } from '../controllers/user.controller.js';
 import { getPublicVendorStore } from '../controllers/storefront.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';

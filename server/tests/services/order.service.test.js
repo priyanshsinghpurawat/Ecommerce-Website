@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { resolveVariant, deductStock, restoreStock, incrementProductSales } from '../../services/order.service.js';
+import {
+  resolveVariant,
+  deductStock,
+  restoreStock,
+  incrementProductSales,
+} from '../../services/order.service.js';
 import { Product } from '../../models/product.model.js';
 import { Variant } from '../../models/variant.model.js';
 import { User } from '../../models/user.model.js';
@@ -13,7 +18,12 @@ let mongod, user, category, subcategory;
 beforeAll(async () => {
   mongod = await MongoMemoryServer.create();
   await mongoose.connect(mongod.getUri());
-  user = await User.create({ name: 'S', email: 'svc@test.com', password: 'Password@1', role: 'seller' });
+  user = await User.create({
+    name: 'S',
+    email: 'svc@test.com',
+    password: 'Password@1',
+    role: 'seller',
+  });
   category = await Category.create({ name: 'Svc Cat' });
   subcategory = await Subcategory.create({ name: 'Svc Sub', category: category._id });
 });
@@ -28,18 +38,28 @@ afterEach(async () => {
   await Product.deleteMany({});
 });
 
-const makeProduct = (overrides = {}) => Product.create({
-  title: 'Svc Product', description: 'Test', price: 500, stock: 20, image: '/t.jpg',
-  category: category._id, subcategory: subcategory._id, seller: user._id, productCode: `SP-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
-  ...overrides
-});
+const makeProduct = (overrides = {}) =>
+  Product.create({
+    title: 'Svc Product',
+    description: 'Test',
+    price: 500,
+    stock: 20,
+    image: '/t.jpg',
+    category: category._id,
+    subcategory: subcategory._id,
+    seller: user._id,
+    productCode: `SP-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    ...overrides,
+  });
 
 describe('resolveVariant', () => {
   it('resolves variant by direct reference', async () => {
     const product = await makeProduct();
     const variant = await Variant.create({
-      product: product._id, sku: 'RES-1', stock: 10,
-      optionValues: new Map([['Color', 'Red']])
+      product: product._id,
+      sku: 'RES-1',
+      stock: 10,
+      optionValues: new Map([['Color', 'Red']]),
     });
     const item = { variant: variant._id };
     const result = await resolveVariant(item);
@@ -49,8 +69,13 @@ describe('resolveVariant', () => {
   it('resolves variant by optionValues when no direct ref', async () => {
     const product = await makeProduct();
     await Variant.create({
-      product: product._id, sku: 'OPT-1', stock: 5,
-      optionValues: new Map([['Color', 'Blue'], ['Size', 'M']])
+      product: product._id,
+      sku: 'OPT-1',
+      stock: 5,
+      optionValues: new Map([
+        ['Color', 'Blue'],
+        ['Size', 'M'],
+      ]),
     });
     const item = { product: { _id: product._id }, color: 'Blue', size: 'M' };
     const result = await resolveVariant(item);
@@ -75,18 +100,24 @@ describe('deductStock', () => {
   it('deducts stock from variant', async () => {
     const product = await makeProduct({ stock: 0 });
     const variant = await Variant.create({
-      product: product._id, sku: 'DED-1', stock: 15,
-      optionValues: new Map([['Color', 'Green']])
+      product: product._id,
+      sku: 'DED-1',
+      stock: 15,
+      optionValues: new Map([['Color', 'Green']]),
     });
-    await deductStock([{ variant: variant._id, product: { _id: product._id }, quantity: 5, title: 'V' }], null);
+    await deductStock(
+      [{ variant: variant._id, product: { _id: product._id }, quantity: 5, title: 'V' }],
+      null,
+    );
     const updated = await Variant.findById(variant._id);
     expect(updated.stock).toBe(10);
   });
 
   it('throws when stock is insufficient', async () => {
     const product = await makeProduct({ stock: 2 });
-    await expect(deductStock([{ product: { _id: product._id }, quantity: 5, title: 'X' }], null))
-      .rejects.toThrow('Insufficient stock');
+    await expect(
+      deductStock([{ product: { _id: product._id }, quantity: 5, title: 'X' }], null),
+    ).rejects.toThrow('Insufficient stock');
   });
 });
 
@@ -101,10 +132,15 @@ describe('restoreStock', () => {
   it('restores stock to variant', async () => {
     const product = await makeProduct({ stock: 0 });
     const variant = await Variant.create({
-      product: product._id, sku: 'RST-1', stock: 5,
-      optionValues: new Map([['Color', 'Red']])
+      product: product._id,
+      sku: 'RST-1',
+      stock: 5,
+      optionValues: new Map([['Color', 'Red']]),
     });
-    await restoreStock([{ variant: variant._id, product: { _id: product._id }, quantity: 2 }], null);
+    await restoreStock(
+      [{ variant: variant._id, product: { _id: product._id }, quantity: 2 }],
+      null,
+    );
     const updated = await Variant.findById(variant._id);
     expect(updated.stock).toBe(7);
   });

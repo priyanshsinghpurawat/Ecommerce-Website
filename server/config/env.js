@@ -1,20 +1,23 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { z } from 'zod';
 
+// Load .env first so NODE_ENV is available for env-specific override
+dotenv.config({ path: '.env' });
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development';
+dotenv.config({ path: envFile, override: true });
+
 if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-must-be-at-least-32-chars-long';
-  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://test';
+  process.env.JWT_SECRET =
+    process.env.JWT_SECRET || 'test-jwt-secret-key-must-be-at-least-32-chars-long';
+  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mensvibe-test';
   process.env.PORT = '3000';
   process.env.CORS_ORIGIN = 'http://localhost:3000';
 }
 
-
 const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test', 'staging'])
-    .default('production'),
+  NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('development'),
   PORT: z.string().transform(Number).default('3000'),
-  MONGODB_URI: z.string().optional(),
+  MONGODB_URI: z.string(),
   MONGODB_URI_TEST: z.string().optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRY: z.string().default('7d'),
@@ -22,7 +25,6 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   COOKIE_SECRET: z.string().optional(),
-  REDIS_URL: z.string().optional(),
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   SERVER_URL: z.string().url().optional(),
@@ -42,57 +44,8 @@ const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
   const err = parsed.error.format ? parsed.error.format() : parsed.error;
-  const message = `❌ Invalid environment variables: ${JSON.stringify(err, null, 2)}`;
-
-  // In CI/tests we prefer not to hard-fail the process; tests often provide
-  // environment at runtime or mock required services. Only hard-fail in
-  // non-test environments to avoid breaking local development iteratively.
-  if (process.env.NODE_ENV === 'test') {
-    // Log a warning but continue — tests can set/override individual vars as needed.
-    // Export a permissive ENV object that falls back to process.env values.
-    // This avoids an abrupt process.exit which makes test runners fail early.
-    console.warn(message + ' — continuing in test mode.');
-  } else {
-    console.error(message);
-    // Non-test environments should not start with invalid configuration.
-    process.exit(1);
-  }
-}
-
-// Export a best-effort ENV: prefer validated values when available, else fall back
-// to raw process.env. This keeps behavior stable in tests while ensuring
-// production still enforces validation.
-export const ENV = parsed.success
-  ? parsed.data
-  : {
-      NODE_ENV: process.env.NODE_ENV || 'test',
-      PORT: Number(process.env.PORT || 3000),
-      MONGODB_URI: process.env.MONGODB_URI,
-      MONGODB_URI_TEST: process.env.MONGODB_URI_TEST,
-      JWT_SECRET: process.env.JWT_SECRET,
-      JWT_EXPIRY: process.env.JWT_EXPIRY || '7d',
-      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
-      JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY || '7d',
-      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
-      COOKIE_SECRET: process.env.COOKIE_SECRET,
-      REDIS_URL: process.env.REDIS_URL,
-      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-      RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
-      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
-      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-      CORS_ORIGIN: process.env.CORS_ORIGIN,
-      RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
-      SERVER_URL: process.env.SERVER_URL,
-      SMTP_HOST: process.env.SMTP_HOST,
-      SMTP_PORT: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
-      SMTP_USER: process.env.SMTP_USER,
-      SMTP_PASS: process.env.SMTP_PASS,
-      EMAIL_FROM: process.env.EMAIL_FROM,
-    };
-
-// Production startup guard — prevent silent failures with missing critical secrets
-if (process.env.NODE_ENV === 'production' && !ENV.JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET is required in production. Set it in server/.env');
+  console.error(`❌ Invalid environment variables: ${JSON.stringify(err, null, 2)}`);
   process.exit(1);
 }
+
+export const ENV = parsed.data;

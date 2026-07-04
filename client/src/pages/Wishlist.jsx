@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard.jsx';
 import { Heart, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
@@ -53,7 +53,9 @@ export const Wishlist = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center rounded-3xl border border-dashed border-surface-200 bg-surface-50/30">
-          <div className="text-6xl mb-4">💔</div>
+          <div className="h-16 w-16 bg-surface-50 rounded-full flex items-center justify-center text-app-text/45 mb-4 shadow-soft">
+            <Heart className="h-8 w-8" />
+          </div>
           <h3 className="text-lg font-bold text-app-text">Your wishlist is empty</h3>
           <p className="text-sm text-app-text/50 mt-2 max-w-xs mx-auto">
             Save the items you love and they'll show up here.

@@ -7,12 +7,12 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Product title is required'],
       trim: true,
-      maxLength: [120, 'Product title cannot exceed 120 characters']
+      maxLength: [120, 'Product title cannot exceed 120 characters'],
     },
     slug: {
       type: String,
       unique: true,
-      index: true
+      index: true,
     },
     productCode: {
       type: String,
@@ -21,64 +21,43 @@ const productSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
       maxlength: 32,
-      index: true
+      index: true,
     },
     description: {
       type: String,
       required: [true, 'Product description is required'],
-      trim: true
+      trim: true,
     },
     price: {
       type: Number,
       required: [true, 'Product price is required'],
-      min: [0, 'Original price cannot be negative']
+      min: [0, 'Original price cannot be negative'],
     },
     stock: {
       type: Number,
       min: [0, 'Stock cannot be negative'],
-      default: 0
+      default: 0,
     },
     discountedPrice: {
       type: Number,
       default: null,
-      min: [0, 'Discounted price cannot be negative']
+      min: [0, 'Discounted price cannot be negative'],
     },
     image: {
       type: String,
       required: [true, 'Product image URL is required'],
-      default: '/assets/hero_casual.png'
+      default: '/assets/hero_casual.png',
     },
     images: {
       type: [String],
       default: [],
-      validate: [v => v.length <= 10, 'Cannot exceed 10 images']
-    },
-    options: {
-      type: [
-        {
-          name: {
-            type: String,
-            required: true,
-            trim: true
-          },
-          values: {
-            type: [String],
-            required: true,
-            validate: {
-              validator: v => v.length > 0 && v.length <= 20,
-              message: 'Option must have 1-20 values'
-            }
-          }
-        }
-      ],
-      default: [],
-      validate: [v => v.length <= 5, 'Cannot exceed 5 options']
+      validate: [(v) => v.length <= 10, 'Cannot exceed 10 images'],
     },
     status: {
       type: String,
       enum: ['draft', 'published', 'archived'],
       default: 'draft',
-      index: true
+      index: true,
     },
     variantSummary: {
       minPrice: { type: Number, default: 0 },
@@ -87,57 +66,57 @@ const productSchema = new mongoose.Schema(
       sizes: { type: [String], default: [] },
       colorImages: { type: Map, of: String, default: {} },
       totalInventory: { type: Number, default: 0 },
-      variantCount: { type: Number, default: 0 }
+      variantCount: { type: Number, default: 0 },
     },
     badge: {
       type: String,
       enum: ['', 'new-arrival', 'sale', 'street-drip', 'limited-edition'],
-      default: ''
+      default: '',
     },
     rating: {
       type: Number,
       min: [0, 'Rating cannot be negative'],
       max: [5, 'Rating cannot exceed 5'],
-      default: 0
+      default: 0,
     },
     reviewCount: {
       type: Number,
       min: [0, 'Review count cannot be negative'],
-      default: 0
+      default: 0,
     },
     soldCount: {
       type: Number,
       min: [0, 'Sold count cannot be negative'],
-      default: 0
+      default: 0,
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Product category is required']
+      required: [true, 'Product category is required'],
     },
     subcategory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Subcategory',
-      required: [true, 'Product subcategory is required']
+      required: [true, 'Product subcategory is required'],
     },
     gender: {
       type: String,
       enum: ['men', 'women', 'unisex'],
-      default: 'men'
+      default: 'men',
     },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'Product seller is required']
+      required: [true, 'Product seller is required'],
     },
     relatedProducts: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
-      }
-    ]
+        ref: 'Product',
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 productSchema.index({ category: 1 });
@@ -155,10 +134,14 @@ productSchema.index({ 'variantSummary.colors': 1 });
 productSchema.index({ 'variantSummary.minPrice': 1, 'variantSummary.maxPrice': 1 });
 
 productSchema.pre('validate', async function (next) {
-  if (this.discountedPrice !== undefined && this.discountedPrice !== null && this.discountedPrice >= this.price) {
+  if (
+    this.discountedPrice !== undefined &&
+    this.discountedPrice !== null &&
+    this.discountedPrice >= this.price
+  ) {
     this.invalidate(
       'discountedPrice',
-      `Discounted price (${this.discountedPrice}) must be strictly less than the original price (${this.price})`
+      `Discounted price (${this.discountedPrice}) must be strictly less than the original price (${this.price})`,
     );
   }
 
@@ -184,7 +167,7 @@ productSchema.pre('validate', async function (next) {
 
 productSchema.statics.recalculateVariantSummary = async function (productId, session = null) {
   const Variant = mongoose.model('Variant');
-  
+
   let aggQuery = Variant.aggregate([
     { $match: { product: productId, deletedAt: null, status: 'active' } },
     {
@@ -199,11 +182,11 @@ productSchema.statics.recalculateVariantSummary = async function (productId, ses
         firstImages: {
           $push: {
             color: '$optionValues.Color',
-            image: { $arrayElemAt: ['$images', 0] }
-          }
-        }
-      }
-    }
+            image: { $arrayElemAt: ['$images', 0] },
+          },
+        },
+      },
+    },
   ]);
 
   if (session) {
@@ -219,7 +202,7 @@ productSchema.statics.recalculateVariantSummary = async function (productId, ses
     sizes: [],
     totalInventory: 0,
     variantCount: 0,
-    firstImages: []
+    firstImages: [],
   };
 
   // Build colorImages map: color → first image URL
@@ -245,12 +228,12 @@ productSchema.statics.recalculateVariantSummary = async function (productId, ses
           sizes: summary.sizes,
           colorImages,
           totalInventory: summary.totalInventory || 0,
-          variantCount: summary.variantCount || 0
+          variantCount: summary.variantCount || 0,
         },
-        stock: summary.totalInventory || 0
-      }
+        stock: summary.totalInventory || 0,
+      },
     },
-    { session }
+    { session },
   );
 };
 

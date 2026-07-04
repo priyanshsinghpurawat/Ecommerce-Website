@@ -1,4 +1,3 @@
-/** WHY: Simple hook to manage cart items and calculations from any component. */
 import { useContext } from 'react';
 import { CartContext } from '../context/CartContext.jsx';
 

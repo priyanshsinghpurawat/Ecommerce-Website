@@ -12,12 +12,24 @@ describe('VariantFactory', () => {
     });
 
     it('computes two arrays', () => {
-      const result = VariantFactory.cartesianProduct([['a', 'b'], ['1', '2']]);
-      expect(result).toEqual([['a', '1'], ['a', '2'], ['b', '1'], ['b', '2']]);
+      const result = VariantFactory.cartesianProduct([
+        ['a', 'b'],
+        ['1', '2'],
+      ]);
+      expect(result).toEqual([
+        ['a', '1'],
+        ['a', '2'],
+        ['b', '1'],
+        ['b', '2'],
+      ]);
     });
 
     it('computes three arrays', () => {
-      const result = VariantFactory.cartesianProduct([['R', 'G'], ['S', 'M'], ['C1', 'C2']]);
+      const result = VariantFactory.cartesianProduct([
+        ['R', 'G'],
+        ['S', 'M'],
+        ['C1', 'C2'],
+      ]);
       expect(result.length).toBe(8);
     });
   });
@@ -39,7 +51,7 @@ describe('VariantFactory', () => {
     it('generates matrix for multiple options', () => {
       const options = [
         { name: 'Color', values: ['Red', 'Blue'] },
-        { name: 'Size', values: ['S', 'M'] }
+        { name: 'Size', values: ['S', 'M'] },
       ];
       const matrix = VariantFactory.generateMatrix(options, 'SHIRT');
       expect(matrix).toHaveLength(4);
@@ -83,11 +95,11 @@ describe('VariantFactory', () => {
     it('returns array of SKU strings', () => {
       const options = [
         { name: 'Color', values: ['Red', 'Blue'] },
-        { name: 'Size', values: ['S', 'M'] }
+        { name: 'Size', values: ['S', 'M'] },
       ];
       const skus = VariantFactory.generateSKUsForOptions('TSHIRT', options);
       expect(skus).toHaveLength(4);
-      skus.forEach(sku => expect(typeof sku).toBe('string'));
+      skus.forEach((sku) => expect(typeof sku).toBe('string'));
     });
   });
 });

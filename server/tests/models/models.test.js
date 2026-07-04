@@ -9,6 +9,7 @@ import { Subcategory } from '../../models/subcategory.model.js';
 import { Order } from '../../models/order.model.js';
 import { Coupon } from '../../models/coupon.model.js';
 import { Cart } from '../../models/cart.model.js';
+import { generateAccessToken } from '../../utils/jwt.js';
 
 let mongod;
 
@@ -34,7 +35,7 @@ describe('User Model', () => {
     const user = await User.create({
       name: 'Test User',
       email: 'test@test.com',
-      password: 'Password@123'
+      password: 'Password@123',
     });
     expect(user.name).toBe('Test User');
     expect(user.password).not.toBe('Password@123');
@@ -45,9 +46,9 @@ describe('User Model', () => {
     const user = await User.create({
       name: 'Test',
       email: 'test@test.com',
-      password: 'Password@123'
+      password: 'Password@123',
     });
-    const token = user.generateAccessToken();
+    const token = generateAccessToken(user);
     expect(typeof token).toBe('string');
     expect(token.split('.')).toHaveLength(3);
   });
@@ -56,7 +57,7 @@ describe('User Model', () => {
     const user = await User.create({
       name: 'Test',
       email: 'test@test.com',
-      password: 'Password@123'
+      password: 'Password@123',
     });
     expect(await user.isPasswordCorrect('Password@123')).toBe(true);
     expect(await user.isPasswordCorrect('wrong')).toBe(false);
@@ -66,7 +67,7 @@ describe('User Model', () => {
     const user = await User.create({
       name: 'Test',
       email: 'test@test.com',
-      password: 'Password@123'
+      password: 'Password@123',
     });
     const hash = user.password;
     user.name = 'Updated';
@@ -76,8 +77,9 @@ describe('User Model', () => {
 
   it('enforces unique email', async () => {
     await User.create({ name: 'A', email: 'dup@test.com', password: 'Password@1' });
-    await expect(User.create({ name: 'B', email: 'dup@test.com', password: 'Password@2' }))
-      .rejects.toThrow();
+    await expect(
+      User.create({ name: 'B', email: 'dup@test.com', password: 'Password@2' }),
+    ).rejects.toThrow();
   });
 
   it('defaults isActive to true', async () => {
@@ -110,7 +112,12 @@ describe('Product Model', () => {
   let user, category, subcategory;
 
   beforeEach(async () => {
-    user = await User.create({ name: 'Seller', email: 'seller@test.com', password: 'Password@1', role: 'seller' });
+    user = await User.create({
+      name: 'Seller',
+      email: 'seller@test.com',
+      password: 'Password@1',
+      role: 'seller',
+    });
     category = await Category.create({ name: 'Clothing' });
     subcategory = await Subcategory.create({ name: 'T-Shirts', category: category._id });
   });
@@ -125,24 +132,26 @@ describe('Product Model', () => {
       category: category._id,
       subcategory: subcategory._id,
       seller: user._id,
-      productCode: 'TS-001'
+      productCode: 'TS-001',
     });
     expect(product.slug).toBe('test-shirt');
     expect(product.productCode).toBe('TS-001');
   });
 
   it('rejects discountedPrice >= price', async () => {
-    await expect(Product.create({
-      title: 'Bad Price',
-      description: 'Test',
-      price: 100,
-      discountedPrice: 150,
-      image: '/test.jpg',
-      category: category._id,
-      subcategory: subcategory._id,
-      seller: user._id,
-      productCode: 'BP-001'
-    })).rejects.toThrow();
+    await expect(
+      Product.create({
+        title: 'Bad Price',
+        description: 'Test',
+        price: 100,
+        discountedPrice: 150,
+        image: '/test.jpg',
+        category: category._id,
+        subcategory: subcategory._id,
+        seller: user._id,
+        productCode: 'BP-001',
+      }),
+    ).rejects.toThrow();
   });
 
   it('accepts valid discountedPrice', async () => {
@@ -155,19 +164,31 @@ describe('Product Model', () => {
       category: category._id,
       subcategory: subcategory._id,
       seller: user._id,
-      productCode: 'SI-001'
+      productCode: 'SI-001',
     });
     expect(product.discountedPrice).toBe(800);
   });
 
   it('handles duplicate slugs with counter', async () => {
     await Product.create({
-      title: 'Shirt', description: 'A', price: 100, image: '/a.jpg',
-      category: category._id, subcategory: subcategory._id, seller: user._id, productCode: 'A-1'
+      title: 'Shirt',
+      description: 'A',
+      price: 100,
+      image: '/a.jpg',
+      category: category._id,
+      subcategory: subcategory._id,
+      seller: user._id,
+      productCode: 'A-1',
     });
     const p2 = await Product.create({
-      title: 'Shirt', description: 'B', price: 200, image: '/b.jpg',
-      category: category._id, subcategory: subcategory._id, seller: user._id, productCode: 'B-2'
+      title: 'Shirt',
+      description: 'B',
+      price: 200,
+      image: '/b.jpg',
+      category: category._id,
+      subcategory: subcategory._id,
+      seller: user._id,
+      productCode: 'B-2',
     });
     expect(p2.slug).toMatch(/^shirt-\d+$/);
   });
@@ -177,12 +198,23 @@ describe('Variant Model', () => {
   let product, user, category, subcategory;
 
   beforeEach(async () => {
-    user = await User.create({ name: 'S', email: 's@t.com', password: 'Password@1', role: 'seller' });
+    user = await User.create({
+      name: 'S',
+      email: 's@t.com',
+      password: 'Password@1',
+      role: 'seller',
+    });
     category = await Category.create({ name: 'Clothing' });
     subcategory = await Subcategory.create({ name: 'Tees', category: category._id });
     product = await Product.create({
-      title: 'Variant Test', description: 'Test', price: 500, image: '/t.jpg',
-      category: category._id, subcategory: subcategory._id, seller: user._id, productCode: 'VT-1'
+      title: 'Variant Test',
+      description: 'Test',
+      price: 500,
+      image: '/t.jpg',
+      category: category._id,
+      subcategory: subcategory._id,
+      seller: user._id,
+      productCode: 'VT-1',
     });
   });
 
@@ -191,7 +223,10 @@ describe('Variant Model', () => {
       product: product._id,
       sku: 'VT-RED-M',
       stock: 10,
-      optionValues: new Map([['Color', 'Red'], ['Size', 'M']])
+      optionValues: new Map([
+        ['Color', 'Red'],
+        ['Size', 'M'],
+      ]),
     });
     expect(variant.sku).toBe('VT-RED-M');
     expect(variant.optionValues.get('Color')).toBe('Red');
@@ -199,13 +234,20 @@ describe('Variant Model', () => {
 
   it('enforces unique SKU', async () => {
     await Variant.create({ product: product._id, sku: 'DUP-SKU', stock: 5 });
-    await expect(Variant.create({ product: product._id, sku: 'DUP-SKU', stock: 3 })).rejects.toThrow();
+    await expect(
+      Variant.create({ product: product._id, sku: 'DUP-SKU', stock: 3 }),
+    ).rejects.toThrow();
   });
 
   it('findByProductAndOptions returns matching variant', async () => {
     await Variant.create({
-      product: product._id, sku: 'FIND-ME', stock: 5,
-      optionValues: new Map([['Color', 'Blue'], ['Size', 'L']])
+      product: product._id,
+      sku: 'FIND-ME',
+      stock: 5,
+      optionValues: new Map([
+        ['Color', 'Blue'],
+        ['Size', 'L'],
+      ]),
     });
     const found = await Variant.findByProductAndOptions(product._id, { Color: 'Blue', Size: 'L' });
     expect(found).not.toBeNull();
@@ -214,7 +256,12 @@ describe('Variant Model', () => {
 
   it('findActiveByProduct excludes deleted variants', async () => {
     await Variant.create({ product: product._id, sku: 'ACTIVE-1', stock: 5 });
-    await Variant.create({ product: product._id, sku: 'DELETED-1', stock: 5, deletedAt: new Date() });
+    await Variant.create({
+      product: product._id,
+      sku: 'DELETED-1',
+      stock: 5,
+      deletedAt: new Date(),
+    });
     const active = await Variant.findActiveByProduct(product._id);
     expect(active.length).toBe(1);
     expect(active[0].sku).toBe('ACTIVE-1');
@@ -227,14 +274,16 @@ describe('Order Model', () => {
     const order = await Order.create({
       orderNumber: 'BL-TEST-001',
       user: user._id,
-      items: [{
-        product: new mongoose.Types.ObjectId(),
-        title: 'Test Product',
-        price: 500,
-        quantity: 1,
-        unitPrice: 500,
-        subtotal: 500
-      }],
+      items: [
+        {
+          product: new mongoose.Types.ObjectId(),
+          title: 'Test Product',
+          price: 500,
+          quantity: 1,
+          unitPrice: 500,
+          subtotal: 500,
+        },
+      ],
       subtotal: 500,
       total: 500,
       shippingAddress: {
@@ -243,8 +292,8 @@ describe('Order Model', () => {
         street: '123 Main St',
         city: 'Mumbai',
         state: 'MH',
-        zipCode: '400001'
-      }
+        zipCode: '400001',
+      },
     });
     expect(order.orderNumber).toBe('BL-TEST-001');
     expect(order.status).toBe('pending');
@@ -253,11 +302,40 @@ describe('Order Model', () => {
 
   it('enforces unique orderNumber', async () => {
     const user = await User.create({ name: 'D', email: 'd@t.com', password: 'Password@1' });
-    const item = { product: new mongoose.Types.ObjectId(), title: 'X', price: 100, quantity: 1, unitPrice: 100, subtotal: 100 };
-    const addr = { fullName: 'T', phone: '9876543210', street: 'S', city: 'C', state: 'S', zipCode: '400001' };
-    await Order.create({ orderNumber: 'DUP-001', user: user._id, items: [item], subtotal: 100, total: 100, shippingAddress: addr });
-    await expect(Order.create({ orderNumber: 'DUP-001', user: user._id, items: [item], subtotal: 100, total: 100, shippingAddress: addr }))
-      .rejects.toThrow();
+    const item = {
+      product: new mongoose.Types.ObjectId(),
+      title: 'X',
+      price: 100,
+      quantity: 1,
+      unitPrice: 100,
+      subtotal: 100,
+    };
+    const addr = {
+      fullName: 'T',
+      phone: '9876543210',
+      street: 'S',
+      city: 'C',
+      state: 'S',
+      zipCode: '400001',
+    };
+    await Order.create({
+      orderNumber: 'DUP-001',
+      user: user._id,
+      items: [item],
+      subtotal: 100,
+      total: 100,
+      shippingAddress: addr,
+    });
+    await expect(
+      Order.create({
+        orderNumber: 'DUP-001',
+        user: user._id,
+        items: [item],
+        subtotal: 100,
+        total: 100,
+        shippingAddress: addr,
+      }),
+    ).rejects.toThrow();
   });
 });
 
@@ -266,18 +344,24 @@ describe('Coupon Model', () => {
     const coupon = await Coupon.create({
       code: 'save10',
       discountType: 'percentage',
-      discountValue: 10
+      discountValue: 10,
     });
     expect(coupon.code).toBe('SAVE10');
   });
 
   it('enforces unique code', async () => {
     await Coupon.create({ code: 'UNIQUE', discountType: 'flat', discountValue: 50 });
-    await expect(Coupon.create({ code: 'UNIQUE', discountType: 'flat', discountValue: 25 })).rejects.toThrow();
+    await expect(
+      Coupon.create({ code: 'UNIQUE', discountType: 'flat', discountValue: 25 }),
+    ).rejects.toThrow();
   });
 
   it('defaults isActive to true', async () => {
-    const coupon = await Coupon.create({ code: 'ACTIVE', discountType: 'percentage', discountValue: 5 });
+    const coupon = await Coupon.create({
+      code: 'ACTIVE',
+      discountType: 'percentage',
+      discountValue: 5,
+    });
     expect(coupon.isActive).toBe(true);
   });
 
@@ -292,6 +376,8 @@ describe('Cart Model', () => {
     const user = await User.create({ name: 'Cart', email: 'cart@t.com', password: 'Password@1' });
     const product = new mongoose.Types.ObjectId();
     await Cart.create({ user: user._id, items: [{ product, quantity: 1 }] });
-    await expect(Cart.create({ user: user._id, items: [{ product, quantity: 2 }] })).rejects.toThrow();
+    await expect(
+      Cart.create({ user: user._id, items: [{ product, quantity: 2 }] }),
+    ).rejects.toThrow();
   });
 });

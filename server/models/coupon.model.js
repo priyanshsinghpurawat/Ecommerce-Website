@@ -8,67 +8,67 @@ const couponSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       uppercase: true, // Auto uppercase coupon codes
-      maxLength: [20, 'Coupon code cannot exceed 20 characters']
+      maxLength: [20, 'Coupon code cannot exceed 20 characters'],
     },
     discountType: {
       type: String,
       required: [true, 'Discount type is required'],
       enum: {
         values: ['percentage', 'flat'],
-        message: 'Discount type must be either percentage or flat'
+        message: 'Discount type must be either percentage or flat',
       },
-      default: 'percentage'
+      default: 'percentage',
     },
     discountValue: {
       type: Number,
       required: [true, 'Discount value is required'],
-      min: [0, 'Discount value cannot be negative']
+      min: [0, 'Discount value cannot be negative'],
     },
     minCartAmount: {
       type: Number,
       default: 0,
-      min: [0, 'Minimum order amount cannot be negative']
+      min: [0, 'Minimum order amount cannot be negative'],
     },
     expiryDate: {
-      type: Date
+      type: Date,
     },
     usageLimit: {
       type: Number,
-      default: null // null means infinite
+      default: null, // null means infinite
     },
     usageCount: {
       type: Number,
       default: 0,
-      min: [0, 'Usage count cannot be negative']
+      min: [0, 'Usage count cannot be negative'],
     },
     perUserLimit: {
       type: Number,
       default: 1,
-      min: [1, 'Per user limit must be at least 1']
+      min: [1, 'Per user limit must be at least 1'],
     },
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
     },
     newUsersOnly: {
       type: Boolean,
-      default: false
+      default: false,
     },
     appliedProducts: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
-      }
+        ref: 'Product',
+      },
     ],
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      default: null // null means global admin coupon
-    }
+      default: null, // null means global admin coupon
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 couponSchema.index({ isActive: 1, expiryDate: 1 });

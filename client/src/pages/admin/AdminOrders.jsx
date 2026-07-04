@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getAllOrders, updateOrderStatus } from '../../services/order.service.js';
 import { Loader2, Package, Search, Eye, ArrowUpDown, ChevronDown, CheckCircle, Clock, Truck, XCircle, Download, Printer } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Modal } from '../../components/Modal.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 
 // State machine: defines which transitions are allowed from each status (matches backend)
 const VALID_TRANSITIONS = {
@@ -22,6 +23,12 @@ export const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    limit: 10
+  });
 
   // Modal Control
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -31,8 +38,13 @@ export const AdminOrders = () => {
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await getAllOrders({ search, status, seller: sellerId });
-      if (res?.success) setOrders(res.data?.orders || res.data || []);
+      const res = await getAllOrders({ search, status, seller: sellerId, page: pagination.currentPage, limit: pagination.limit });
+      if (res?.success) {
+        setOrders(res.data?.orders || res.data?.orders || []);
+        if (res.data?.pagination) {
+          setPagination(res.data.pagination);
+        }
+      }
     } catch {
       toast.error('Failed to load orders.');
     } finally {
@@ -42,7 +54,7 @@ export const AdminOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [search, status, sellerId]);
+  }, [search, status, sellerId, pagination.currentPage, pagination.limit]);
 
   const handleStatusChange = async (id, newStatus) => {
     setUpdatingId(id);
@@ -64,30 +76,37 @@ export const AdminOrders = () => {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (orders.length === 0) return;
-    const headers = ['Order Number', 'Customer', 'Email', 'Items', 'Total', 'Status', 'Date'];
-    const csvData = orders.map(o => [
-      o.orderNumber,
-      o.user?.name || 'N/A',
-      o.user?.email || 'N/A',
-      o.items?.length || 0,
-      o.total,
-      o.status,
-      new Date(o.createdAt).toLocaleDateString()
-    ]);
-    
-    const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `orders_export_${new Date().toISOString().slice(0,10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Orders exported to CSV');
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const baseUrl = apiUrl ? apiUrl.replace(/\/api\/v3\/?$/, '') : window.location.origin;
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${baseUrl}/api/v3/orders/export/csv`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `orders_export_${new Date().toISOString().slice(0,10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Orders exported to CSV');
+    } catch (err) {
+      console.error('CSV export error:', err);
+      toast.error('Failed to export orders. Please try again.');
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -252,6 +271,13 @@ export const AdminOrders = () => {
               </tbody>
             </table>
           </div>
+          
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={(page) => setPagination(prev => ({ ...prev, currentPage: page }))}
+            loading={loading}
+          />
         </div>
       )}
 

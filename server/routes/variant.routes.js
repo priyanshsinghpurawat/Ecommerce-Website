@@ -6,7 +6,7 @@ import {
   getProductVariants,
   deleteVariant,
   toggleSkuLock,
-  bulkUpdateStock
+  bulkUpdateStock,
 } from '../controllers/variant.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -33,7 +33,7 @@ const router = Router({ mergeParams: true });
 router.get(
   '/products/:id/variants',
   validate({ params: productIdParamSchema }),
-  getProductVariants
+  getProductVariants,
 );
 
 /**
@@ -59,7 +59,7 @@ router.post(
   verifyJWT,
   authorizeRoles('admin', 'seller'),
   validate({ params: productIdParamSchema }),
-  generateVariants
+  generateVariants,
 );
 
 /**
@@ -85,7 +85,7 @@ router.post(
   verifyJWT,
   authorizeRoles('admin', 'seller'),
   validate({ params: productIdParamSchema }),
-  bulkUpsertVariants
+  bulkUpsertVariants,
 );
 
 /**
@@ -110,7 +110,7 @@ router.patch(
   '/variants/:id/stock',
   verifyJWT,
   authorizeRoles('admin', 'seller'),
-  updateVariantStock
+  updateVariantStock,
 );
 
 /**
@@ -131,12 +131,7 @@ router.patch(
  *       200:
  *         description: Variant deleted
  */
-router.delete(
-  '/variants/:id',
-  verifyJWT,
-  authorizeRoles('admin', 'seller'),
-  deleteVariant
-);
+router.delete('/variants/:id', verifyJWT, authorizeRoles('admin', 'seller'), deleteVariant);
 
 /**
  * @openapi
@@ -156,12 +151,7 @@ router.delete(
  *       200:
  *         description: SKU lock toggled
  */
-router.patch(
-  '/variants/:id/sku-lock',
-  verifyJWT,
-  authorizeRoles('admin', 'seller'),
-  toggleSkuLock
-);
+router.patch('/variants/:id/sku-lock', verifyJWT, authorizeRoles('admin', 'seller'), toggleSkuLock);
 
 /**
  * @openapi
@@ -175,11 +165,6 @@ router.patch(
  *       200:
  *         description: Bulk stock updated
  */
-router.patch(
-  '/variants/bulk-stock',
-  verifyJWT,
-  authorizeRoles('admin', 'seller'),
-  bulkUpdateStock
-);
+router.patch('/variants/bulk-stock', verifyJWT, authorizeRoles('admin', 'seller'), bulkUpdateStock);
 
 export default router;

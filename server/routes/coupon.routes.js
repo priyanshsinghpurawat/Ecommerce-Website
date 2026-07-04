@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { 
-  createCoupon, 
-  getAllCoupons, 
-  updateCoupon, 
-  deleteCoupon, 
-  applyCoupon 
+import {
+  createCoupon,
+  getAllCoupons,
+  updateCoupon,
+  deleteCoupon,
+  applyCoupon,
 } from '../controllers/coupon.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -78,7 +78,13 @@ router.post('/apply', verifyJWT, applyCoupon);
  *       201:
  *         description: Coupon created successfully
  */
-router.post('/', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: createCouponSchema }), createCoupon);
+router.post(
+  '/',
+  verifyJWT,
+  authorizeRoles('admin', 'seller'),
+  validate({ body: createCouponSchema }),
+  createCoupon,
+);
 
 /**
  * @openapi
@@ -134,7 +140,13 @@ router.get('/', verifyJWT, authorizeRoles('admin', 'seller'), getAllCoupons);
  *       200:
  *         description: Coupon updated successfully
  */
-router.put('/:id', verifyJWT, authorizeRoles('admin', 'seller'), validate({ body: updateCouponSchema }), updateCoupon);
+router.put(
+  '/:id',
+  verifyJWT,
+  authorizeRoles('admin', 'seller'),
+  validate({ body: updateCouponSchema }),
+  updateCoupon,
+);
 
 /**
  * @openapi

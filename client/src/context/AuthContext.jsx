@@ -1,4 +1,3 @@
-/** WHY: Global state for the logged-in user (session, roles, logout). */
 import { createContext, useState, useEffect, useRef } from 'react';
 import * as authService from '../services/auth.service.js';
 import { unwrapData, getErrorMessage } from '../utils/helpers.js';
@@ -84,6 +83,7 @@ export const AuthProvider = ({ children }) => {
             handleUnauthorized();
           }
         } finally {
+          verifySessionRef.current = null;
           if (isMounted) setLoading(false);
         }
       })();

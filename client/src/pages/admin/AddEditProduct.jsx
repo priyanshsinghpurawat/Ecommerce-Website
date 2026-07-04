@@ -335,9 +335,9 @@ export default function AddEditProduct() {
                     <label className={labelCls}>Badge</label>
                     <select {...register('badge')} className={inputCls}>
                       <option value="">— None —</option>
-                      <option value="new-arrival">🆕 New Arrival</option>
-                      <option value="sale">🔥 Sale</option>
-                      <option value="street-drip">💧 Street Drip</option>
+                      <option value="new-arrival">New Arrival</option>
+                      <option value="sale">Sale</option>
+                      <option value="street-drip">Street Drip</option>
                     </select>
                   </div>
                 </div>
@@ -440,7 +440,14 @@ export default function AddEditProduct() {
                     <VariantDataTable
                       value={variants}
                       onChange={setVariants}
-                      onDelete={(variantId) => productService.deleteVariant(variantId).catch(() => {})}
+                      onDelete={async (variantId) => {
+  try {
+    await productService.deleteVariant(variantId);
+    toast.success('Variant deleted');
+  } catch {
+    toast.error('Failed to delete variant');
+  }
+}}
                       categoryName={categories?.find(c => c._id === watchedCategory)?.name || ''}
                     />
                   </>

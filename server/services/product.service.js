@@ -1,5 +1,6 @@
 import { uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
 import { deleteFromCloudinary } from '../middleware/upload.middleware.js';
+import { Product } from '../models/product.model.js';
 import { Variant } from '../models/variant.model.js';
 import { safeJSON } from '../utils/helpers.js';
 
@@ -36,7 +37,7 @@ export class ProductService {
       ...Object.keys(buckets.variants)
         .map(Number)
         .sort((a, b) => a - b)
-        .map((i) => uploadFilesToCloudinary(buckets.variants[i]).then((urls) => ({ i, urls })))
+        .map((i) => uploadFilesToCloudinary(buckets.variants[i]).then((urls) => ({ i, urls }))),
     ]);
 
     const newVariantImagesByIndex = Object.fromEntries(variantUploads.map((v) => [v.i, v.urls]));
@@ -54,31 +55,12 @@ export class ProductService {
           price: v?.price === '' || v?.price == null ? null : Number(v.price),
           images: [
             ...(Array.isArray(v?.keepImages) ? v.keepImages : []),
-            ...(newVariantImagesByIndex[i] || [])
-          ]
+            ...(newVariantImagesByIndex[i] || []),
+          ],
         }))
       : [];
 
     return { coverUrl, galleryUrls, variants };
-  }
-
-  /** Sync embedded variants in product document (backward compat) */
-  static async syncEmbeddedVariants(productId) {
-    const product = await import('../models/product.model.js').then(m => m.Product.findById(productId));
-    if (!product) return;
-
-    // Build embedded variants from standalone Variant collection
-    const dbVariants = await Variant.find({ product: productId, deletedAt: null });
-    product.variants = dbVariants.map(v => ({
-      color: v.optionValues.get('Color') || '',
-      size: v.optionValues.get('Size') || '',
-      sku: v.sku,
-      stock: v.stock,
-      price: v.price,
-      images: v.images || []
-    }));
-
-    await product.save();
   }
 
   /**
@@ -91,7 +73,7 @@ export class ProductService {
     if (!variants.length) return;
 
     const existing = await Variant.find({ product: productId, deletedAt: null });
-    const existingBySku = new Map(existing.map(v => [v.sku, v]));
+    const existingBySku = new Map(existing.map((v) => [v.sku, v]));
 
     for (const ev of variants) {
       if (!ev.sku) continue;
@@ -114,13 +96,14 @@ export class ProductService {
             price: ev.price,
             stock: ev.stock,
             optionValues,
-            images: ev.images || []
+            images: ev.images || [],
           });
         }
-      } catch { /* skip bad variant, continue sync */ }
+      } catch {
+        /* skip bad variant, continue sync */
+      }
     }
 
-    const Product = (await import('../models/product.model.js')).Product;
     await Product.recalculateVariantSummary(productId);
   }
 
@@ -138,11 +121,15 @@ export class ProductService {
   }
 
   /** Parse secondary/meta fields from request body */
-  static parseProductMeta(body) {
+  static parseProductMeta(body, role) {
     const meta = {};
     if (body.badge !== undefined) meta.badge = body.badge || '';
-    if (body.rating !== undefined && body.rating !== '') meta.rating = Number(body.rating);
-    if (body.reviewCount !== undefined && body.reviewCount !== '') meta.reviewCount = Number(body.reviewCount);
+
+    if (role === 'admin') {
+      if (body.rating !== undefined && body.rating !== '') meta.rating = Number(body.rating);
+      if (body.reviewCount !== undefined && body.reviewCount !== '')
+        meta.reviewCount = Number(body.reviewCount);
+    }
 
     const related = safeJSON(body.relatedProducts, undefined);
     if (related) meta.relatedProducts = Array.isArray(related) ? related : [related];
@@ -150,7 +137,16 @@ export class ProductService {
   }
 
   /** Construct MongoDB query object from query parameters */
-  static buildCatalogQuery({ search, category, subcategory, badge, seller, minPrice, maxPrice, color }) {
+  static buildCatalogQuery({
+    search,
+    category,
+    subcategory,
+    badge,
+    seller,
+    minPrice,
+    maxPrice,
+    color,
+  }) {
     const query = {};
     if (search) {
       const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -167,27 +163,24 @@ export class ProductService {
       const exprCond = [];
       if (minPrice) {
         exprCond.push({
-          $gte: [
-            { $ifNull: ["$discountedPrice", "$price"] },
-            Number(minPrice)
-          ]
+          $gte: [{ $ifNull: ['$discountedPrice', '$price'] }, Number(minPrice)],
         });
       }
       if (maxPrice) {
         exprCond.push({
-          $lte: [
-            { $ifNull: ["$discountedPrice", "$price"] },
-            Number(maxPrice)
-          ]
+          $lte: [{ $ifNull: ['$discountedPrice', '$price'] }, Number(maxPrice)],
         });
       }
       query.$expr = { $and: exprCond };
     }
 
     if (color) {
-      const colors = String(color).split(',').map(c => c.trim()).filter(Boolean);
+      const colors = String(color)
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
       if (colors.length > 0) {
-        const regexes = colors.map(c => {
+        const regexes = colors.map((c) => {
           const safe = c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           return new RegExp(`^${safe}$`, 'i');
         });
@@ -206,7 +199,7 @@ export class ProductService {
       priceAsc: { price: 1 },
       priceDesc: { price: -1 },
       bestSelling: { soldCount: -1 },
-      popularity: { rating: -1, soldCount: -1 }
+      popularity: { rating: -1, soldCount: -1 },
     };
     return sortMap[sort] || sortMap.latest;
   }

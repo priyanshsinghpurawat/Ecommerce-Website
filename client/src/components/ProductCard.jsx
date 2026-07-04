@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, Star } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
@@ -114,6 +114,7 @@ export const ProductCard = ({ product, activeColor }) => {
           type="button"
           onClick={handleWishlist}
           disabled={wishlistLoading}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           className={`p-2.5 rounded-2xl backdrop-blur-md border transition-all active:scale-90 ${
             isWishlisted
               ? 'bg-red-500 text-white border-red-400/30 shadow-lg shadow-red-500/25'

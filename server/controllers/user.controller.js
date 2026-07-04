@@ -18,10 +18,10 @@ export const getVendors = asyncHandler(async (req, res) => {
 
   const [result] = await User.aggregate([
     {
-      $match: { role: 'seller' }
+      $match: { role: 'seller' },
     },
     {
-      $sort: { createdAt: -1 }
+      $sort: { createdAt: -1 },
     },
     {
       $facet: {
@@ -31,30 +31,30 @@ export const getVendors = asyncHandler(async (req, res) => {
           { $limit: limitNum },
           {
             $project: {
-              password: 0
-            }
+              password: 0,
+            },
           },
           {
             $lookup: {
               from: 'products',
               localField: '_id',
               foreignField: 'seller',
-              as: 'products'
-            }
+              as: 'products',
+            },
           },
           {
             $addFields: {
               productIds: '$products._id',
-              categoryIds: '$products.category'
-            }
+              categoryIds: '$products.category',
+            },
           },
           {
             $lookup: {
               from: 'categories',
               localField: 'categoryIds',
               foreignField: '_id',
-              as: 'categoryDocs'
-            }
+              as: 'categoryDocs',
+            },
           },
           {
             $addFields: {
@@ -66,25 +66,25 @@ export const getVendors = asyncHandler(async (req, res) => {
                     $cond: [
                       { $in: ['$$this', '$$value'] },
                       '$$value',
-                      { $concatArrays: ['$$value', ['$$this']] }
-                    ]
-                  }
-                }
-              }
-            }
+                      { $concatArrays: ['$$value', ['$$this']] },
+                    ],
+                  },
+                },
+              },
+            },
           },
           {
             $lookup: {
               from: 'orders',
               localField: 'productIds',
               foreignField: 'items.product',
-              as: 'matchingOrders'
-            }
+              as: 'matchingOrders',
+            },
           },
           {
             $addFields: {
-              totalOrders: { $size: '$matchingOrders' }
-            }
+              totalOrders: { $size: '$matchingOrders' },
+            },
           },
           {
             $project: {
@@ -92,26 +92,32 @@ export const getVendors = asyncHandler(async (req, res) => {
               productIds: 0,
               categoryIds: 0,
               categoryDocs: 0,
-              matchingOrders: 0
-            }
-          }
-        ]
-      }
-    }
+              matchingOrders: 0,
+            },
+          },
+        ],
+      },
+    },
   ]);
 
   const total = result.metadata[0]?.total || 0;
   const vendors = result.data;
 
-  return res.status(200).json(new ApiResponse(200, {
-    vendors,
-    pagination: {
-      total,
-      totalPages: Math.ceil(total / limitNum),
-      currentPage: pageNum,
-      limit: limitNum
-    }
-  }, 'Vendors retrieved successfully'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        vendors,
+        pagination: {
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
+      'Vendors retrieved successfully',
+    ),
+  );
 });
 
 /**
@@ -122,7 +128,7 @@ export const getVendors = asyncHandler(async (req, res) => {
 export const toggleVendorStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const user = await User.findById(id);
-  
+
   if (!user || user.role !== 'seller') {
     throw new ApiError(404, 'Vendor not found');
   }
@@ -130,7 +136,15 @@ export const toggleVendorStatus = asyncHandler(async (req, res) => {
   user.isActive = !user.isActive;
   await user.save();
 
-  return res.status(200).json(new ApiResponse(200, user, `Vendor status updated to ${user.isActive ? 'Active' : 'Inactive'}`));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user,
+        `Vendor status updated to ${user.isActive ? 'Active' : 'Inactive'}`,
+      ),
+    );
 });
 
 /**
@@ -141,87 +155,85 @@ export const toggleVendorStatus = asyncHandler(async (req, res) => {
 export const getVendorProfile = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const vendor = await User.findById(id).select('-password').lean();
-  
+
   if (!vendor || vendor.role !== 'seller') {
     throw new ApiError(404, 'Vendor not found');
   }
 
   const products = await Product.find({ seller: id }).populate('category subcategory').lean();
-  const productIds = products.map(p => p._id);
-  const productIdSet = new Set(productIds.map(pid => pid.toString()));
+  const productIds = products.map((p) => p._id);
+  const productIdSet = new Set(productIds.map((pid) => pid.toString()));
 
   // 1. Efficiently count active orders where the vendor's items are active (not delivered, cancelled, or returned)
   const activeOrdersCount = await Order.countDocuments({
     items: {
       $elemMatch: {
         product: { $in: productIds },
-        status: { $nin: ['delivered', 'cancelled', 'returned'] }
-      }
-    }
+        status: { $nin: ['delivered', 'cancelled', 'returned'] },
+      },
+    },
   });
 
   // 2. Aggregate sales revenue and units sold per product in database, filtering out non-revenue items (cancelled/returned)
   const revenueStats = await Order.aggregate([
     {
       $match: {
-        "items.product": { $in: productIds },
-        status: { $in: ['confirmed', 'partially_shipped', 'shipped', 'delivered'] }
-      }
+        'items.product': { $in: productIds },
+        status: { $in: ['confirmed', 'partially_shipped', 'shipped', 'delivered'] },
+      },
     },
-    { $unwind: "$items" },
+    { $unwind: '$items' },
     {
       $match: {
-        "items.product": { $in: productIds },
-        "items.status": { $in: ['confirmed', 'shipped', 'delivered'] }
-      }
+        'items.product': { $in: productIds },
+        'items.status': { $in: ['confirmed', 'shipped', 'delivered'] },
+      },
     },
     {
       $group: {
-        _id: "$items.product",
-        revenue: { $sum: { $multiply: ["$items.unitPrice", "$items.quantity"] } },
-        unitsSold: { $sum: "$items.quantity" }
-      }
-    }
+        _id: '$items.product',
+        revenue: { $sum: { $multiply: ['$items.unitPrice', '$items.quantity'] } },
+        unitsSold: { $sum: '$items.quantity' },
+      },
+    },
   ]);
 
   let totalRevenue = 0;
   const productStats = {};
-  revenueStats.forEach(stat => {
+  revenueStats.forEach((stat) => {
     const pid = stat._id.toString();
     productStats[pid] = {
       revenue: stat.revenue,
-      units: stat.unitsSold
+      units: stat.unitsSold,
     };
     totalRevenue += stat.revenue;
   });
 
   // Enhance products with sales data and sort for top products
-  const productsWithStats = products.map(p => {
+  const productsWithStats = products.map((p) => {
     const stats = productStats[p._id.toString()] || { revenue: 0, units: 0 };
     return {
       ...p,
       revenue: stats.revenue,
-      unitsSold: stats.units
+      unitsSold: stats.units,
     };
   });
 
-  const topProducts = [...productsWithStats]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
+  const topProducts = [...productsWithStats].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
   // 3. Fetch only the top 5 recent orders instead of pulling everything
-  const recentOrdersRaw = await Order.find({ "items.product": { $in: productIds } })
+  const recentOrdersRaw = await Order.find({ 'items.product': { $in: productIds } })
     .populate('user', 'name')
     .sort({ createdAt: -1 })
     .limit(5)
     .lean();
 
-  const recentOrders = recentOrdersRaw.map(o => {
-    const vendorItems = o.items.filter(item => {
+  const recentOrders = recentOrdersRaw.map((o) => {
+    const vendorItems = o.items.filter((item) => {
       const itemProductId = item.product?._id || item.product;
       return productIdSet.has(String(itemProductId));
     });
-    
+
     return {
       _id: o._id,
       orderNumber: o.orderNumber,
@@ -229,21 +241,27 @@ export const getVendorProfile = asyncHandler(async (req, res) => {
       status: o.status,
       createdAt: o.createdAt,
       vendorItemsCount: vendorItems.length,
-      vendorSubtotal: vendorItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+      vendorSubtotal: vendorItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     };
   });
 
-  return res.status(200).json(new ApiResponse(200, {
-    vendor,
-    stats: {
-      totalProducts: products.length,
-      activeOrders: activeOrdersCount,
-      totalRevenue
-    },
-    products: productsWithStats,
-    topProducts,
-    recentOrders
-  }, 'Vendor profile retrieved successfully'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        vendor,
+        stats: {
+          totalProducts: products.length,
+          activeOrders: activeOrdersCount,
+          totalRevenue,
+        },
+        products: productsWithStats,
+        topProducts,
+        recentOrders,
+      },
+      'Vendor profile retrieved successfully',
+    ),
+  );
 });
 
 /**
@@ -259,7 +277,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
   const [result] = await User.aggregate([
     {
-      $sort: { createdAt: -1 }
+      $sort: { createdAt: -1 },
     },
     {
       $facet: {
@@ -269,44 +287,50 @@ export const getAllUsers = asyncHandler(async (req, res) => {
           { $limit: limitNum },
           {
             $project: {
-              password: 0
-            }
+              password: 0,
+            },
           },
           {
             $lookup: {
               from: 'orders',
               localField: '_id',
               foreignField: 'user',
-              as: 'orders'
-            }
+              as: 'orders',
+            },
           },
           {
             $addFields: {
-              totalOrders: { $size: '$orders' }
-            }
+              totalOrders: { $size: '$orders' },
+            },
           },
           {
             $project: {
-              orders: 0
-            }
-          }
-        ]
-      }
-    }
+              orders: 0,
+            },
+          },
+        ],
+      },
+    },
   ]);
 
   const total = result.metadata[0]?.total || 0;
   const users = result.data;
 
-  return res.status(200).json(new ApiResponse(200, {
-    users,
-    pagination: {
-      total,
-      totalPages: Math.ceil(total / limitNum),
-      currentPage: pageNum,
-      limit: limitNum
-    }
-  }, 'Users retrieved successfully'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        users,
+        pagination: {
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
+      'Users retrieved successfully',
+    ),
+  );
 });
 
 /**
@@ -362,16 +386,18 @@ export const getProfile = asyncHandler(async (req, res) => {
   if ((!userData.addresses || userData.addresses.length === 0) && userData.address) {
     const legacyAddr = userData.address;
     if (legacyAddr.street || legacyAddr.city) {
-      userData.addresses = [{
-        fullName: userData.name,
-        phone: userData.phone || '',
-        street: legacyAddr.street || '',
-        city: legacyAddr.city || '',
-        state: legacyAddr.state || '',
-        zipCode: legacyAddr.zipCode || '',
-        country: legacyAddr.country || 'India',
-        isDefault: true
-      }];
+      userData.addresses = [
+        {
+          fullName: userData.name,
+          phone: userData.phone || '',
+          street: legacyAddr.street || '',
+          city: legacyAddr.city || '',
+          state: legacyAddr.state || '',
+          zipCode: legacyAddr.zipCode || '',
+          country: legacyAddr.country || 'India',
+          isDefault: true,
+        },
+      ];
     }
   }
 
@@ -396,15 +422,29 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (name && typeof name === 'string') user.name = name.trim();
   if (phone !== undefined) user.phone = typeof phone === 'string' ? phone.trim() : '';
   if (avatar !== undefined) user.avatar = typeof avatar === 'string' ? avatar.trim() : '';
-  
+
   if (user.role === 'seller') {
-    if (brandName !== undefined) user.brandName = typeof brandName === 'string' ? brandName.trim() : '';
+    if (brandName !== undefined)
+      user.brandName = typeof brandName === 'string' ? brandName.trim() : '';
     if (storefront && typeof storefront === 'object') {
       if (!user.storefront) user.storefront = {};
-      if (storefront.banner !== undefined) user.storefront.banner = typeof storefront.banner === 'string' ? storefront.banner.trim() : '';
-      if (storefront.description !== undefined) user.storefront.description = typeof storefront.description === 'string' ? storefront.description.trim() : '';
-      if (storefront.returnPolicy !== undefined) user.storefront.returnPolicy = typeof storefront.returnPolicy === 'string' ? storefront.returnPolicy.trim() : '';
-      if (storefront.slug !== undefined) user.storefront.slug = typeof storefront.slug === 'string' ? storefront.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') : '';
+      if (storefront.banner !== undefined)
+        user.storefront.banner =
+          typeof storefront.banner === 'string' ? storefront.banner.trim() : '';
+      if (storefront.description !== undefined)
+        user.storefront.description =
+          typeof storefront.description === 'string' ? storefront.description.trim() : '';
+      if (storefront.returnPolicy !== undefined)
+        user.storefront.returnPolicy =
+          typeof storefront.returnPolicy === 'string' ? storefront.returnPolicy.trim() : '';
+      if (storefront.slug !== undefined)
+        user.storefront.slug =
+          typeof storefront.slug === 'string'
+            ? storefront.slug
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9-]/g, '-')
+            : '';
     }
   }
 
@@ -421,7 +461,10 @@ export const updateProfile = asyncHandler(async (req, res) => {
  */
 export const uploadAvatar = asyncHandler(async (req, res) => {
   if (!req.file) {
-    throw new ApiError(400, 'No image file provided. Send a single image under the "avatar" field.');
+    throw new ApiError(
+      400,
+      'No image file provided. Send a single image under the "avatar" field.',
+    );
   }
 
   const user = await User.findById(req.user._id);
@@ -436,7 +479,7 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
   const avatarUrl = await uploadBufferToCloudinary(req.file.buffer, {
     folder: 'mensvibe/avatars',
-    filename: `avatar_${user._id.toString()}`
+    filename: `avatar_${user._id.toString()}`,
   });
 
   user.avatar = avatarUrl;
@@ -456,7 +499,7 @@ export const addAddress = asyncHandler(async (req, res) => {
   const { fullName, phone, street, city, state, zipCode, country, isDefault } = req.body;
 
   const user = await User.findById(req.user._id);
-  
+
   const newAddress = {
     fullName,
     phone,
@@ -465,14 +508,14 @@ export const addAddress = asyncHandler(async (req, res) => {
     state,
     zipCode,
     country: country || 'India',
-    isDefault: isDefault || false
+    isDefault: isDefault || false,
   };
 
   // If this is the first address or marked as default, unset others
   if (user.addresses.length === 0) {
     newAddress.isDefault = true;
   } else if (newAddress.isDefault) {
-    user.addresses.forEach(addr => addr.isDefault = false);
+    user.addresses.forEach((addr) => (addr.isDefault = false));
   }
 
   user.addresses.push(newAddress);
@@ -510,7 +553,7 @@ export const updateAddress = asyncHandler(async (req, res) => {
 
   // If marking as default, unset others
   if (safeUpdates.isDefault) {
-    user.addresses.forEach(addr => addr.isDefault = false);
+    user.addresses.forEach((addr) => (addr.isDefault = false));
   }
 
   Object.assign(address, safeUpdates);
@@ -528,7 +571,7 @@ export const deleteAddress = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const user = await User.findById(req.user._id);
-  const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === id);
+  const addressIndex = user.addresses.findIndex((addr) => addr._id.toString() === id);
 
   if (addressIndex === -1) {
     throw new ApiError(404, 'Address not found');
@@ -561,7 +604,7 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Address not found');
   }
 
-  user.addresses.forEach(addr => {
+  user.addresses.forEach((addr) => {
     addr.isDefault = addr._id.toString() === id;
   });
 
@@ -579,7 +622,9 @@ export const getWishlist = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
-  return res.status(200).json(new ApiResponse(200, user.wishlist, 'Wishlist retrieved successfully'));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user.wishlist, 'Wishlist retrieved successfully'));
 });
 
 /**
@@ -598,7 +643,7 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  if (user.wishlist.some(id => id.toString() === productId)) {
+  if (user.wishlist.some((id) => id.toString() === productId)) {
     return res.status(200).json(new ApiResponse(200, user.wishlist, 'Product already in wishlist'));
   }
 
@@ -624,7 +669,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
+  user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
   await user.save();
 
   return res.status(200).json(new ApiResponse(200, user.wishlist, 'Product removed from wishlist'));

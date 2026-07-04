@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getVendorProfile } from '../../services/user.service.js';
 import { 
@@ -45,7 +45,7 @@ export const AdminVendorProfile = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-4">
           <Link
-            to="/admin/vendors"
+            to="/admin/sellers"
             className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-app-text/40 hover:text-app-text transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

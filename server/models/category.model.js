@@ -1,32 +1,32 @@
 import mongoose from 'mongoose';
-import { slugify } from '../utils/helpers.js';
+import slugify from 'slugify';
 
 const categorySchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Category name is required"],
+      required: [true, 'Category name is required'],
       unique: true,
       trim: true,
-      maxLength: [32, "Category name cannot exceed 32 characters"]
+      maxLength: [32, 'Category name cannot exceed 32 characters'],
     },
     slug: {
       type: String,
       unique: true,
       lowercase: true,
-      index: true
-    }
+      index: true,
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
-categorySchema.pre("save", function (next) {
-  if (this.isModified("name")) {
-    this.slug = slugify(this.name);
+categorySchema.pre('save', function (next) {
+  if (this.isModified('name')) {
+    this.slug = slugify(this.name, { lower: true, strict: true });
   }
   next();
 });
 
-export const Category = mongoose.model("Category", categorySchema);
+export const Category = mongoose.model('Category', categorySchema);

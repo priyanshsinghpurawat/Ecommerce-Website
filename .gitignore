@@ -69,10 +69,14 @@ cypress/screenshots/
 .vercel/
 .netlify/
 
+# Local tool configs
+.caveman.json
+
 # Server specific
 server/public/
 gemini-creds-*.json
 .husky/
+.opencode/
 
 # Heavy files and reports
 docs/

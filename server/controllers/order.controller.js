@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
-import { Cart } from '../models/cart.model.js';
 import { Product } from '../models/product.model.js';
 import { Variant } from '../models/variant.model.js';
 import { Coupon } from '../models/coupon.model.js';
@@ -9,25 +8,38 @@ import { AffiliateLink } from '../models/affiliateLink.model.js';
 import { LedgerTransaction } from '../models/ledger.model.js';
 import Papa from 'papaparse';
 import logger from '../config/logger.js';
-import { ApiResponse, ApiError, asyncHandler, calculateCouponDiscount, computeCartSubtotal, getUnitPrice, generateOrderNumber, validateShippingAddress } from '../utils/helpers.js';
+import {
+  ApiResponse,
+  ApiError,
+  asyncHandler,
+  generateOrderNumber,
+  validateShippingAddress,
+} from '../utils/helpers.js';
 import { getIO } from '../config/socket.js';
-import { deductStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
+import {
+  deductStock,
+  incrementProductSales as incrementSalesBulk,
+  fetchAndValidateUserCart,
+  calculateOrderTotals,
+  createLedgerEntries,
+} from '../services/order.service.js';
+import { calculateCouponDiscount } from '../services/coupon.service.js';
 
-const GST_TAX_RATE = 0.18;
-const VALID_ORDER_STATUSES = ['confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'];
+const VALID_ORDER_STATUSES = [
+  'confirmed',
+  'partially_shipped',
+  'shipped',
+  'delivered',
+  'cancelled',
+];
 
-// State machine: defines which transitions are allowed from each status
 const VALID_TRANSITIONS = {
-  confirmed:        ['shipped', 'cancelled'],
-  partially_shipped:['shipped', 'cancelled'],
-  shipped:          ['delivered', 'cancelled'],
-  delivered:        [],                        // terminal state
-  cancelled:        ['confirmed'],             // reinstatement (requires stock check)
+  confirmed: ['shipped', 'cancelled'],
+  partially_shipped: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [], // terminal state
+  cancelled: ['confirmed'], // reinstatement (requires stock check)
 };
-
-/* -------------------------------------------------------------------------- */
-/*                                 CONTROLLERS                                */
-/* -------------------------------------------------------------------------- */
 
 /**
  * @desc    Place order from cart
@@ -41,19 +53,17 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   const cart = await fetchAndValidateUserCart(req.user._id);
   const orderCalculations = await calculateOrderTotals(cart, couponCode, req.user._id);
-  
+
   const order = await executeOrderTransaction({
     userId: req.user._id,
     cart,
     orderCalculations,
     shippingAddress,
     paymentMethod,
-    attributionTag
+    attributionTag,
   });
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, order, 'Order placed successfully'));
+  return res.status(201).json(new ApiResponse(201, order, 'Order placed successfully'));
 });
 
 /**
@@ -68,25 +78,25 @@ export const getMyOrders = asyncHandler(async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const [orders, total] = await Promise.all([
-    Order.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum)
-      .lean(),
-    Order.countDocuments({ user: req.user._id })
+    Order.find({ user: req.user._id }).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+    Order.countDocuments({ user: req.user._id }),
   ]);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {
-      orders,
-      pagination: {
-        total,
-        totalPages: Math.ceil(total / limitNum),
-        currentPage: pageNum,
-        limit: limitNum
-      }
-    }, 'Orders retrieved successfully'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        orders,
+        pagination: {
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
+      'Orders retrieved successfully',
+    ),
+  );
 });
 
 /**
@@ -109,9 +119,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Order not found or you are not authorized to view it');
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, order, 'Order retrieved successfully'));
+  return res.status(200).json(new ApiResponse(200, order, 'Order retrieved successfully'));
 });
 
 /**
@@ -125,7 +133,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
   const pageNum = Math.max(1, Number(page));
   const limitNum = Math.min(100, Math.max(1, Number(limit)));
   const skip = (pageNum - 1) * limitNum;
-  
+
   const query = buildOrderQuery({ status, search });
 
   if (sellerId) {
@@ -140,20 +148,24 @@ export const getAllOrders = asyncHandler(async (req, res) => {
       .skip(skip)
       .limit(limitNum)
       .lean(),
-    Order.countDocuments(query)
+    Order.countDocuments(query),
   ]);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {
-      orders,
-      pagination: {
-        total,
-        totalPages: Math.ceil(total / limitNum),
-        currentPage: pageNum,
-        limit: limitNum
-      }
-    }, 'All orders retrieved successfully'));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        orders,
+        pagination: {
+          total,
+          totalPages: Math.ceil(total / limitNum),
+          currentPage: pageNum,
+          limit: limitNum,
+        },
+      },
+      'All orders retrieved successfully',
+    ),
+  );
 });
 
 /**
@@ -167,7 +179,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   validateOrderStatus(status);
 
-  const order = await Order.findById(id).populate('items.product', 'seller');
+  const order = await Order.findById(id);
   if (!order) {
     throw new ApiError(404, 'Order not found');
   }
@@ -223,15 +235,13 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       orderId: order._id,
       orderNumber: order.orderNumber,
       status: order.status,
-      items: order.items
+      items: order.items,
     });
   } catch (err) {
     logger.error('Socket emission failed:', err.message);
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, order, 'Order status updated successfully'));
+  return res.status(200).json(new ApiResponse(200, order, 'Order status updated successfully'));
 });
 
 /**
@@ -246,12 +256,18 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
   const [dailyRevenue, categoryPerformance, peakHours] = await Promise.all([
     fetchDailyRevenue(thirtyDaysAgo),
     fetchCategoryPerformance(),
-    fetchPeakOrderingHours()
+    fetchPeakOrderingHours(),
   ]);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { dailyRevenue, categoryPerformance, peakHours }, 'Analytics retrieved successfully'));
+    .json(
+      new ApiResponse(
+        200,
+        { dailyRevenue, categoryPerformance, peakHours },
+        'Analytics retrieved successfully',
+      ),
+    );
 });
 
 /**
@@ -326,31 +342,34 @@ export const processReturn = asyncHandler(async (req, res) => {
 
   try {
     item.returnStatus = status;
-    
+
     if (status === 'refunded') {
       item.status = 'returned';
       // In a real system, we would trigger Razorpay refund API here.
-      
+
       // Reverse Ledger Transaction
       const saleAmountPaise = Math.round(item.subtotal * 100);
-      const commissionAmountPaise = Math.round(item.subtotal * 0.10 * 100);
-      
-      await LedgerTransaction.insertMany([
-        {
-          vendor: item.vendor,
-          type: 'refund',
-          amount: -saleAmountPaise, // deduct sale
-          order: order._id,
-          description: `Refund (RMA) - #${order.orderNumber}`
-        },
-        {
-          vendor: item.vendor,
-          type: 'commission_fee', // Revert fee
-          amount: commissionAmountPaise, // credit back the platform fee
-          order: order._id,
-          description: `Fee Reversal (RMA) - #${order.orderNumber}`
-        }
-      ], { session });
+      const commissionAmountPaise = Math.round(item.subtotal * 0.1 * 100);
+
+      await LedgerTransaction.insertMany(
+        [
+          {
+            vendor: item.vendor,
+            type: 'refund',
+            amount: -saleAmountPaise, // deduct sale
+            order: order._id,
+            description: `Refund (RMA) - #${order.orderNumber}`,
+          },
+          {
+            vendor: item.vendor,
+            type: 'commission_fee', // Revert fee
+            amount: commissionAmountPaise, // credit back the platform fee
+            order: order._id,
+            description: `Fee Reversal (RMA) - #${order.orderNumber}`,
+          },
+        ],
+        { session },
+      );
 
       // Restore stock
       await restoreStockForOrder({ items: [item] }, session);
@@ -358,7 +377,7 @@ export const processReturn = asyncHandler(async (req, res) => {
 
     recalculateRootOrderStatus(order);
     await order.save({ session });
-    
+
     await session.commitTransaction();
     session.endSession();
 
@@ -378,15 +397,27 @@ export const processReturn = asyncHandler(async (req, res) => {
 export const exportOrdersCSV = asyncHandler(async (req, res) => {
   res.header('Content-Type', 'text/csv');
   res.attachment('sales_report.csv');
-  
-  const headers = ['OrderNumber', 'Date', 'CustomerName', 'CustomerEmail', 'Status', 'ItemsCount', 'Subtotal', 'Tax', 'Discount', 'Total', 'PaymentMethod'];
+
+  const headers = [
+    'OrderNumber',
+    'Date',
+    'CustomerName',
+    'CustomerEmail',
+    'Status',
+    'ItemsCount',
+    'Subtotal',
+    'Tax',
+    'Discount',
+    'Total',
+    'PaymentMethod',
+  ];
   res.write(Papa.unparse([headers], { header: false }) + '\n');
-  
+
   const cursor = Order.find({ status: { $ne: 'cancelled' } })
     .populate('user', 'name email')
     .sort({ createdAt: -1 })
     .cursor();
-    
+
   for await (const o of cursor) {
     const row = [
       o.orderNumber,
@@ -399,98 +430,31 @@ export const exportOrdersCSV = asyncHandler(async (req, res) => {
       o.taxAmount,
       o.discountAmount,
       o.total,
-      o.paymentMethod
+      o.paymentMethod,
     ];
     res.write(Papa.unparse([row], { header: false }) + '\n');
   }
-  
+
   res.end();
 });
 
-/* -------------------------------------------------------------------------- */
-/*                               PRIVATE HELPERS                              */
-/* -------------------------------------------------------------------------- */
-
-export async function fetchAndValidateUserCart(userId) {
-  const cart = await Cart.findOne({ user: userId }).populate({
-    path: 'items.product',
-    select: 'title price discountedPrice image stock seller variantSummary'
-  }).populate({
-    path: 'items.variant',
-    select: 'sku stock optionValues price images'
-  });
-
-  if (!cart || cart.items.length === 0) {
-    throw new ApiError(400, 'Your cart is empty. Add items before checkout.');
-  }
-
-  const validItems = cart.items.filter((item) => item.product);
-  if (validItems.length === 0) {
-    throw new ApiError(400, 'Cart contains invalid products.');
-  }
-
-  return cart;
-}
-
-export async function calculateOrderTotals(cart, couponCode, userId) {
-  const validItems = cart.items.filter((item) => item.product);
-  const subtotal = computeCartSubtotal(validItems);
-
-  let discountAmount = 0;
-  let taxableValue = subtotal;
-  let appliedCouponCode;
-  let appliedCouponId;
-
-  if (couponCode?.trim()) {
-    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId);
-    discountAmount = couponResult.discountAmount;
-    taxableValue = couponResult.finalTotal;
-    appliedCouponCode = couponResult.code;
-
-    const couponDoc = await Coupon.findOne({ code: appliedCouponCode });
-    if (couponDoc) {
-      appliedCouponId = couponDoc._id;
-    }
-  }
-
-  const taxAmount = taxableValue * GST_TAX_RATE;
-  const total = taxableValue + taxAmount;
-
-  const orderItems = validItems.map((item) => {
-    const product = item.product;
-    const variant = item.variant;
-    const unitPrice = variant?.price ?? getUnitPrice(product);
-    return {
-      product: product._id,
-      variant: variant?._id || null,
-      sku: variant?.sku || '',
-      vendor: product.seller,
-      title: product.title,
-      image: product.image,
-      price: variant?.price ?? product.price,
-      discountedPrice: variant?.compareAtPrice ?? product.discountedPrice,
-      quantity: item.quantity,
-      unitPrice,
-      subtotal: unitPrice * item.quantity,
-      size: item.size || '',
-      color: item.color || '',
-      status: 'confirmed'
-    };
-  });
-
-  return {
+async function executeOrderTransaction({
+  userId,
+  cart,
+  orderCalculations,
+  shippingAddress,
+  paymentMethod,
+  attributionTag,
+}) {
+  const {
     subtotal,
     taxAmount,
     discountAmount,
     total,
     orderItems,
     appliedCouponId,
-    appliedCouponCode
-  };
-}
-
-async function executeOrderTransaction({ userId, cart, orderCalculations, shippingAddress, paymentMethod, attributionTag }) {
-  const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
+    appliedCouponCode,
+  } = orderCalculations;
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -506,87 +470,53 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
     const validItems = cart.items.filter((item) => item.product);
     await deductStock(validItems, session);
 
-    const [order] = await Order.create([{
-      orderNumber: generateOrderNumber(),
-      user: userId,
-      items: orderItems,
-      subtotal,
-      taxAmount,
-      discountAmount,
-      total,
-      coupon: appliedCouponId,
-      couponCode: appliedCouponCode,
-      shippingAddress: {
-        fullName: shippingAddress.fullName.trim(),
-        phone: shippingAddress.phone.trim(),
-        street: shippingAddress.street.trim(),
-        city: shippingAddress.city.trim(),
-        state: shippingAddress.state.trim(),
-        zipCode: shippingAddress.zipCode.trim(),
-        country: shippingAddress.country?.trim() || 'India'
-      },
-      paymentMethod: paymentMethod === 'demo' ? 'demo' : 'cod',
-      status: 'confirmed',
-      attributionTag: attributionTag || null
-    }], { session });
+    const [order] = await Order.create(
+      [
+        {
+          orderNumber: generateOrderNumber(),
+          user: userId,
+          items: orderItems,
+          subtotal,
+          taxAmount,
+          discountAmount,
+          total,
+          coupon: appliedCouponId,
+          couponCode: appliedCouponCode,
+          shippingAddress: {
+            fullName: shippingAddress.fullName.trim(),
+            phone: shippingAddress.phone.trim(),
+            street: shippingAddress.street.trim(),
+            city: shippingAddress.city.trim(),
+            state: shippingAddress.state.trim(),
+            zipCode: shippingAddress.zipCode.trim(),
+            country: shippingAddress.country?.trim() || 'India',
+          },
+          paymentMethod: paymentMethod === 'demo' ? 'demo' : 'cod',
+          status: 'confirmed',
+          attributionTag: attributionTag || null,
+        },
+      ],
+      { session },
+    );
 
     await incrementSalesBulk(orderItems, session);
     await incrementCouponUsage(appliedCouponId, session);
-    
+
     // Update affiliate metrics if an attribution tag exists
     if (attributionTag) {
       await AffiliateLink.findOneAndUpdate(
         { trackingTag: attributionTag.toLowerCase(), isActive: true },
-        { 
-          $inc: { 
-            'metrics.conversions': 1, 
-            'metrics.revenueGenerated': total 
-          } 
+        {
+          $inc: {
+            'metrics.conversions': 1,
+            'metrics.revenueGenerated': total,
+          },
         },
-        { session }
+        { session },
       );
     }
 
-    // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
-    const vendorTotals = {};
-    for (const item of orderItems) {
-      if (item.vendor) {
-        const vid = item.vendor.toString();
-        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
-        vendorTotals[vid] += item.subtotal;
-      }
-    }
-
-    const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
-    const ledgerEntries = [];
-    
-    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
-      // 1. Credit Vendor for the sale (in paise)
-      const saleAmountPaise = Math.round(vendorTotal * 100);
-      ledgerEntries.push({
-        vendor: vendorId,
-        type: 'sale',
-        amount: saleAmountPaise,
-        order: order._id,
-        status: paymentMethod === 'cod' ? 'pending' : 'cleared',
-        description: `Order Revenue - #${order.orderNumber}`
-      });
-
-      // 2. Debit Platform Commission (in paise)
-      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
-      ledgerEntries.push({
-        vendor: vendorId,
-        type: 'commission_fee',
-        amount: -commissionAmountPaise, // negative amount for debits
-        order: order._id,
-        status: paymentMethod === 'cod' ? 'pending' : 'cleared',
-        description: `Platform Fee (10%) - #${order.orderNumber}`
-      });
-    }
-
-    if (ledgerEntries.length > 0) {
-      await LedgerTransaction.insertMany(ledgerEntries, { session });
-    }
+    await createLedgerEntries(order._id, order.orderNumber, orderItems, paymentMethod, session);
 
     cart.items = [];
     await cart.save({ session });
@@ -604,11 +534,7 @@ async function executeOrderTransaction({ userId, cart, orderCalculations, shippi
 
 async function incrementCouponUsage(couponId, session) {
   if (couponId) {
-    await Coupon.findByIdAndUpdate(
-      couponId,
-      { $inc: { usageCount: 1 } },
-      { session }
-    );
+    await Coupon.findByIdAndUpdate(couponId, { $inc: { usageCount: 1 } }, { session });
   }
 }
 
@@ -639,7 +565,7 @@ function assertValidTransition(oldStatus, newStatus) {
   if (!allowed || !allowed.includes(newStatus)) {
     throw new ApiError(
       400,
-      `Invalid status transition: '${oldStatus}' → '${newStatus}'. Allowed: ${(allowed || []).join(', ') || 'none (terminal state)'}`
+      `Invalid status transition: '${oldStatus}' → '${newStatus}'. Allowed: ${(allowed || []).join(', ') || 'none (terminal state)'}`,
     );
   }
 }
@@ -685,13 +611,17 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
       await Variant.findOneAndUpdate(
         { _id: variant._id },
         { $inc: { stock: item.quantity } },
-        opts
+        opts,
       );
       await Product.recalculateVariantSummary(item.product, session);
     } else {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: item.quantity, soldCount: -item.quantity }
-      }, opts);
+      await Product.findByIdAndUpdate(
+        item.product,
+        {
+          $inc: { stock: item.quantity, soldCount: -item.quantity },
+        },
+        opts,
+      );
     }
   }
 
@@ -701,14 +631,14 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
       updated = await Variant.findOneAndUpdate(
         { _id: variant._id, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        { new: true, ...opts }
+        { new: true, ...opts },
       );
       await Product.recalculateVariantSummary(item.product, session);
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity, soldCount: item.quantity } },
-        { new: true, ...opts }
+        { new: true, ...opts },
       );
     }
     if (!updated) {
@@ -722,15 +652,15 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
 }
 
 function recalculateRootOrderStatus(order) {
-  const itemStatuses = order.items.map(i => i.status);
-  
-  if (itemStatuses.every(s => s === 'cancelled')) {
+  const itemStatuses = order.items.map((i) => i.status);
+
+  if (itemStatuses.every((s) => s === 'cancelled')) {
     order.status = 'cancelled';
-  } else if (itemStatuses.every(s => s === 'delivered' || s === 'cancelled')) {
+  } else if (itemStatuses.every((s) => s === 'delivered' || s === 'cancelled')) {
     order.status = 'delivered';
-  } else if (itemStatuses.every(s => s === 'shipped' || s === 'delivered' || s === 'cancelled')) {
+  } else if (itemStatuses.every((s) => s === 'shipped' || s === 'delivered' || s === 'cancelled')) {
     order.status = 'shipped';
-  } else if (itemStatuses.some(s => s === 'shipped' || s === 'delivered')) {
+  } else if (itemStatuses.some((s) => s === 'shipped' || s === 'delivered')) {
     order.status = 'partially_shipped';
   } else {
     order.status = 'confirmed';
@@ -739,7 +669,7 @@ function recalculateRootOrderStatus(order) {
 
 async function restoreStockForOrder(order, session) {
   const sortedItems = [...order.items].sort((a, b) =>
-    (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
+    (a.product?.toString() || '').localeCompare(b.product?.toString() || ''),
   );
   const productsToRecalculate = new Set();
 
@@ -762,15 +692,19 @@ async function restoreStockForOrder(order, session) {
         await Variant.findOneAndUpdate(
           { _id: variant._id },
           { $inc: { stock: item.quantity } },
-          session ? { session } : {}
+          session ? { session } : {},
         );
         productsToRecalculate.add(item.product.toString());
       } else {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity, soldCount: -item.quantity }
-        }, session ? { session } : {});
+        await Product.findByIdAndUpdate(
+          item.product,
+          {
+            $inc: { stock: item.quantity, soldCount: -item.quantity },
+          },
+          session ? { session } : {},
+        );
       }
-      
+
       // Preserve 'returned' status for refunded items instead of overwriting to 'cancelled'
       if (item.status !== 'returned') {
         item.status = 'cancelled';
@@ -785,7 +719,7 @@ async function restoreStockForOrder(order, session) {
 
 async function reDeductStockForOrder(order, session) {
   const sortedItems = [...order.items].sort((a, b) =>
-    (a.product?.toString() || '').localeCompare(b.product?.toString() || '')
+    (a.product?.toString() || '').localeCompare(b.product?.toString() || ''),
   );
   const productsToRecalculate = new Set();
 
@@ -809,14 +743,14 @@ async function reDeductStockForOrder(order, session) {
       updated = await Variant.findOneAndUpdate(
         { _id: variant._id, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity } },
-        opts
+        opts,
       );
       productsToRecalculate.add(item.product.toString());
     } else {
       updated = await Product.findOneAndUpdate(
         { _id: item.product, stock: { $gte: item.quantity } },
         { $inc: { stock: -item.quantity, soldCount: item.quantity } },
-        opts
+        opts,
       );
     }
 
@@ -841,13 +775,17 @@ async function reDeductStockForOrder(order, session) {
           await Variant.findOneAndUpdate(
             { _id: prevVariant._id },
             { $inc: { stock: prev.quantity } },
-            session ? { session } : {}
+            session ? { session } : {},
           );
           rollbackProducts.add(prev.product.toString());
         } else {
-          await Product.findByIdAndUpdate(prev.product, {
-            $inc: { stock: prev.quantity, soldCount: -prev.quantity }
-          }, session ? { session } : {});
+          await Product.findByIdAndUpdate(
+            prev.product,
+            {
+              $inc: { stock: prev.quantity, soldCount: -prev.quantity },
+            },
+            session ? { session } : {},
+          );
         }
       }
       for (const prodId of rollbackProducts) {
@@ -867,51 +805,51 @@ async function fetchDailyRevenue(fromDate) {
     {
       $match: {
         status: { $ne: 'cancelled' },
-        createdAt: { $gte: fromDate }
-      }
+        createdAt: { $gte: fromDate },
+      },
     },
     {
       $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        revenue: { $sum: "$total" },
-        orders: { $sum: 1 }
-      }
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        revenue: { $sum: '$total' },
+        orders: { $sum: 1 },
+      },
     },
-    { $sort: { _id: 1 } }
+    { $sort: { _id: 1 } },
   ]);
 }
 
 async function fetchCategoryPerformance() {
   return Order.aggregate([
     { $match: { status: { $ne: 'cancelled' } } },
-    { $unwind: "$items" },
+    { $unwind: '$items' },
     {
       $lookup: {
-        from: "products",
-        localField: "items.product",
-        foreignField: "_id",
-        as: "productDoc"
-      }
+        from: 'products',
+        localField: 'items.product',
+        foreignField: '_id',
+        as: 'productDoc',
+      },
     },
-    { $unwind: "$productDoc" },
+    { $unwind: '$productDoc' },
     {
       $lookup: {
-        from: "subcategories",
-        localField: "productDoc.subcategory",
-        foreignField: "_id",
-        as: "subcategoryDoc"
-      }
+        from: 'subcategories',
+        localField: 'productDoc.subcategory',
+        foreignField: '_id',
+        as: 'subcategoryDoc',
+      },
     },
-    { $unwind: { path: "$subcategoryDoc", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$subcategoryDoc', preserveNullAndEmptyArrays: true } },
     {
       $group: {
-        _id: { $ifNull: ["$subcategoryDoc.name", "Uncategorized"] },
-        sales: { $sum: "$items.quantity" },
-        revenue: { $sum: "$items.subtotal" }
-      }
+        _id: { $ifNull: ['$subcategoryDoc.name', 'Uncategorized'] },
+        sales: { $sum: '$items.quantity' },
+        revenue: { $sum: '$items.subtotal' },
+      },
     },
     { $sort: { revenue: -1 } },
-    { $limit: 5 }
+    { $limit: 5 },
   ]);
 }
 
@@ -919,10 +857,10 @@ async function fetchPeakOrderingHours() {
   return Order.aggregate([
     {
       $group: {
-        _id: { $hour: "$createdAt" },
-        count: { $sum: 1 }
-      }
+        _id: { $hour: '$createdAt' },
+        count: { $sum: 1 },
+      },
     },
-    { $sort: { _id: 1 } }
+    { $sort: { _id: 1 } },
   ]);
 }

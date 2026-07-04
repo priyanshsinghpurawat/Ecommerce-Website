@@ -1,4 +1,3 @@
-/** WHY: Catches all errors and sends a clean, consistent JSON response to the client. */
 import { ApiError } from '../utils/helpers.js';
 
 import { ENV } from '../config/env.js';
@@ -10,11 +9,10 @@ const errorHandler = (err, req, res, next) => {
   // If the error is not an instance of custom ApiError, wrap it
   if (!(error instanceof ApiError)) {
     const statusCode = error.statusCode || (error.name === 'ValidationError' ? 400 : 500);
-    const message = error.message || "Internal Server Error";
+    const message = error.message || 'Internal Server Error';
     error = new ApiError(statusCode, message, error.errors || [], err.stack);
   }
 
-  
   // Mongoose duplicate key error (code 11000)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
@@ -30,12 +28,12 @@ const errorHandler = (err, req, res, next) => {
 
   // JWT error
   if (err.name === 'JsonWebTokenError') {
-    error = new ApiError(401, "Invalid token. Please log in again.");
+    error = new ApiError(401, 'Invalid token. Please log in again.');
   }
 
   // JWT expired
   if (err.name === 'TokenExpiredError') {
-    error = new ApiError(401, "Token has expired. Please log in again.");
+    error = new ApiError(401, 'Token has expired. Please log in again.');
   }
 
   const response = {
@@ -43,7 +41,7 @@ const errorHandler = (err, req, res, next) => {
     statusCode: error.statusCode,
     message: error.message,
     errors: error.errors,
-    ...(ENV.NODE_ENV === 'development' ? { stack: error.stack } : {})
+    ...(ENV.NODE_ENV === 'development' ? { stack: error.stack } : {}),
   };
 
   return res.status(error.statusCode).json(response);

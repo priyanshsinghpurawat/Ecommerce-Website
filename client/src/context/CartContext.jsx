@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext.jsx';
 import * as cartService from '../services/cart.service.js';
+import { toast } from 'react-hot-toast';
 
 const GUEST_CART_KEY = 'guest_cart';
 
@@ -84,7 +85,9 @@ export const CartProvider = ({ children }) => {
         setCartItemsCount(0);
         setCartTotal(0);
       } else {
-        setError(err.response?.data?.message || 'Failed to fetch cart.');
+        const msg = err.response?.data?.message || 'Failed to fetch cart.';
+        setError(msg);
+        toast.error(msg);
       }
     } finally {
       setLoading(false);
@@ -106,8 +109,10 @@ export const CartProvider = ({ children }) => {
       }));
       await cartService.mergeCart(payload);
       clearGuestCart();
-    } catch {
-      // Non-fatal — guest items that fail merge stay in localStorage
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Failed to merge your guest cart items.';
+      setError(msg);
+      toast.error(msg);
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { 
@@ -13,9 +13,6 @@ import {
   User, 
   Menu, 
   X,
-  Search,
-  Bell,
-  ChevronDown,
   Plus,
   Users
 } from 'lucide-react';
@@ -39,7 +36,7 @@ export const AdminLayout = () => {
     { to: '/admin/coupons', label: 'Growth Engines', icon: Ticket },
     { to: '/admin/orders', label: 'Fulfillment', icon: ClipboardList },
     { to: '/admin/users', label: 'Access Control', icon: Users },
-    { to: '/admin/vendors', label: 'Market Partners', icon: Store },
+    { to: '/admin/sellers', label: 'Market Partners', icon: Store },
   ];
 
   return (
@@ -97,8 +94,8 @@ export const AdminLayout = () => {
         </nav>
 
         {/* User Info & Logout (Bottom) */}
-        <div className="p-6 border-t border-white/5 bg-black/20">
-          <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-3">
+        <div className="p-6 border-t border-white/5 bg-[#121214] flex flex-col gap-4">
+          <div className="flex items-center gap-4 px-2">
             <div className="relative">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10 border border-brand-primary/20">
                 <User className="h-5 w-5 text-brand-primary" />
@@ -108,14 +105,14 @@ export const AdminLayout = () => {
               <p className="text-[11px] font-black italic text-white truncate uppercase tracking-tight">{user?.name || 'Root Admin'}</p>
               <p className="text-[9px] text-white/30 truncate font-black tracking-widest uppercase">{user?.email || 'System Auth OK'}</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-              title="Terminate Session"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_20px_rgba(239,68,68,0.15)] transition-all duration-300 border border-white/5 group"
+          >
+            <LogOut className="h-4 w-4 text-red-500 group-hover:text-white group-hover:-translate-x-1 transition-all duration-300" />
+            Terminate Session
+          </button>
         </div>
       </aside>
 
@@ -146,26 +143,18 @@ export const AdminLayout = () => {
             {/* Real-time Stats Mockup */}
             <div className="hidden lg:flex items-center gap-6 border-r border-white/5 pr-8">
               <div className="text-right">
-                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Server Load</p>
-                <p className="text-xs font-black text-brand-primary tracking-tighter">12.4% <span className="text-[9px] text-white/20 italic">NOMINAL</span></p>
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Environment</p>
+                <p className="text-xs font-black text-brand-primary tracking-tighter uppercase">Production <span className="text-[9px] text-white/20 italic">ACTIVE</span></p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Active Fulfilment</p>
-                <p className="text-xs font-black text-white tracking-tighter">182 <span className="text-[9px] text-emerald-500">LIVE</span></p>
+                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">API Status</p>
+                <p className="text-xs font-black text-white tracking-tighter">OK <span className="text-[9px] text-emerald-500">ONLINE</span></p>
               </div>
             </div>
 
             <div className="flex items-center gap-5">
-              <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-brand-primary transition-colors border border-white/5">
-                <Search className="h-4 w-4" />
-              </button>
-              <button className="relative h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-brand-primary transition-colors border border-white/5">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-brand-primary ring-4 ring-[#121214]"></span>
-              </button>
-              
               <Link
-                to="/admin/products"
+                to="/admin/products/new"
                 className="hidden sm:flex items-center gap-3 px-6 py-2.5 bg-brand-primary text-black rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-90 hover:scale-105 transition-all shadow-[0_10px_30px_rgba(193,255,0,0.15)]"
               >
                 <Plus className="h-3.5 w-3.5" />

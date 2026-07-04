@@ -16,16 +16,7 @@ const connectDB = async (retries = 3, delay = 5000) => {
       logger.warn('Mongoose database connection disconnected.');
     });
 
-    const options = {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 60000,
-      retryWrites: true,
-      retryReads: true,
-      bufferCommands: false,
-    };
-
-    const connectionInstance = await mongoose.connect(ENV.MONGODB_URI, options);
+    const connectionInstance = await mongoose.connect(ENV.MONGODB_URI);
     logger.info(`MongoDB connected! DB HOST: ${connectionInstance.connection.host}`);
   } catch (error) {
     logger.error(`MongoDB connection FAILED: ${error.message}`);
@@ -33,8 +24,10 @@ const connectDB = async (retries = 3, delay = 5000) => {
       // Add jitter to prevent thundering herd
       const jitter = Math.random() * 2000; // 0-2 seconds
       const totalDelay = delay + jitter;
-      logger.warn(`Retrying connection in ${Math.round(totalDelay)}ms... (${retries} retries left)`);
-      await new Promise(resolve => setTimeout(resolve, totalDelay));
+      logger.warn(
+        `Retrying connection in ${Math.round(totalDelay)}ms... (${retries} retries left)`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, totalDelay));
       return connectDB(retries - 1, delay * 2);
     }
     process.exit(1);

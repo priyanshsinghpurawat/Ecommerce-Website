@@ -6,12 +6,12 @@ const ledgerTransactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true
+      index: true,
     },
     type: {
       type: String,
       enum: ['sale', 'commission_fee', 'payout', 'refund'],
-      required: true
+      required: true,
     },
     // Amounts MUST be stored in the smallest currency unit (e.g., paise/cents) to avoid floating point math errors
     amount: {
@@ -19,32 +19,32 @@ const ledgerTransactionSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: Number.isInteger,
-        message: '{VALUE} is not an integer value'
-      }
+        message: '{VALUE} is not an integer value',
+      },
     },
     // Store the currency code for future multi-currency support
     currency: {
       type: String,
       default: 'INR',
-      uppercase: true
+      uppercase: true,
     },
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order',
-      default: null
+      default: null,
     },
     status: {
       type: String,
       enum: ['pending', 'cleared', 'failed'],
-      default: 'cleared'
+      default: 'cleared',
     },
     description: {
       type: String,
       required: true,
-      trim: true
-    }
+      trim: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'ledger_transactions' },
 );
 
 // Index for quickly calculating a vendor's balance or fetching their history

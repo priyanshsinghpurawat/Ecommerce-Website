@@ -1,4 +1,3 @@
-/** WHY: Background tasks to fix stock locks and keep the server from idling. */
 import cron from 'node-cron';
 import axios from 'axios';
 import mongoose from 'mongoose';
@@ -7,16 +6,7 @@ import { restoreStock } from '../services/order.service.js';
 import { ENV } from '../config/env.js';
 import logger from '../config/logger.js';
 
-/**
- * Automates the cleanup of expired pending orders.
- * When a user starts a Razorpay checkout, stock is reserved (decremented).
- * If they don't complete the payment within 30 minutes, this job:
- * 1. Finds the pending order.
- * 2. Returns the stock to the product.
- * 3. Marks the order as 'cancelled'.
- */
 export const initInventoryCron = () => {
-  // 1. Inventory Recovery Job (Every 10 minutes)
   cron.schedule('*/10 * * * *', async () => {
     logger.info('[Cron] Checking for expired pending orders...');
 
@@ -28,7 +18,7 @@ export const initInventoryCron = () => {
       const expiredOrders = await Order.find({
         status: 'pending',
         paymentMethod: 'razorpay',
-        createdAt: { $lt: expirationTime }
+        createdAt: { $lt: expirationTime },
       }).session(session);
 
       if (expiredOrders.length === 0) {
@@ -43,11 +33,11 @@ export const initInventoryCron = () => {
         await restoreStock(order.items, session);
       }
 
-      const orderUpdates = expiredOrders.map(order => order._id);
+      const orderUpdates = expiredOrders.map((order) => order._id);
       await Order.updateMany(
         { _id: { $in: orderUpdates } },
         { $set: { status: 'cancelled', paymentStatus: 'failed' } },
-        { session }
+        { session },
       );
 
       await session.commitTransaction();
@@ -60,7 +50,6 @@ export const initInventoryCron = () => {
     }
   });
 
-  // 2. Self-Ping Job (Every 14 minutes) — keeps Render free tier awake
   cron.schedule('*/14 * * * *', async () => {
     if (!ENV.SERVER_URL) return;
     try {

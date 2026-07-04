@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getProducts } from '../../services/product.service.js';
 import api from '../../services/api.js';

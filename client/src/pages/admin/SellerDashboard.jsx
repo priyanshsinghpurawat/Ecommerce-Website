@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getProducts } from '../../services/product.service.js';
 import { getAllOrders } from '../../services/order.service.js';
 import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight, Loader2, Clock } from 'lucide-react';
 
-// --- Pure Helper Functions (KISS Principle) ---
 const calculateSellerData = (products, orders) => {
   let revenue = 0;
   const productStats = {};

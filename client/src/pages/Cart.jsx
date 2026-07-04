@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart.js';
 import { useAuth } from '../hooks/useAuth.js';
@@ -58,6 +58,7 @@ export const Cart = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
+  const [taxRate, setTaxRate] = useState(0.18);
   const [shipping, setShipping] = useState({ ...DEFAULT_SHIPPING });
 
   // State to track which item is currently being updated to render loaders
@@ -98,6 +99,7 @@ export const Cart = () => {
         }
         
         setRazorpayEnabled(Boolean(configRes?.data?.razorpayEnabled));
+        if (configRes?.data?.taxRate != null) setTaxRate(configRes.data.taxRate);
       } catch (err) {
         console.error('Cart initialization failed:', err);
       }
@@ -177,7 +179,8 @@ export const Cart = () => {
       const res = await createOrder({
         shippingAddress: payload,
         couponCode: appliedCoupon?.code,
-        paymentMethod: 'cod'
+        paymentMethod: 'cod',
+        taxAmount: billData.gstAmount
       });
       if (res?.success) {
         toast.success('Order placed! Pay when your delivery arrives.');
@@ -206,7 +209,8 @@ export const Cart = () => {
     try {
       const res = await createCheckout({
         shippingAddress: payload,
-        couponCode: appliedCoupon?.code
+        couponCode: appliedCoupon?.code,
+        taxAmount: billData.gstAmount
       });
       
       if (!res?.success || !res.data) {
@@ -347,10 +351,10 @@ export const Cart = () => {
 
   const billData = useMemo(() => {
     const baseAmount = appliedCoupon ? appliedCoupon.finalTotal : cartTotal;
-    const gstAmount = baseAmount * 0.18;
+    const gstAmount = baseAmount * taxRate;
     const grandTotal = baseAmount + gstAmount;
     return { baseAmount, gstAmount, grandTotal };
-  }, [cartTotal, appliedCoupon]);
+  }, [cartTotal, appliedCoupon, taxRate]);
 
   if (!isAuthenticated && !cart?.items?.length) {
     return (
@@ -400,7 +404,9 @@ export const Cart = () => {
           animate={EMPTY_CART_ANIMATION}
           className="rounded-3xl border border-dashed border-surface-200 bg-surface-50/20 py-20 px-8 flex flex-col items-center justify-center text-center shadow-soft backdrop-blur-md min-h-[420px] gap-5"
         >
-          <div className="text-6xl mb-2">🛒</div>
+          <div className="h-16 w-16 bg-surface-50 rounded-full flex items-center justify-center text-app-text/45 mb-2 shadow-soft">
+            <ShoppingBag className="h-8 w-8" />
+          </div>
           <div>
             <h2 className="text-lg font-black uppercase tracking-wider text-app-text">Your bag is empty</h2>
             <p className="text-xs text-app-text/40 mt-1.5 font-medium max-w-xs">Nothing in here yet. Go find something that speaks to you.</p>
@@ -553,7 +559,7 @@ export const Cart = () => {
 
               {/* Clear Cart Button */}
               <button
-                onClick={() => { clearCart(); toast.success('Shopping bag cleared.'); }}
+                onClick={async () => { const r = await clearCart(); if (r?.success) toast.success('Shopping bag cleared.'); }}
                 className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-red-400 hover:text-red-500 border border-red-500/20 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition-all self-start cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />

@@ -1,4 +1,3 @@
-import React from 'react';
 import { ProductCard } from './ProductCard.jsx';
 
 export const ProductGrid = ({ products = [], columns = 3 }) => {

@@ -9,29 +9,40 @@ const normalizePhone = (val) => {
 
 export const updateUserSchema = z.object({
   name: z.string().trim().min(2).max(50).optional(),
-  phone: z.string().trim().optional().refine(
-    (val) => !val || /^[6-9]\d{9}$/.test(normalizePhone(val)),
-    { message: 'Invalid phone number' }
-  ),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^[6-9]\d{9}$/.test(normalizePhone(val)), {
+      message: 'Invalid phone number',
+    }),
   brandName: z.string().optional(),
-  storefront: z.object({
-    banner: z.string().optional(),
-    description: z.string().optional(),
-    returnPolicy: z.string().optional(),
-    slug: z.string().optional()
-  }).optional()
+  storefront: z
+    .object({
+      banner: z.string().optional(),
+      description: z.string().optional(),
+      returnPolicy: z.string().optional(),
+      slug: z.string().optional(),
+    })
+    .optional(),
 });
 
 export const addressSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required'),
-  phone: z.string().trim().min(1, 'Phone is required').transform(normalizePhone).refine(
-    (val) => /^[6-9]\d{9}$/.test(val),
-    { message: 'Invalid phone number' }
-  ),
+  phone: z
+    .string()
+    .trim()
+    .min(1, 'Phone is required')
+    .transform(normalizePhone)
+    .refine((val) => /^[6-9]\d{9}$/.test(val), { message: 'Invalid phone number' }),
   street: z.string().trim().min(1, 'Street is required'),
   city: z.string().trim().min(1, 'City is required'),
   state: z.string().trim().min(1, 'State is required'),
-  zipCode: z.string().trim().min(1, 'Zip code is required').regex(/^\d{6}$/, 'PIN code must be 6 digits'),
+  zipCode: z
+    .string()
+    .trim()
+    .min(1, 'Zip code is required')
+    .regex(/^\d{6}$/, 'PIN code must be 6 digits'),
   country: z.string().trim().default('India'),
-  isDefault: z.boolean().optional()
+  isDefault: z.boolean().optional(),
 });

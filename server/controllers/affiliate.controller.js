@@ -12,7 +12,7 @@ export const generateAffiliateLink = asyncHandler(async (req, res) => {
   const vendorId = req.user._id;
 
   if (!campaignName) {
-    throw new ApiError(400, "Campaign name is required");
+    throw new ApiError(400, 'Campaign name is required');
   }
 
   // Generate a unique tag: vendorId(short) + random string
@@ -24,7 +24,7 @@ export const generateAffiliateLink = asyncHandler(async (req, res) => {
 
   if (productId) {
     const product = await Product.findById(productId);
-    if (!product) throw new ApiError(404, "Product not found");
+    if (!product) throw new ApiError(404, 'Product not found');
     targetUrl = `/product/${product._id}`;
   } else {
     // If no product, maybe point to their storefront
@@ -39,10 +39,10 @@ export const generateAffiliateLink = asyncHandler(async (req, res) => {
     targetProduct: productId || null,
     targetUrl: fullUrl,
     trackingTag,
-    campaignName
+    campaignName,
   });
 
-  return res.status(201).json(new ApiResponse(201, link, "Tracking link generated successfully"));
+  return res.status(201).json(new ApiResponse(201, link, 'Tracking link generated successfully'));
 });
 
 /**
@@ -55,7 +55,7 @@ export const getMyAffiliateLinks = asyncHandler(async (req, res) => {
     .populate('targetProduct', 'title image')
     .sort({ createdAt: -1 });
 
-  return res.status(200).json(new ApiResponse(200, links, "Links retrieved successfully"));
+  return res.status(200).json(new ApiResponse(200, links, 'Links retrieved successfully'));
 });
 
 /**
@@ -69,18 +69,14 @@ export const trackClick = asyncHandler(async (req, res) => {
   const link = await AffiliateLink.findOneAndUpdate(
     { trackingTag: tag.toLowerCase(), isActive: true },
     { $inc: { 'metrics.clicks': 1 } },
-    { new: true }
+    { new: true },
   );
 
   if (!link) {
-    // We don't want to throw an error and break navigation if a tag is invalid
-    return res.status(200).json(new ApiResponse(200, null, "Invalid or inactive tag"));
+    return res.status(200).json(new ApiResponse(200, null, 'Invalid or inactive tag'));
   }
 
-  // To implement strict attribution, the backend could set an HttpOnly cookie here:
-  // res.cookie('attributionTag', tag, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
-
-  return res.status(200).json(new ApiResponse(200, null, "Click tracked"));
+  return res.status(200).json(new ApiResponse(200, null, 'Click tracked'));
 });
 
 /**
@@ -91,10 +87,10 @@ export const trackClick = asyncHandler(async (req, res) => {
 export const deleteAffiliateLink = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const link = await AffiliateLink.findOneAndDelete({ _id: id, vendor: req.user._id });
-  
+
   if (!link) {
     throw new ApiError(404, "Affiliate link not found or you don't have permission to delete it.");
   }
-  
-  return res.status(200).json(new ApiResponse(200, null, "Affiliate link deleted successfully"));
+
+  return res.status(200).json(new ApiResponse(200, null, 'Affiliate link deleted successfully'));
 });

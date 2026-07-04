@@ -35,7 +35,15 @@ jobs:
         working-directory: server
 
       - name: Security Audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
+        working-directory: server
+
+      - name: Lint
+        run: npm run lint
+        working-directory: server
+
+      - name: Test
+        run: npm run test
         working-directory: server
 
 
@@ -61,11 +69,12 @@ jobs:
         working-directory: client
 
       - name: Security Audit
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
         working-directory: client
 
-
-
+      - name: Lint
+        run: npm run lint
+        working-directory: client
 
       - name: Build
         run: npm run build

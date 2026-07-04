@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { HERO_SLIDES } from '../constants/showcase.js';
@@ -44,7 +44,7 @@ export const HeroCarousel = () => {
     <section
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative w-full overflow-hidden bg-black min-h-[70vh] md:min-h-[85vh] lg:min-h-[92vh] group"
+      className="relative w-full overflow-hidden bg-black min-h-[50vh] md:min-h-[70vh] lg:min-h-[85vh] group"
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -81,7 +81,7 @@ export const HeroCarousel = () => {
         </motion.div>
       </AnimatePresence>
 
-      <div className="relative z-20 flex h-[70vh] md:h-[85vh] lg:h-[92vh] flex-col justify-end md:justify-center p-6 md:p-16 lg:p-24 md:max-w-4xl text-left">
+      <div       className="relative z-20 flex h-[50vh] md:h-[70vh] lg:h-[85vh] flex-col justify-end md:justify-center p-6 md:p-16 lg:p-24 md:max-w-4xl text-left">
         <AnimatePresence mode="wait">
           <motion.div
             key={index}

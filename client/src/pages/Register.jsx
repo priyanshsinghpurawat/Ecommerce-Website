@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +38,7 @@ export const Register = () => {
   const [capsLockActive, setCapsLockActive] = useState(false);
   const [serverError, setServerError] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [registerRole, setRegisterRole] = useState('user');
+  const registerRole = 'user';
 
   // Initialize react-hook-form
   const {
@@ -115,7 +115,7 @@ export const Register = () => {
       if (result.user?.role === 'admin') {
         navigate('/admin/dashboard');
       } else if (result.user?.role === 'seller') {
-        navigate('/vendor/dashboard');
+        navigate('/seller/dashboard');
       } else {
         navigate('/');
       }
@@ -136,7 +136,7 @@ export const Register = () => {
       if (result.user?.role === 'admin') {
         navigate('/admin/dashboard');
       } else if (result.user?.role === 'seller') {
-        navigate('/vendor/dashboard');
+        navigate('/seller/dashboard');
       } else {
         navigate('/');
       }
@@ -253,7 +253,7 @@ export const Register = () => {
                   e.preventDefault();
                   setShowPassword(!showPassword);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none z-10"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-brand-primary z-10"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -313,14 +313,7 @@ export const Register = () => {
             )}
           </div>
 
-          <div className="flex gap-2 p-1 rounded-xl bg-black/40 border border-white/10">
-            <button type="button" onClick={() => setRegisterRole('user')}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${registerRole === 'user' ? 'bg-brand-primary text-black' : 'text-white/50 hover:text-white'}`}
-            >Customer</button>
-            <button type="button" onClick={() => setRegisterRole('seller')}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${registerRole === 'seller' ? 'bg-brand-primary text-black' : 'text-white/50 hover:text-white'}`}
-            >Seller</button>
-          </div>
+
 
           <button
             type="submit"

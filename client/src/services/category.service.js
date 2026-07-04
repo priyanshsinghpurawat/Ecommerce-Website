@@ -5,11 +5,6 @@ export const getCategories = async () => {
   return data;
 };
 
-export const getCategoryBySlug = async (slug) => {
-  const { data } = await api.get(`/categories/${slug}`);
-  return data;
-};
-
 export const createCategory = async (name) => {
   const { data } = await api.post('/categories', { name });
   return data;

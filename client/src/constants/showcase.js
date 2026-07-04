@@ -10,10 +10,10 @@ export const HERO_SLIDES = [
     image2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781001455/mensvibe/products/1736491521_4978820.avif',
     image3: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781001457/mensvibe/products/1764057049_4505939.avif',
     cta: 'Shop shirts',
-    link: '/shop?subcategory=Shirts',
-    link1: '/shop?subcategory=Shirts',
-    link2: '/shop?subcategory=T-Shirts',
-    link3: '/shop?subcategory=Shirts',
+    link: '/shop',
+    link1: '/shop',
+    link2: '/shop',
+    link3: '/shop',
   },
   {
     id: 'sport',
@@ -23,7 +23,7 @@ export const HERO_SLIDES = [
     description: 'Training tees, track pants & sports shoes — move light, look sharp.',
     image: '/assets/hero_sport.png',
     cta: 'Shop sportswear',
-    link: '/shop?subcategory=Sportswear',
+    link: '/shop',
     gradient: 'from-zinc-950/90 via-zinc-900/45 to-transparent'
   },
   {
@@ -34,7 +34,7 @@ export const HERO_SLIDES = [
     description: 'Sneakers & runners — cushion, grip, and everyday drip.',
     image: '/assets/hero_street.png',
     cta: 'Shop footwear',
-    link: '/shop?category=Footwear',
+    link: '/shop',
     gradient: 'from-slate-950/90 via-slate-900/45 to-transparent'
   },
   {
@@ -43,7 +43,7 @@ export const HERO_SLIDES = [
     title: 'Street Drip',
     subtitle: 'INTERACTIVE LOOKBOOK',
     description: 'Tap on interactive hotspots to shop complete utility fits, oversized layers, and custom cargos.',
-    image: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781074254/brown_tvlluh.avif',
+    image: '/assets/hero_casual.png',
     cta: 'Explore Lookbook',
     link: '/street-drip',
     gradient: 'from-zinc-950/90 via-zinc-900/45 to-transparent'
@@ -58,10 +58,10 @@ export const HERO_SLIDES = [
     image2: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1781077001/1739774935_1647535_jmoydf.avif',
     image3: 'https://res.cloudinary.com/decppyzuk/image/upload/q_auto/f_auto/v1780984921/mensvibe/products/1739601040_1918057.avif',
     cta: 'Explore linen',
-    link: '/shop?subcategory=Linen',
-    link1: '/shop?subcategory=Shirts',
-    link2: '/shop?subcategory=Pants',
-    link3: '/shop?subcategory=Shirts',
+    link: '/shop',
+    link1: '/shop',
+    link2: '/shop',
+    link3: '/shop',
     gradient: 'from-stone-950/90 via-stone-900/40 to-transparent'
   }
 ];

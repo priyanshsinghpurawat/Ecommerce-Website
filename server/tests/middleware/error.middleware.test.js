@@ -9,7 +9,7 @@ describe('errorHandler middleware', () => {
     req = {};
     res = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn()
+      json: vi.fn(),
     };
     next = vi.fn();
     vi.clearAllMocks();

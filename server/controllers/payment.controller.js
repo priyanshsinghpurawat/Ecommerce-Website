@@ -2,16 +2,26 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import mongoose from 'mongoose';
 import { Order } from '../models/order.model.js';
-import { Product } from '../models/product.model.js';
-import { Variant } from '../models/variant.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { User } from '../models/user.model.js';
-import { LedgerTransaction } from '../models/ledger.model.js';
-import { asyncHandler, ApiError, ApiResponse, generateOrderNumber, calculateCouponDiscount, validateShippingAddress } from '../utils/helpers.js';
+import {
+  asyncHandler,
+  ApiError,
+  ApiResponse,
+  generateOrderNumber,
+  validateShippingAddress,
+} from '../utils/helpers.js';
+import { calculateCouponDiscount } from '../services/coupon.service.js';
 import logger from '../config/logger.js';
-import { calculateOrderTotals, fetchAndValidateUserCart } from './order.controller.js';
-import { restoreStock, incrementProductSales as incrementSalesBulk } from '../services/order.service.js';
+import {
+  deductStock,
+  restoreStock,
+  incrementProductSales as incrementSalesBulk,
+  fetchAndValidateUserCart,
+  calculateOrderTotals,
+  createLedgerEntries,
+} from '../services/order.service.js';
 import { ENV } from '../config/env.js';
 
 const isRazorpayConfigured = () => {
@@ -29,23 +39,21 @@ export const getPaymentConfig = asyncHandler(async (req, res) => {
       200,
       {
         razorpayEnabled: enabled,
-        keyId: enabled ? ENV.RAZORPAY_KEY_ID : null
+        keyId: enabled ? ENV.RAZORPAY_KEY_ID : null,
+        taxRate: 0.18,
       },
-      'Payment config'
-    )
+      'Payment config',
+    ),
   );
 });
 
 const getRazorpay = () => {
   if (!isRazorpayConfigured()) {
-    throw new ApiError(
-      503,
-      'Online payment is not configured. Use Cash on Delivery instead.'
-    );
+    throw new ApiError(503, 'Online payment is not configured. Use Cash on Delivery instead.');
   }
   return new Razorpay({
     key_id: ENV.RAZORPAY_KEY_ID,
-    key_secret: ENV.RAZORPAY_KEY_SECRET
+    key_secret: ENV.RAZORPAY_KEY_SECRET,
   });
 };
 
@@ -64,18 +72,21 @@ export const createCheckout = asyncHandler(async (req, res) => {
   const razorpay = getRazorpay();
   const amountPaise = Math.round(calculations.total * 100);
   let rzOrder;
-  
+
   try {
     rzOrder = await razorpay.orders.create({
       amount: amountPaise,
       currency: 'INR',
       receipt: orderId.toString(),
-      notes: { orderNumber }
+      notes: { orderNumber },
     });
   } catch (paymentErr) {
     logger.error('Razorpay order creation failed:', paymentErr);
     // Fail immediately, no database state has been mutated yet.
-    throw new ApiError(502, `Payment gateway error. Please try again. ${paymentErr?.error?.description || paymentErr.message || ''}`);
+    throw new ApiError(
+      502,
+      `Payment gateway error. Please try again. ${paymentErr?.error?.description || paymentErr.message || ''}`,
+    );
   }
 
   // 3. Transactionally reserve stock and save the order
@@ -88,95 +99,68 @@ export const createCheckout = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
 
     if (calculations.appliedCouponCode) {
-      const validItems = cart.items.filter(item => item.product);
-      await calculateCouponDiscount(calculations.appliedCouponCode, calculations.subtotal, validItems, req.user._id, session);
+      const validItems = cart.items.filter((item) => item.product);
+      await calculateCouponDiscount(
+        calculations.appliedCouponCode,
+        calculations.subtotal,
+        validItems,
+        req.user._id,
+        session,
+      );
     }
 
     let appliedCouponId = null;
     if (calculations.appliedCouponCode) {
-      const couponDoc = await Coupon.findOne({ code: calculations.appliedCouponCode }).session(session);
+      const couponDoc = await Coupon.findOne({ code: calculations.appliedCouponCode }).session(
+        session,
+      );
       if (couponDoc) {
         appliedCouponId = couponDoc._id;
       }
     }
 
-    const sortedOrderItems = [...calculations.orderItems].sort((a, b) => 
-      a.product.toString().localeCompare(b.product.toString())
+    await deductStock(calculations.orderItems, session);
+
+    const [order] = await Order.create(
+      [
+        {
+          _id: orderId,
+          orderNumber,
+          user: req.user._id,
+          items: calculations.orderItems,
+          subtotal: calculations.subtotal,
+          taxAmount: calculations.taxAmount,
+          discountAmount: calculations.discountAmount,
+          total: calculations.total,
+          coupon: appliedCouponId,
+          couponCode: calculations.appliedCouponCode,
+          shippingAddress,
+          paymentMethod: 'razorpay',
+          razorpayOrderId: rzOrder.id,
+          paymentStatus: 'pending',
+          status: 'pending',
+        },
+      ],
+      { session },
     );
-
-    const productsToRecalculate = new Set();
-
-    for (const item of sortedOrderItems) {
-      // Resolve variant
-      let variant = null;
-      if (item.variant) {
-        variant = await Variant.findById(item.variant).session(session);
-      } else if (item.sku) {
-        variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
-      } else if (item.color || item.size) {
-        const query = { product: item.product, deletedAt: null };
-        if (item.color) query['optionValues.Color'] = item.color;
-        if (item.size) query['optionValues.Size'] = item.size;
-        variant = await Variant.findOne(query).session(session);
-      }
-
-      let updated;
-      if (variant) {
-        updated = await Variant.findOneAndUpdate(
-          { _id: variant._id, stock: { $gte: item.quantity } },
-          { $inc: { stock: -item.quantity } },
-          { new: true, session }
-        );
-        productsToRecalculate.add(item.product.toString());
-      } else {
-        updated = await Product.findOneAndUpdate(
-          { _id: item.product, stock: { $gte: item.quantity } },
-          { $inc: { stock: -item.quantity } },
-          { new: true, session }
-        );
-      }
-
-      if (!updated) {
-        throw new ApiError(400, `Insufficient stock for "${item.title}". It may have just sold out.`);
-      }
-    }
-
-    // Recalculate variant summaries inside the transaction
-    for (const prodId of productsToRecalculate) {
-      await Product.recalculateVariantSummary(prodId, session);
-    }
-
-    const [order] = await Order.create([{
-      _id: orderId,
-      orderNumber,
-      user: req.user._id,
-      items: calculations.orderItems,
-      subtotal: calculations.subtotal,
-      taxAmount: calculations.taxAmount,
-      discountAmount: calculations.discountAmount,
-      total: calculations.total,
-      coupon: appliedCouponId,
-      couponCode: calculations.appliedCouponCode,
-      shippingAddress,
-      paymentMethod: 'razorpay',
-      razorpayOrderId: rzOrder.id,
-      paymentStatus: 'pending',
-      status: 'pending'
-    }], { session });
 
     await session.commitTransaction();
     committed = true;
     session.endSession();
 
     return res.status(201).json(
-      new ApiResponse(201, {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
-        amount: calculations.total,
-        amountPaise,
-        razorpayOrderId: rzOrder.id,
-        keyId: ENV.RAZORPAY_KEY_ID
-      }, 'Checkout ready')
+      new ApiResponse(
+        201,
+        {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          amount: calculations.total,
+          amountPaise,
+          razorpayOrderId: rzOrder.id,
+          keyId: ENV.RAZORPAY_KEY_ID,
+        },
+        'Checkout ready',
+      ),
     );
   } catch (error) {
     if (!committed) {
@@ -188,12 +172,7 @@ export const createCheckout = asyncHandler(async (req, res) => {
 });
 
 export const verifyPayment = asyncHandler(async (req, res) => {
-  const {
-    orderId,
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature
-  } = req.body;
+  const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
   if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     throw new ApiError(400, 'Payment verification fields missing');
@@ -226,7 +205,10 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   const expectedBuffer = Buffer.from(expected, 'hex');
   const signatureBuffer = Buffer.from(razorpay_signature, 'hex');
 
-  if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
+  if (
+    expectedBuffer.length !== signatureBuffer.length ||
+    !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)
+  ) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
@@ -234,7 +216,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       const failedOrder = await Order.findOneAndUpdate(
         { _id: orderId, paymentStatus: 'pending' },
         { $set: { paymentStatus: 'failed', status: 'cancelled' } },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!failedOrder) {
@@ -262,14 +244,16 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         paymentStatus: 'paid',
         status: 'confirmed',
         razorpayPaymentId: razorpay_payment_id,
-        razorpayOrderId: razorpay_order_id
-      }
+        razorpayOrderId: razorpay_order_id,
+      },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!successOrder) {
-    return res.status(200).json(new ApiResponse(200, order, 'Order already processed successfully'));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, 'Order already processed successfully'));
   }
 
   // Run coupon increment + soldCount + cart clear inside a transaction so a
@@ -281,7 +265,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       await Coupon.findByIdAndUpdate(
         successOrder.coupon,
         { $inc: { usageCount: 1 } },
-        { session: successSession }
+        { session: successSession },
       );
     }
 
@@ -294,46 +278,13 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       await cart.save({ session: successSession });
     }
 
-    // Process Ledger Transactions (Billing & Commissions) using strict integer math (paise)
-    const vendorTotals = {};
-    for (const item of successOrder.items) {
-      if (item.vendor) {
-        const vid = item.vendor.toString();
-        if (!vendorTotals[vid]) vendorTotals[vid] = 0;
-        vendorTotals[vid] += item.subtotal;
-      }
-    }
-
-    const PLATFORM_FEE_PERCENTAGE = 0.10; // 10% flat fee
-    const ledgerEntries = [];
-    
-    for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
-      // 1. Credit Vendor for the sale (in paise)
-      const saleAmountPaise = Math.round(vendorTotal * 100);
-      ledgerEntries.push({
-        vendor: vendorId,
-        type: 'sale',
-        amount: saleAmountPaise,
-        order: successOrder._id,
-        status: 'cleared', // Razorpay payments are cleared instantly
-        description: `Order Revenue - #${successOrder.orderNumber}`
-      });
-
-      // 2. Debit Platform Commission (in paise)
-      const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
-      ledgerEntries.push({
-        vendor: vendorId,
-        type: 'commission_fee',
-        amount: -commissionAmountPaise, // negative amount for debits
-        order: successOrder._id,
-        status: 'cleared', // Razorpay payments are cleared instantly
-        description: `Platform Fee (10%) - #${successOrder.orderNumber}`
-      });
-    }
-
-    if (ledgerEntries.length > 0) {
-      await LedgerTransaction.insertMany(ledgerEntries, { session: successSession });
-    }
+    await createLedgerEntries(
+      successOrder._id,
+      successOrder.orderNumber,
+      successOrder.items,
+      'razorpay',
+      successSession,
+    );
 
     await successSession.commitTransaction();
   } catch (postErr) {

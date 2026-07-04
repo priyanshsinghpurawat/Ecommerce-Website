@@ -2,7 +2,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import { ENV } from './env.js';
 import logger from './logger.js';
 
-/** True when real Cloudinary credentials are set (not placeholders). */
 export function isCloudinaryConfigured() {
   const name = ENV.CLOUDINARY_CLOUD_NAME;
   const key = ENV.CLOUDINARY_API_KEY;
@@ -31,7 +30,7 @@ export function assertCloudinaryForRuntime() {
   cloudinary.config({
     cloud_name: ENV.CLOUDINARY_CLOUD_NAME,
     api_key: ENV.CLOUDINARY_API_KEY,
-    api_secret: ENV.CLOUDINARY_API_SECRET
+    api_secret: ENV.CLOUDINARY_API_SECRET,
   });
 }
 

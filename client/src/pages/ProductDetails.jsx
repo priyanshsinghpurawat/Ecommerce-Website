@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getProductById, getProductVariants, getProductReviews, submitReview } from '../services/product.service.js';
@@ -17,13 +17,12 @@ import { FrequentlyBoughtTogether } from '../components/FrequentlyBoughtTogether
 import { UrgencyNudge } from '../components/UrgencyNudge.jsx';
 
 const CLOTHING_MEASUREMENTS = {
-  // Tall Sizing (Competitor Standard)
   MT: { chest: '42 in', length: '32.5 in', shoulder: '19.5 in', sleeve: '27 in' },
   LT: { chest: '45 in', length: '33 in', shoulder: '20 in', sleeve: '27.5 in' },
   XLT: { chest: '48 in', length: '33.5 in', shoulder: '21.5 in', sleeve: '28 in' },
   '2XLT': { chest: '52 in', length: '34 in', shoulder: '22.5 in', sleeve: '28.5 in' },
   '3XLT': { chest: '56 in', length: '34.5 in', shoulder: '23.5 in', sleeve: '29 in' },
-  // Standard Sizing (Backward Compatibility)
+ 
   XS: { chest: '40 in', length: '27 in', shoulder: '18.5 in', sleeve: '24 in' },
   S: { chest: '42 in', length: '28 in', shoulder: '19 in', sleeve: '24.5 in' },
   M: { chest: '44 in', length: '29 in', shoulder: '19.5 in', sleeve: '25 in' },
@@ -87,6 +86,8 @@ export const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const sizeGuideRef = useRef(null);
+  const sizeGuideCloseRef = useRef(null);
   const [pincode, setPincode] = useState('');
   const [deliveryStatus, setDeliveryStatus] = useState(null);
   const [checkingPincode, setCheckingPincode] = useState(false);
@@ -102,6 +103,29 @@ export const ProductDetails = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!showSizeGuide) return;
+    const el = sizeGuideRef.current;
+    if (!el) return;
+    el.focus();
+    const handleKeyDown = (e) => {
+      const focusable = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.key === 'Tab') {
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    el.addEventListener('keydown', handleKeyDown);
+    return () => el.removeEventListener('keydown', handleKeyDown);
+  }, [showSizeGuide]);
 
   const handleWishlist = async () => {
     if (!isAuthenticated) {
@@ -501,6 +525,7 @@ export const ProductDetails = () => {
                 <button
                   onClick={handleWishlist}
                   disabled={wishlistLoading}
+                  aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
                   className={`p-4 rounded-[1.5rem] backdrop-blur-xl border border-white/20 transition-all hover:scale-110 active:scale-95 shadow-lg ${
                     isWishlisted ? 'bg-red-500 text-white border-red-500/30' : 'bg-black/40 text-white'
                   }`}
@@ -627,6 +652,7 @@ export const ProductDetails = () => {
                 <span className="text-xs font-black uppercase tracking-wider text-app-text">Select Size</span>
                 <button 
                   onClick={() => setShowSizeGuide(true)}
+                  aria-label="Open size guide"
                   className="text-[10px] font-black uppercase tracking-wider text-app-text/45 hover:text-brand-primary underline decoration-dotted"
                 >
                   Size Guide
@@ -957,11 +983,18 @@ export const ProductDetails = () => {
 
       {/* Size Guide Modal Popup */}
       {showSizeGuide && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onKeyDown={(e) => { if (e.key === 'Escape') setShowSizeGuide(false); }}
+          ref={sizeGuideRef}
+          tabIndex={-1}
+        >
           <div className="bg-app-card text-app-text rounded-[2rem] border border-border p-8 max-w-md w-full relative shadow-2xl">
             <button 
+              ref={sizeGuideCloseRef}
               onClick={() => setShowSizeGuide(false)} 
               className="absolute top-5 right-5 text-app-text/60 hover:text-app-text transition-colors"
+              aria-label="Close size guide"
             >
               <X className="h-5 w-5" />
             </button>
@@ -1028,6 +1061,7 @@ export const ProductDetails = () => {
             <button 
               onClick={() => setShowSizeGuide(false)}
               className="mt-6 w-full py-3 bg-app-text text-app-bg rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity select-none cursor-pointer"
+              aria-label="Close size guide"
             >
               Close Chart
             </button>

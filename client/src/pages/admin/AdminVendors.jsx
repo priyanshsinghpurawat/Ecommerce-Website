@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getVendors, toggleVendorStatus } from '../../services/user.service.js';
 import { Loader2, Store, User, Mail, ShieldCheck, ShieldAlert, ExternalLink, Hash, Tag } from 'lucide-react';
@@ -130,7 +130,7 @@ export const AdminVendors = () => {
                   <td className="px-6 py-6">
                     <div className="flex items-center justify-center">
                       <Link
-                        to={`/admin/vendors/${v._id}`}
+                        to={`/admin/sellers/${v._id}`}
                         className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-white/5 border border-white/10 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-app-text hover:bg-brand-primary hover:text-black hover:border-brand-primary/20 transition-all shadow-xl hover:scale-[1.03]"
                       >
                         Deep Dive
