@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const ledgerTransactionSchema = new mongoose.Schema(
   {
-    vendor: {
+    seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -47,8 +47,8 @@ const ledgerTransactionSchema = new mongoose.Schema(
   { timestamps: true, collection: 'ledger_transactions' },
 );
 
-// Index for quickly calculating a vendor's balance or fetching their history
-ledgerTransactionSchema.index({ vendor: 1, createdAt: -1 });
+// Index for quickly calculating a seller's balance or fetching their history
+ledgerTransactionSchema.index({ seller: 1, createdAt: -1 });
 ledgerTransactionSchema.index({ order: 1 }); // Quick lookup by order
 
 export const LedgerTransaction = mongoose.model('LedgerTransaction', ledgerTransactionSchema);

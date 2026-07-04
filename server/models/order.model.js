@@ -1,47 +1,49 @@
 import mongoose from 'mongoose';
 
-const orderItemSchema = new mongoose.Schema({
-  product: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
+const orderItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Variant',
+      default: null,
+    },
+    sku: { type: String, trim: true },
+    title: { type: String, required: true },
+    image: { type: String },
+    price: { type: Number, required: true },
+    discountedPrice: { type: Number, default: 0 },
+    quantity: { type: Number, required: true, min: 1 },
+    unitPrice: { type: Number, required: true },
+    subtotal: { type: Number, required: true },
+    size: { type: String, trim: true },
+    color: { type: String, trim: true },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned'],
+      default: 'confirmed',
+    },
+    returnStatus: {
+      type: String,
+      enum: ['none', 'requested', 'approved', 'rejected', 'refunded'],
+      default: 'none',
+    },
+    returnReason: {
+      type: String,
+      trim: true,
+    },
+    trackingNumber: { type: String, trim: true },
+    deliveryDate: { type: Date },
   },
-  variant: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Variant',
-    default: null,
-  },
-  sku: { type: String, trim: true },
-  title: { type: String, required: true },
-  image: { type: String },
-  price: { type: Number, required: true },
-  discountedPrice: { type: Number, default: 0 },
-  quantity: { type: Number, required: true, min: 1 },
-  unitPrice: { type: Number, required: true },
-  subtotal: { type: Number, required: true },
-  size: { type: String, trim: true },
-  color: { type: String, trim: true },
-  vendor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned'],
-    default: 'confirmed',
-  },
-  returnStatus: {
-    type: String,
-    enum: ['none', 'requested', 'approved', 'rejected', 'refunded'],
-    default: 'none',
-  },
-  returnReason: {
-    type: String,
-    trim: true,
-  },
-  trackingNumber: { type: String, trim: true },
-  deliveryDate: { type: Date },
-});
+);
 
 const shippingAddressSchema = new mongoose.Schema(
   {
@@ -113,7 +115,7 @@ const orderSchema = new mongoose.Schema(
 // Optimize retrieval of order history (most recent orders first for a specific user)
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ trackingNumber: 1 });
-orderSchema.index({ 'items.product': 1 }); // Optimize vendor queries
+orderSchema.index({ 'items.product': 1 }); // Optimize seller queries
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 

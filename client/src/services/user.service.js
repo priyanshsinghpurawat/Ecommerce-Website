@@ -29,18 +29,18 @@ export const updateUserRole = async (id, role) => {
   return data;
 };
 
-export const getVendors = async () => {
-  const { data } = await api.get('/users/vendors');
+export const getSellers = async () => {
+  const { data } = await api.get('/users/sellers');
   return data;
 };
 
-export const toggleVendorStatus = async (id) => {
-  const { data } = await api.patch(`/users/vendors/${id}/status`);
+export const toggleSellerStatus = async (id) => {
+  const { data } = await api.patch(`/users/sellers/${id}/status`);
   return data;
 };
 
-export const getVendorProfile = async (id) => {
-  const { data } = await api.get(`/users/vendors/${id}`);
+export const getSellerProfile = async (id) => {
+  const { data } = await api.get(`/users/sellers/${id}`);
   return data;
 };
 

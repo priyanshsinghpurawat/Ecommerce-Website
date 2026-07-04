@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import slugify from 'slugify';
+import { ENV } from '../config/env.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -84,8 +87,25 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ name: 'text', email: 'text' });
 userSchema.index({ role: 1, createdAt: -1 });
 
-// Hash password before saving to DB
+// Hash password before saving to DB and auto-generate storefront slug for sellers
 userSchema.pre('save', async function (next) {
+  if (this.role === 'seller' && (!this.storefront || !this.storefront.slug)) {
+    const baseSlug = slugify(this.brandName || this.name || 'store', { lower: true, strict: true });
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await mongoose.models.User.findOne({ 'storefront.slug': uniqueSlug, _id: { $ne: this._id } });
+      if (!existing) break;
+      uniqueSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+    if (!this.storefront) {
+      this.storefront = { slug: uniqueSlug, banner: '', description: '', returnPolicy: '' };
+    } else {
+      this.storefront.slug = uniqueSlug;
+    }
+  }
+
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();

@@ -51,13 +51,9 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   validateShippingAddress(shippingAddress);
 
-  const cart = await fetchAndValidateUserCart(req.user._id);
-  const orderCalculations = await calculateOrderTotals(cart, couponCode, req.user._id);
-
   const order = await executeOrderTransaction({
     userId: req.user._id,
-    cart,
-    orderCalculations,
+    couponCode,
     shippingAddress,
     paymentMethod,
     attributionTag,
@@ -110,7 +106,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
   if (req.user.role === 'user') {
     filter.user = req.user._id;
   } else if (req.user.role === 'seller') {
-    filter['items.vendor'] = req.user._id;
+    filter['items.seller'] = req.user._id;
   }
 
   const order = await Order.findOne(filter).populate('user', 'name email').lean();
@@ -193,19 +189,19 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       if (itemId) {
         const item = order.items.id(itemId);
         if (!item) throw new ApiError(404, 'Item not found in order');
-        if (item.vendor.toString() !== req.user._id.toString()) {
+        if (item.seller.toString() !== req.user._id.toString()) {
           throw new ApiError(403, 'You are not authorized to update this item');
         }
         await transitionOrderItemStatus(order, item, status, trackingNumber, session);
       } else {
         let updatedAny = false;
         for (const item of order.items) {
-          if (item.vendor.toString() === req.user._id.toString()) {
+          if (item.seller.toString() === req.user._id.toString()) {
             await transitionOrderItemStatus(order, item, status, trackingNumber, session);
             updatedAny = true;
           }
         }
-        if (!updatedAny) throw new ApiError(403, 'No items found for this vendor in this order');
+        if (!updatedAny) throw new ApiError(403, 'No items found for this seller in this order');
       }
     } else if (req.user.role === 'admin') {
       if (itemId) {
@@ -329,7 +325,7 @@ export const processReturn = asyncHandler(async (req, res) => {
   if (!item) throw new ApiError(404, 'Item not found in order');
 
   // Verify authorization
-  if (req.user.role === 'seller' && item.vendor?.toString() !== req.user._id.toString()) {
+  if (req.user.role === 'seller' && item.seller?.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'Not authorized to process this return');
   }
 
@@ -349,27 +345,24 @@ export const processReturn = asyncHandler(async (req, res) => {
 
       // Reverse Ledger Transaction
       const saleAmountPaise = Math.round(item.subtotal * 100);
-      const commissionAmountPaise = Math.round(item.subtotal * 0.1 * 100);
+      const commissionAmountPaise = Math.round(item.subtotal * 0.10 * 100);
 
-      await LedgerTransaction.insertMany(
-        [
-          {
-            vendor: item.vendor,
-            type: 'refund',
-            amount: -saleAmountPaise, // deduct sale
-            order: order._id,
-            description: `Refund (RMA) - #${order.orderNumber}`,
-          },
-          {
-            vendor: item.vendor,
-            type: 'commission_fee', // Revert fee
-            amount: commissionAmountPaise, // credit back the platform fee
-            order: order._id,
-            description: `Fee Reversal (RMA) - #${order.orderNumber}`,
-          },
-        ],
-        { session },
-      );
+      await LedgerTransaction.insertMany([
+        {
+          seller: item.seller,
+          type: 'refund',
+          amount: -saleAmountPaise, // deduct sale
+          order: order._id,
+          description: `Refund (RMA) - #${order.orderNumber}`,
+        },
+        {
+          seller: item.seller,
+          type: 'commission_fee', // Revert fee
+          amount: commissionAmountPaise, // credit back the platform fee
+          order: order._id,
+          description: `Fee Reversal (RMA) - #${order.orderNumber}`,
+        },
+      ], { session });
 
       // Restore stock
       await restoreStockForOrder({ items: [item] }, session);
@@ -438,23 +431,7 @@ export const exportOrdersCSV = asyncHandler(async (req, res) => {
   res.end();
 });
 
-async function executeOrderTransaction({
-  userId,
-  cart,
-  orderCalculations,
-  shippingAddress,
-  paymentMethod,
-  attributionTag,
-}) {
-  const {
-    subtotal,
-    taxAmount,
-    discountAmount,
-    total,
-    orderItems,
-    appliedCouponId,
-    appliedCouponCode,
-  } = orderCalculations;
+async function executeOrderTransaction({ userId, couponCode, shippingAddress, paymentMethod, attributionTag }) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -462,10 +439,9 @@ async function executeOrderTransaction({
     // Acquire lock on user to prevent concurrent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(userId, { $set: { updatedAt: new Date() } }, { session });
 
-    if (appliedCouponCode) {
-      const validItems = cart.items.filter((item) => item.product);
-      await calculateCouponDiscount(appliedCouponCode, subtotal, validItems, userId, session);
-    }
+    const cart = await fetchAndValidateUserCart(userId, session);
+    const orderCalculations = await calculateOrderTotals(cart, couponCode, userId, session);
+    const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
 
     const validItems = cart.items.filter((item) => item.product);
     await deductStock(validItems, session);

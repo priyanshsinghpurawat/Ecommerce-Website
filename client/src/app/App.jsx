@@ -72,11 +72,11 @@ const AdminOrders = lazy(() =>
 const AdminUsers = lazy(() =>
   import('../pages/admin/AdminUsers.jsx').then((m) => ({ default: m.AdminUsers })),
 );
-const AdminVendors = lazy(() =>
-  import('../pages/admin/AdminVendors.jsx').then((m) => ({ default: m.AdminVendors })),
+const AdminSellers = lazy(() =>
+  import('../pages/admin/AdminSellers.jsx').then((m) => ({ default: m.AdminSellers })),
 );
-const AdminVendorProfile = lazy(() =>
-  import('../pages/admin/AdminVendorProfile.jsx').then((m) => ({ default: m.AdminVendorProfile })),
+const AdminSellerProfile = lazy(() =>
+  import('../pages/admin/AdminSellerProfile.jsx').then((m) => ({ default: m.AdminSellerProfile })),
 );
 
 // Seller Pages (Lazy Loaded)
@@ -227,8 +227,8 @@ function App() {
                       <Route path="coupons" element={<AdminCoupons />} />
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="users" element={<AdminUsers />} />
-                      <Route path="sellers" element={<AdminVendors />} />
-                      <Route path="sellers/:id" element={<AdminVendorProfile />} />
+                      <Route path="sellers" element={<AdminSellers />} />
+                      <Route path="sellers/:id" element={<AdminSellerProfile />} />
                     </Route>
 
                     <Route

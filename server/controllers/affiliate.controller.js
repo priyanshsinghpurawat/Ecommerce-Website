@@ -9,14 +9,14 @@ import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
  */
 export const generateAffiliateLink = asyncHandler(async (req, res) => {
   const { campaignName, productId } = req.body;
-  const vendorId = req.user._id;
+  const sellerId = req.user._id;
 
   if (!campaignName) {
     throw new ApiError(400, 'Campaign name is required');
   }
 
-  // Generate a unique tag: vendorId(short) + random string
-  const shortId = vendorId.toString().substring(18, 24);
+  // Generate a unique tag: sellerId(short) + random string
+  const shortId = sellerId.toString().substring(18, 24);
   const randomStr = Math.random().toString(36).substring(2, 8);
   const trackingTag = `${shortId}-${randomStr}`.toLowerCase();
 
@@ -28,14 +28,14 @@ export const generateAffiliateLink = asyncHandler(async (req, res) => {
     targetUrl = `/product/${product._id}`;
   } else {
     // If no product, maybe point to their storefront
-    targetUrl = `/store/${req.user.storefront?.slug || vendorId}`;
+    targetUrl = `/store/${req.user.storefront?.slug || sellerId}`;
   }
 
   // Append the tag to the URL for easy copying
   const fullUrl = `${targetUrl}?ref=${trackingTag}`;
 
   const link = await AffiliateLink.create({
-    vendor: vendorId,
+    seller: sellerId,
     targetProduct: productId || null,
     targetUrl: fullUrl,
     trackingTag,
@@ -51,7 +51,7 @@ export const generateAffiliateLink = asyncHandler(async (req, res) => {
  * @access  Private/Seller
  */
 export const getMyAffiliateLinks = asyncHandler(async (req, res) => {
-  const links = await AffiliateLink.find({ vendor: req.user._id })
+  const links = await AffiliateLink.find({ seller: req.user._id })
     .populate('targetProduct', 'title image')
     .sort({ createdAt: -1 });
 
@@ -86,8 +86,7 @@ export const trackClick = asyncHandler(async (req, res) => {
  */
 export const deleteAffiliateLink = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const link = await AffiliateLink.findOneAndDelete({ _id: id, vendor: req.user._id });
-
+  const link = await AffiliateLink.findOneAndDelete({ _id: id, seller: req.user._id });
   if (!link) {
     throw new ApiError(404, "Affiliate link not found or you don't have permission to delete it.");
   }

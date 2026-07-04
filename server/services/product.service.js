@@ -156,8 +156,8 @@ export class ProductService {
 
     if (category && isValidId(category)) query.category = category;
     if (subcategory && isValidId(subcategory)) query.subcategory = subcategory;
-    if (badge && badge !== 'undefined' && badge !== 'null') query.badge = badge;
-    if (seller) query.seller = seller;
+    if (typeof badge === 'string' && badge !== 'undefined' && badge !== 'null') query.badge = badge;
+    if (typeof seller === 'string' && seller) query.seller = seller;
 
     if (minPrice || maxPrice) {
       const exprCond = [];

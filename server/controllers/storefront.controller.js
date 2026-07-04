@@ -3,26 +3,26 @@ import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
 
 /**
- * @desc    Get public vendor storefront data by slug
+ * @desc    Get public seller storefront data by slug
  * @route   GET /api/v3/users/store/:slug
  * @access  Public
  */
-export const getPublicVendorStore = asyncHandler(async (req, res) => {
+export const getPublicSellerStore = asyncHandler(async (req, res) => {
   const { slug } = req.params;
 
-  // Find vendor by storefront slug
-  const vendor = await User.findOne({
+  // Find seller by storefront slug
+  const seller = await User.findOne({
     'storefront.slug': slug.toLowerCase(),
     role: 'seller',
     isActive: true,
   }).select('brandName storefront avatar createdAt');
 
-  if (!vendor) {
+  if (!seller) {
     throw new ApiError(404, 'Storefront not found');
   }
 
   // Fetch their active published products
-  const products = await Product.find({ seller: vendor._id, status: 'published' })
+  const products = await Product.find({ seller: seller._id, status: 'published' })
     .sort({ createdAt: -1 })
     .limit(100);
 
@@ -30,7 +30,7 @@ export const getPublicVendorStore = asyncHandler(async (req, res) => {
     new ApiResponse(
       200,
       {
-        vendor,
+        seller,
         products,
       },
       'Storefront retrieved successfully',

@@ -61,6 +61,13 @@ export const createCheckout = asyncHandler(async (req, res) => {
   const { shippingAddress, couponCode } = req.body;
 
   validateShippingAddress(shippingAddress);
+
+  // Prevent multiple pending orders to stop Inventory DoS
+  const existingPending = await Order.findOne({ user: req.user._id, paymentStatus: 'pending' });
+  if (existingPending) {
+    throw new ApiError(400, 'You already have a pending order. Please complete or wait for it to expire (30 mins) before creating a new one.');
+  }
+
   const cart = await fetchAndValidateUserCart(req.user._id);
   const calculations = await calculateOrderTotals(cart, couponCode, req.user._id);
 
@@ -97,6 +104,12 @@ export const createCheckout = asyncHandler(async (req, res) => {
   try {
     // Acquire lock on user to prevent checkout race conditions (Bug #7)
     await User.findByIdAndUpdate(req.user._id, { $set: { updatedAt: new Date() } }, { session });
+
+    // Double check inside transaction for race conditions
+    const txPending = await Order.findOne({ user: req.user._id, paymentStatus: 'pending' }).session(session);
+    if (txPending) {
+      throw new ApiError(400, 'You already have a pending order. Please complete or wait for it to expire.');
+    }
 
     if (calculations.appliedCouponCode) {
       const validItems = cart.items.filter((item) => item.product);

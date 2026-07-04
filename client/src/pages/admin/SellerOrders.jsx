@@ -106,7 +106,7 @@ export const SellerOrders = () => {
     if (orders.length === 0) return;
     const headers = ['Order Number', 'Customer', 'Email', 'My Items', 'Status', 'Date'];
     const csvData = orders.map(o => {
-      const myItems = o.items.filter(it => String(it.vendor) === String(user._id));
+      const myItems = o.items.filter(it => String(it.seller) === String(user._id));
       return [
         o.orderNumber,
         o.user?.name || 'N/A',
@@ -227,7 +227,7 @@ export const SellerOrders = () => {
               </thead>
               <tbody className="divide-y divide-border-base text-xs font-bold text-app-text">
                 {orders.map((order) => {
-                  const myItems = order.items.filter(it => String(it.vendor) === String(user._id));
+                  const myItems = order.items.filter(it => String(it.seller) === String(user._id));
                   return (
                     <tr key={order._id} className="hover:bg-app-text/5 transition-colors">
                       <td className="px-5 py-4 font-black tracking-widest italic text-brand-primary">{order.orderNumber}</td>
@@ -282,7 +282,7 @@ export const SellerOrders = () => {
               <div className="flex justify-between items-end">
                 <div>
                   <h1 className="text-3xl font-black uppercase tracking-tighter text-app-text">MENSVIBE</h1>
-                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Vendor Fulfillment Sheet</p>
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">Seller Fulfillment Sheet</p>
                 </div>
                 <div className="text-right">
                   <h2 className="text-xl font-black uppercase italic text-app-text">PACKING SLIP</h2>
@@ -320,7 +320,7 @@ export const SellerOrders = () => {
             <div className="space-y-3">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-muted">Your Items in this Order</h4>
               {selectedOrder.items
-                .filter(it => String(it.vendor) === String(user._id))
+                .filter(it => String(it.seller) === String(user._id))
                 .map((it) => (
                   <div key={it._id} className="p-4 rounded-2xl bg-app-bg border border-border-base shadow-sm space-y-4">
                     <div className="flex justify-between items-start">

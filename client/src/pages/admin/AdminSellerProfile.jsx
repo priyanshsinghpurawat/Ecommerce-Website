@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getVendorProfile } from '../../services/user.service.js';
+import { getSellerProfile } from '../../services/user.service.js';
 import { 
   Loader2, ArrowLeft, Store, Mail, Phone, MapPin, 
   Package, ShoppingCart, DollarSign, PlusCircle, 
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-export const AdminVendorProfile = () => {
+export const AdminSellerProfile = () => {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,10 +16,10 @@ export const AdminVendorProfile = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getVendorProfile(id);
+        const res = await getSellerProfile(id);
         if (res?.success) setData(res.data);
       } catch {
-        toast.error('Failed to load vendor profile.');
+        toast.error('Failed to load seller profile.');
       } finally {
         setLoading(false);
       }
@@ -35,7 +35,7 @@ export const AdminVendorProfile = () => {
     );
   }
 
-  const { vendor, stats, products: rawProducts, topProducts, recentOrders } = data;
+  const { seller, stats, products: rawProducts, topProducts, recentOrders } = data;
   const products = rawProducts || [];
   const formatCurrency = (val) => `₹${val.toLocaleString('en-IN')}`;
 
@@ -57,15 +57,15 @@ export const AdminVendorProfile = () => {
             </div>
             <div>
               <h1 className="text-3xl font-black uppercase tracking-tighter text-app-text leading-none">
-                {vendor.brandName || vendor.name}
+                {seller.brandName || seller.name}
               </h1>
               <div className="flex items-center gap-3 mt-2">
                 <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                  vendor.isActive ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-red-500/15 text-red-400 border-red-500/20'
+                  seller.isActive ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-red-500/15 text-red-400 border-red-500/20'
                 }`}>
-                  {vendor.isActive ? 'Active Merchant' : 'Merchant Suspended'}
+                  {seller.isActive ? 'Active Merchant' : 'Merchant Suspended'}
                 </span>
-                <span className="text-[10px] font-mono text-app-text/30">ID: {vendor._id}</span>
+                <span className="text-[10px] font-mono text-app-text/30">ID: {seller._id}</span>
               </div>
             </div>
           </div>
@@ -75,15 +75,15 @@ export const AdminVendorProfile = () => {
         <div className="bg-app-card border border-border-base p-5 rounded-[2rem] shadow-soft flex flex-col gap-3 min-w-[280px]">
           <div className="flex items-center gap-3 text-xs font-bold text-app-text/70">
             <Mail className="h-4 w-4 text-brand-primary" />
-            <span>{vendor.email}</span>
+            <span>{seller.email}</span>
           </div>
           <div className="flex items-center gap-3 text-xs font-bold text-app-text/70">
             <Phone className="h-4 w-4 text-brand-primary" />
-            <span>{vendor.phone || 'No phone added'}</span>
+            <span>{seller.phone || 'No phone added'}</span>
           </div>
           <div className="flex items-center gap-3 text-xs font-bold text-app-text/70">
             <MapPin className="h-4 w-4 text-brand-primary" />
-            <span className="truncate">{vendor.addresses?.[0]?.city || vendor.address?.city || 'No City'}, {vendor.addresses?.[0]?.country || vendor.address?.country || 'No Country'}</span>
+            <span className="truncate">{seller.addresses?.[0]?.city || seller.address?.city || 'No City'}, {seller.addresses?.[0]?.country || seller.address?.country || 'No Country'}</span>
           </div>
         </div>
       </div>
@@ -109,9 +109,9 @@ export const AdminVendorProfile = () => {
       {/* Merchant Hub Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Sync Catalog', sub: 'Manual Entry', icon: PlusCircle, link: `/admin/products?seller=${vendor._id}` },
+          { label: 'Sync Catalog', sub: 'Manual Entry', icon: PlusCircle, link: `/admin/products?seller=${seller._id}` },
           { label: 'Launch Campaign', sub: 'Coupon Forge', icon: Ticket, link: '/admin/coupons' },
-          { label: 'Route Logistics', sub: 'Shipment Center', icon: ClipboardList, link: `/admin/orders?seller=${vendor._id}` },
+          { label: 'Route Logistics', sub: 'Shipment Center', icon: ClipboardList, link: `/admin/orders?seller=${seller._id}` },
           { label: 'User Registry', sub: 'Live Tracking', icon: ShoppingCart, link: '/admin/users' }
         ].map((btn, i) => (
           <Link 
@@ -176,8 +176,8 @@ export const AdminVendorProfile = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-xs font-black text-app-text italic">₹{o.vendorSubtotal.toLocaleString('en-IN')}</p>
-                      <p className="text-[8px] font-bold text-app-text/30 uppercase tracking-tighter">{o.vendorItemsCount} Items</p>
+                      <p className="text-xs font-black text-app-text italic">₹{o.sellerSubtotal.toLocaleString('en-IN')}</p>
+                      <p className="text-[8px] font-bold text-app-text/30 uppercase tracking-tighter">{o.sellerItemsCount} Items</p>
                     </div>
                     <span className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${
                       o.status === 'delivered' ? 'bg-emerald-500/15 text-emerald-400' : 

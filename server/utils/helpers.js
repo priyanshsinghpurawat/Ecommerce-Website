@@ -127,6 +127,8 @@ export const computeCartSubtotal = (items = []) => {
   return subtotal;
 };
 
+
+
 export const validateShippingAddress = (address) => {
   const required = ['fullName', 'phone', 'street', 'city', 'state', 'zipCode'];
   for (const field of required) {
