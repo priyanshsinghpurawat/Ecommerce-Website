@@ -304,10 +304,8 @@ const swaggerOptions = {
   apis: ['./app.js', './routes/*.js'],
 };
 
-if (ENV.NODE_ENV !== 'production') {
-  const swaggerDocs = swaggerJsdoc(swaggerOptions);
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-}
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Route declarations
 app.use('/api/v3/auth', authLimiter, authRouter);
