@@ -4,7 +4,7 @@ import { z } from 'zod';
 if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
   process.env.JWT_SECRET =
     process.env.JWT_SECRET || 'test-jwt-secret-key-must-be-at-least-32-chars-long';
-  process.env.MONGODB_URI = process.env.MONGODB_URI || '=mongodb+srv://Priyansh:GW3NpW1rxRWe7LCW@code-engine.4me9sb0.mongodb.net/mensvibe?retryWrites=true&w=majority';
+  process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mensvibe-test';
   process.env.PORT = '3000';
   process.env.CORS_ORIGIN = 'http://localhost:3000';
 }
