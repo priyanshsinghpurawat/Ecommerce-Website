@@ -650,7 +650,7 @@ export const getWishlist = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const addToWishlist = asyncHandler(async (req, res) => {
-  const { productId } = req.params;
+  const { productId } = req.body;
   if (!productId) {
     throw new ApiError(400, 'Product ID is required');
   }

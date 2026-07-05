@@ -190,7 +190,7 @@ router.get('/me', verifyJWT, getProfile);
  *       200:
  *         description: Profile updated successfully
  */
-router.put('/profile', verifyJWT, validate(updateUserSchema), updateProfile);
+router.put('/me', verifyJWT, validate(updateUserSchema), updateProfile);
 
 /**
  * @openapi
@@ -214,7 +214,7 @@ router.put('/profile', verifyJWT, validate(updateUserSchema), updateProfile);
  *       200:
  *         description: Avatar uploaded successfully
  */
-router.post('/avatar', verifyJWT, upload.single('avatar'), requireCloudinary, uploadAvatar);
+router.post('/me/avatar', verifyJWT, upload.single('avatar'), requireCloudinary, uploadAvatar);
 
 // Address Management routes
 
@@ -373,7 +373,7 @@ router.get('/wishlist', verifyJWT, getWishlist);
  *       200:
  *         description: Product added to wishlist successfully
  */
-router.post('/wishlist/:productId', verifyJWT, addToWishlist);
+router.post('/wishlist', verifyJWT, addToWishlist);
 
 /**
  * @openapi
