@@ -100,7 +100,7 @@ const orderSchema = new mongoose.Schema(
     deliveryDate: { type: Date },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled'],
+      enum: ['pending', 'confirmed', 'partially_shipped', 'shipped', 'delivered', 'cancelled', 'returned'],
       default: 'pending',
     },
     attributionTag: {
@@ -115,6 +115,7 @@ const orderSchema = new mongoose.Schema(
 // Optimize retrieval of order history (most recent orders first for a specific user)
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ trackingNumber: 1 });
+orderSchema.index({ 'items.seller': 1 }); // Optimize seller queries
 orderSchema.index({ 'items.product': 1 }); // Optimize seller queries
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1, createdAt: -1 });

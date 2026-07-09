@@ -41,12 +41,12 @@ export const WishlistProvider = ({ children }) => {
   const toggleWishlist = async (productId) => {
     if (!isAuthenticated) return { success: false, error: 'Please log in.' };
     
-    const isWishlisted = wishlist.some(item => (item._id || item) === productId);
+    const isWishlisted = wishlist.some(item => item && (item._id || item) === productId);
     
     try {
       if (isWishlisted) {
         await wishlistService.removeFromWishlist(productId);
-        setWishlist(prev => prev.filter(item => (item._id || item) !== productId));
+        setWishlist(prev => prev.filter(item => item && (item._id || item) !== productId));
         return { success: true, action: 'removed' };
       } else {
         await wishlistService.addToWishlist(productId);
@@ -61,7 +61,7 @@ export const WishlistProvider = ({ children }) => {
   };
 
   const isInWishlist = (productId) => {
-    return wishlist.some(item => (item._id || item) === productId);
+    return wishlist.some(item => item && (item._id || item) === productId);
   };
 
   return (

@@ -15,9 +15,16 @@ export function generateAccessToken(user) {
 }
 
 export function generateRefreshToken(user) {
-  return jwt.sign({ _id: user._id }, ENV.JWT_REFRESH_SECRET || ENV.JWT_SECRET, {
-    expiresIn: ENV.JWT_REFRESH_EXPIRY,
-  });
+  return jwt.sign(
+    {
+      _id: user._id,
+      jti: crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex'),
+    },
+    ENV.JWT_REFRESH_SECRET || ENV.JWT_SECRET,
+    {
+      expiresIn: ENV.JWT_REFRESH_EXPIRY,
+    },
+  );
 }
 
 export function generatePasswordResetToken(user) {

@@ -98,16 +98,16 @@ app.use(
 // General rate limiter for all routes
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: ENV.NODE_ENV === 'production' ? 500 : 5000,
+  max: 1000, // Standardize to 1000 requests per 15m
   message: { success: false, message: 'Too many requests. Please try again later.' },
-  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true',
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20,
   message: { success: false, message: 'Too many login attempts. Wait a few minutes.' },
-  skip: () => ENV.NODE_ENV !== 'production' && process.env.DISABLE_RATE_LIMIT === 'true',
+  skip: () => process.env.DISABLE_RATE_LIMIT === 'true',
 });
 
 const configuredOrigins = ENV.CORS_ORIGIN?.split(',')
@@ -162,10 +162,9 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${ENV.PORT || 3000}`,
+        url: ENV.SERVER_URL || `http://localhost:${ENV.PORT || 3000}`,
       },
-    ],
-    components: {
+    ],    components: {
       securitySchemes: {
         BearerAuth: {
           type: 'http',

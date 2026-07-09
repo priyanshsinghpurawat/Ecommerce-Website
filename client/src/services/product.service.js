@@ -21,13 +21,15 @@ export const getFrequentlyBoughtTogether = async (id) => {
 };
 
 export const createProduct = async (productData) => {
-  const config = productData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const config =
+    productData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
   const { data } = await api.post('/products', productData, config);
   return data;
 };
 
 export const updateProduct = async (id, productData) => {
-  const config = productData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const config =
+    productData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
   const { data } = await api.put(`/products/${id}`, productData, config);
   return data;
 };
@@ -55,8 +57,8 @@ export const getProductReviews = async (productId) => {
 };
 
 export const submitReview = async (productId, reviewData) => {
-  const { data } = await api.post(`/products/${productId}/reviews`, reviewData);
+  const config =
+    reviewData instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const { data } = await api.post(`/products/${productId}/reviews`, reviewData, config);
   return data;
 };
-
-

@@ -3,7 +3,7 @@ import { Product } from '../models/product.model.js';
 import { Cart } from '../models/cart.model.js';
 import { Coupon } from '../models/coupon.model.js';
 import { LedgerTransaction } from '../models/ledger.model.js';
-import { ApiError, computeCartSubtotal, getUnitPrice } from '../utils/helpers.js';
+import { ApiError, getUnitPrice } from '../utils/helpers.js';
 import { calculateCouponDiscount } from './coupon.service.js';
 
 const GST_TAX_RATE = 0.18;
@@ -11,6 +11,12 @@ const GST_TAX_RATE = 0.18;
 export async function resolveVariant(item, session = null) {
   if (item.variant) {
     let q = Variant.findById(item.variant);
+    if (session) q = q.session(session);
+    return q;
+  }
+
+  if (item.sku) {
+    let q = Variant.findOne({ sku: item.sku, deletedAt: null });
     if (session) q = q.session(session);
     return q;
   }
@@ -101,43 +107,52 @@ export async function deductStock(items, session) {
   }
 }
 
-export async function restoreStock(items, session) {
-  const variantUpdates = [];
-  const productUpdates = [];
+export async function restoreStock(items, session, options = {}) {
+  const { decrementSoldCount = false, cancelItems = false } = options;
   const productsToRecalculate = new Set();
 
-  for (const item of items) {
+  const sortedItems = [...items].sort((a, b) => {
+    const aId = (a.product?._id || a.product || '').toString();
+    const bId = (b.product?._id || b.product || '').toString();
+    return aId.localeCompare(bId);
+  });
+
+  for (const item of sortedItems) {
+    if (cancelItems && item.status === 'cancelled') {
+      continue;
+    }
+
     const variant = await resolveVariant(item, session);
     const productId = item.product?._id || item.product;
+
     if (variant) {
-      variantUpdates.push({
-        updateOne: {
-          filter: { _id: variant._id },
-          update: { $inc: { stock: item.quantity } },
-        },
-      });
+      await Variant.findOneAndUpdate(
+        { _id: variant._id },
+        { $inc: { stock: item.quantity } },
+        session ? { session } : {},
+      );
       productsToRecalculate.add(productId.toString());
     } else {
-      productUpdates.push({
-        updateOne: {
-          filter: { _id: productId },
-          update: { $inc: { stock: item.quantity } },
-        },
-      });
+      const updateQuery = { $inc: { stock: item.quantity } };
+      if (decrementSoldCount) {
+        updateQuery.$inc.soldCount = -item.quantity;
+      }
+      await Product.findByIdAndUpdate(
+        productId,
+        updateQuery,
+        session ? { session } : {},
+      );
+    }
+
+    if (cancelItems) {
+      if (item.status !== 'returned') {
+        item.status = 'cancelled';
+      }
     }
   }
 
-  if (variantUpdates.length > 0) {
-    await Variant.bulkWrite(variantUpdates, { session });
-  }
-  if (productUpdates.length > 0) {
-    await Product.bulkWrite(productUpdates, { session });
-  }
-
-  if (productsToRecalculate.size > 0) {
-    for (const prodId of productsToRecalculate) {
-      await Product.recalculateVariantSummary(prodId, session);
-    }
+  for (const prodId of productsToRecalculate) {
+    await Product.recalculateVariantSummary(prodId, session);
   }
 }
 
@@ -161,22 +176,22 @@ export async function createLedgerEntries(
   paymentMethod,
   session,
 ) {
-  const vendorTotals = {};
+  const sellerTotals = {};
   for (const item of orderItems) {
-    if (item.vendor) {
-      const vid = item.vendor.toString();
-      if (!vendorTotals[vid]) vendorTotals[vid] = 0;
-      vendorTotals[vid] += item.subtotal;
+    if (item.seller) {
+      const sid = item.seller.toString();
+      if (!sellerTotals[sid]) sellerTotals[sid] = 0;
+      sellerTotals[sid] += item.subtotal;
     }
   }
 
   const PLATFORM_FEE_PERCENTAGE = 0.1;
   const ledgerEntries = [];
 
-  for (const [vendorId, vendorTotal] of Object.entries(vendorTotals)) {
-    const saleAmountPaise = Math.round(vendorTotal * 100);
+  for (const [sellerId, sellerTotal] of Object.entries(sellerTotals)) {
+    const saleAmountPaise = Math.round(sellerTotal * 100);
     ledgerEntries.push({
-      seller: vendorId,
+      seller: sellerId,
       type: 'sale',
       amount: saleAmountPaise,
       order: orderId,
@@ -184,9 +199,9 @@ export async function createLedgerEntries(
       description: `Order Revenue - #${orderNumber}`,
     });
 
-    const commissionAmountPaise = Math.round(vendorTotal * PLATFORM_FEE_PERCENTAGE * 100);
+    const commissionAmountPaise = Math.round(sellerTotal * PLATFORM_FEE_PERCENTAGE * 100);
     ledgerEntries.push({
-      seller: vendorId,
+      seller: sellerId,
       type: 'commission_fee',
       amount: -commissionAmountPaise,
       order: orderId,
@@ -200,8 +215,8 @@ export async function createLedgerEntries(
   }
 }
 
-export async function fetchAndValidateUserCart(userId) {
-  const cart = await Cart.findOne({ user: userId })
+export async function fetchAndValidateUserCart(userId, session = null) {
+  let query = Cart.findOne({ user: userId })
     .populate({
       path: 'items.product',
       select: 'title price discountedPrice image stock seller variantSummary',
@@ -210,6 +225,11 @@ export async function fetchAndValidateUserCart(userId) {
       path: 'items.variant',
       select: 'sku stock optionValues price images',
     });
+
+  if (session) {
+    query = query.session(session);
+  }
+  const cart = await query;
 
   if (!cart || cart.items.length === 0) {
     throw new ApiError(400, 'Your cart is empty. Add items before checkout.');
@@ -223,29 +243,8 @@ export async function fetchAndValidateUserCart(userId) {
   return cart;
 }
 
-export async function calculateOrderTotals(cart, couponCode, userId) {
+export async function calculateOrderTotals(cart, couponCode, userId, session = null) {
   const validItems = cart.items.filter((item) => item.product);
-  const subtotal = computeCartSubtotal(validItems);
-
-  let discountAmount = 0;
-  let taxableValue = subtotal;
-  let appliedCouponCode;
-  let appliedCouponId;
-
-  if (couponCode?.trim()) {
-    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId);
-    discountAmount = couponResult.discountAmount;
-    taxableValue = couponResult.finalTotal;
-    appliedCouponCode = couponResult.code;
-
-    const couponDoc = await Coupon.findOne({ code: appliedCouponCode });
-    if (couponDoc) {
-      appliedCouponId = couponDoc._id;
-    }
-  }
-
-  const taxAmount = taxableValue * GST_TAX_RATE;
-  const total = taxableValue + taxAmount;
 
   const orderItems = validItems.map((item) => {
     const product = item.product;
@@ -255,7 +254,7 @@ export async function calculateOrderTotals(cart, couponCode, userId) {
       product: product._id,
       variant: variant?._id || null,
       sku: variant?.sku || '',
-      vendor: product.seller,
+      seller: product.seller,
       title: product.title,
       image: product.image,
       price: variant?.price ?? product.price,
@@ -268,6 +267,30 @@ export async function calculateOrderTotals(cart, couponCode, userId) {
       status: 'confirmed',
     };
   });
+
+  const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+
+  let discountAmount = 0;
+  let taxableValue = subtotal;
+  let appliedCouponCode;
+  let appliedCouponId;
+
+  if (couponCode?.trim()) {
+    const couponResult = await calculateCouponDiscount(couponCode, subtotal, validItems, userId, session);
+    discountAmount = couponResult.discountAmount;
+    taxableValue = couponResult.finalTotal;
+    appliedCouponCode = couponResult.code;
+
+    let couponDocQuery = Coupon.findOne({ code: appliedCouponCode });
+    if (session) couponDocQuery = couponDocQuery.session(session);
+    const couponDoc = await couponDocQuery;
+    if (couponDoc) {
+      appliedCouponId = couponDoc._id;
+    }
+  }
+
+  const taxAmount = taxableValue * GST_TAX_RATE;
+  const total = taxableValue + taxAmount;
 
   return {
     subtotal,

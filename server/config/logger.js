@@ -1,4 +1,6 @@
 import winston from 'winston';
+import fs from 'fs';
+import path from 'path';
 import { ENV } from '../config/env.js';
 
 const isProd = ENV.NODE_ENV === 'production';
@@ -23,8 +25,14 @@ const logger = winston.createLogger({
 });
 
 if (isProd) {
-  logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
-  logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
+  const logDir = 'logs';
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
+  }
+  logger.add(
+    new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
+  );
+  logger.add(new winston.transports.File({ filename: path.join(logDir, 'combined.log') }));
 }
 
 export default logger;

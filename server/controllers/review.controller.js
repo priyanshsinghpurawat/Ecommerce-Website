@@ -1,6 +1,8 @@
 import { Review } from '../models/review.model.js';
 import { Product } from '../models/product.model.js';
 import { asyncHandler, ApiError, ApiResponse } from '../utils/helpers.js';
+import { uploadFilesToCloudinary } from '../utils/cloudinaryUpload.js';
+import { deleteFromCloudinary } from '../middleware/upload.middleware.js';
 import mongoose from 'mongoose';
 
 /**
@@ -27,6 +29,7 @@ export const getProductReviews = asyncHandler(async (req, res) => {
     avatar: r.user?.avatar || null,
     rating: r.rating,
     comment: r.comment,
+    images: r.images || [],
     date: r.createdAt.toISOString().split('T')[0],
     isOwn: req.user?._id?.toString() === r.user?._id?.toString(),
   }));
@@ -58,11 +61,17 @@ export const submitReview = asyncHandler(async (req, res) => {
     );
   }
 
+  let imageUrls = [];
+  if (req.files && req.files.length > 0) {
+    imageUrls = await uploadFilesToCloudinary(req.files, { folder: 'mensvibe/reviews' });
+  }
+
   const review = await Review.create({
     product: productId,
     user: req.user._id,
     rating: Number(rating),
     comment: comment.trim(),
+    images: imageUrls,
   });
 
   await Review.recalculateProductRating(productId);
@@ -77,6 +86,7 @@ export const submitReview = asyncHandler(async (req, res) => {
     avatar: populated.user?.avatar || null,
     rating: populated.rating,
     comment: populated.comment,
+    images: populated.images || [],
     date: populated.createdAt.toISOString().split('T')[0],
     isOwn: true,
   };
@@ -100,6 +110,12 @@ export const deleteReview = asyncHandler(async (req, res) => {
   }
 
   const productId = review.product;
+
+  // Clean up review image attachments in Cloudinary
+  if (review.images && review.images.length > 0) {
+    await Promise.allSettled(review.images.map((img) => deleteFromCloudinary(img)));
+  }
+
   await Review.findByIdAndDelete(reviewId);
 
   await Review.recalculateProductRating(productId);

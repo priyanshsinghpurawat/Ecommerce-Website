@@ -8,6 +8,7 @@ import {
   getOrderAnalytics,
   exportOrdersCSV,
   processReturn,
+  requestReturn,
 } from '../controllers/order.controller.js';
 import { verifyJWT, authorizeRoles } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
@@ -201,6 +202,8 @@ router.put(
   authorizeRoles('admin', 'seller'),
   processReturn,
 );
+
+router.post('/:id/items/:itemId/return', verifyJWT, requestReturn);
 
 /**
  * @openapi

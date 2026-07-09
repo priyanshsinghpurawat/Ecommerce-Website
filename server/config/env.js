@@ -8,31 +8,44 @@ if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
   process.env.CORS_ORIGIN = 'http://localhost:3000';
 }
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('production'),
-  PORT: z.string().transform(Number).default('3000'),
-  MONGODB_URI: z.string().optional(),
-  MONGODB_URI_TEST: z.string().optional(),
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_EXPIRY: z.string().default('7d'),
-  JWT_REFRESH_SECRET: z.string().min(32).optional(),
-  JWT_REFRESH_EXPIRY: z.string().default('7d'),
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  COOKIE_SECRET: z.string().optional(),
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
-  SERVER_URL: z.string().url().optional(),
-  CLOUDINARY_CLOUD_NAME: z.string().optional(),
-  CLOUDINARY_API_KEY: z.string().optional(),
-  CLOUDINARY_API_SECRET: z.string().optional(),
-  CORS_ORIGIN: z.string().optional(),
-  RATE_LIMIT_WINDOW_MS: z.string().optional(),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().transform(Number).optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  EMAIL_FROM: z.string().email().optional(),
-});
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'production', 'test', 'staging']).default('production'),
+    PORT: z.string().transform(Number).default('3000'),
+    MONGODB_URI: z.string().optional(),
+    MONGODB_URI_TEST: z.string().optional(),
+    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+    JWT_EXPIRY: z.string().default('7d'),
+    JWT_REFRESH_SECRET: z.string().min(32).optional(),
+    JWT_REFRESH_EXPIRY: z.string().default('7d'),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    COOKIE_SECRET: z.string().optional(),
+    RAZORPAY_KEY_ID: z.string().optional(),
+    RAZORPAY_KEY_SECRET: z.string().optional(),
+    SERVER_URL: z.string().url().optional(),
+    CLOUDINARY_CLOUD_NAME: z.string().optional(),
+    CLOUDINARY_API_KEY: z.string().optional(),
+    CLOUDINARY_API_SECRET: z.string().optional(),
+    CORS_ORIGIN: z.string().optional(),
+    RATE_LIMIT_WINDOW_MS: z.string().optional(),
+    SMTP_HOST: z.string().optional(),
+    SMTP_PORT: z.string().transform(Number).optional(),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    EMAIL_FROM: z.string().email().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.NODE_ENV === 'production' && !data.JWT_REFRESH_SECRET) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'JWT_REFRESH_SECRET is required in production environment and must be at least 32 characters',
+      path: ['JWT_REFRESH_SECRET'],
+    },
+  );
 
 const parsed = envSchema.safeParse(process.env);
 
@@ -48,15 +61,22 @@ if (!parsed.success) {
   }
 }
 
+if (parsed.success && parsed.data.NODE_ENV !== 'production' && !parsed.data.JWT_REFRESH_SECRET) {
+  console.warn('\x1b[33m%s\x1b[0m', 'Warning: JWT_REFRESH_SECRET is not configured. Falling back to JWT_SECRET.');
+}
+
 export const ENV = parsed.success
-  ? parsed.data
+  ? {
+      ...parsed.data,
+      JWT_REFRESH_SECRET: parsed.data.JWT_REFRESH_SECRET || parsed.data.JWT_SECRET,
+    }
   : {
       NODE_ENV: process.env.NODE_ENV || 'production',
       PORT: Number(process.env.PORT || 3000),
       MONGODB_URI: process.env.MONGODB_URI,
       JWT_SECRET: process.env.JWT_SECRET,
       JWT_EXPIRY: process.env.JWT_EXPIRY || '7d',
-      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+      JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
       JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY || '7d',
       CORS_ORIGIN: process.env.CORS_ORIGIN,
     };

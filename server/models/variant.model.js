@@ -67,6 +67,14 @@ variantSchema.index(
   { unique: true, partialFilterExpression: { deletedAt: null } },
 );
 
+variantSchema.pre(/^find/, function (next) {
+  const query = this.getQuery();
+  if (query.deletedAt === undefined) {
+    this.where({ deletedAt: null });
+  }
+  next();
+});
+
 variantSchema.post('save', async function (doc) {
   if (doc && !doc.deletedAt) {
     try {
@@ -100,9 +108,9 @@ variantSchema.statics.findByProductAndOptions = function (productId, optionValue
 };
 
 variantSchema.statics.findActiveByProduct = function (productId) {
-  return this
-    .find({ product: productId, deletedAt: null, status: 'active' })
-    .sort({ createdAt: 1 });
+  return this.find({ product: productId, deletedAt: null, status: 'active' }).sort({
+    createdAt: 1,
+  });
 };
 
 variantSchema.statics.bulkUpdateStock = async function (updates) {

@@ -25,6 +25,10 @@ const reviewSchema = new mongoose.Schema(
       trim: true,
       maxLength: [1000, 'Comment cannot exceed 1000 characters'],
     },
+    images: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

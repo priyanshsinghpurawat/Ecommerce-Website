@@ -245,7 +245,7 @@ export const Register = () => {
                 {...register('password')}
                 className={`w-full rounded-xl border bg-black/40 pl-4 pr-12 py-3 text-sm text-zinc-300 placeholder-zinc-500 backdrop-blur-md focus:outline-none transition-all ${errors.password ? 'border-error focus:border-error focus:ring-1 focus:ring-error' : 'border-white/10 focus:border-white/30 focus:bg-black/60'
                   }`}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
               />
               <button
                 type="button"
@@ -269,21 +269,52 @@ export const Register = () => {
               <button
                 type="button"
                 onClick={() => {
-                  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-                  const array = new Uint8Array(12);
-                  window.crypto.getRandomValues(array);
-                  let suggested = "";
-                  for (let i = 0; i < array.length; i++) {
-                    suggested += charset[array[i] % charset.length];
+                  const lowers = "abcdefghijklmnopqrstuvwxyz";
+                  const uppers = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                  const numbers = "0123456789";
+                  const specials = "@$!%*?&";
+                  const all = lowers + uppers + numbers + specials;
+                  
+                  const getRandomChar = (str) => {
+                    const array = new Uint32Array(1);
+                    window.crypto.getRandomValues(array);
+                    return str[array[0] % str.length];
+                  };
+                  
+                  let suggestedArr = [
+                    getRandomChar(lowers),
+                    getRandomChar(uppers),
+                    getRandomChar(numbers),
+                    getRandomChar(specials)
+                  ];
+                  
+                  for (let i = 0; i < 8; i++) {
+                    suggestedArr.push(getRandomChar(all));
                   }
                   
+                  // Shuffle the array to avoid predictable patterns
+                  for (let i = suggestedArr.length - 1; i > 0; i--) {
+                    const jArray = new Uint32Array(1);
+                    window.crypto.getRandomValues(jArray);
+                    const j = jArray[0] % (i + 1);
+                    [suggestedArr[i], suggestedArr[j]] = [suggestedArr[j], suggestedArr[i]];
+                  }
+                  
+                  const suggested = suggestedArr.join('');
+                  
                   setValue('password', suggested, { shouldValidate: true, shouldDirty: true });
-                  toast.success(`Suggested password applied & copied!`, { duration: 3000 });
-                  navigator.clipboard.writeText(suggested).catch(err => {
-                    console.error('Clipboard write failed:', err);
-                  });
                   setShowPassword(true);
-                }}
+                  if (navigator.clipboard?.writeText) {
+                    navigator.clipboard
+                      .writeText(suggested)
+                      .then(() => toast.success('Suggested password applied & copied!', { duration: 3000 }))
+                      .catch((err) => {
+                        console.error('Clipboard write failed:', err);
+                        toast.success('Suggested password applied.', { duration: 3000 });
+                      });
+                  } else {
+                    toast.success('Suggested password applied.', { duration: 3000 });
+                  }                }}
                 className="text-[10px] font-bold text-brand-primary uppercase tracking-wider hover:underline"
               >
                 Suggest Password

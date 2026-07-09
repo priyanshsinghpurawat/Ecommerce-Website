@@ -26,6 +26,7 @@ export const createOrderSchema = z.object({
   }),
   paymentMethod: z.enum(['razorpay', 'cod', 'demo']).default('cod'),
   couponCode: z.string().optional(),
+  attributionTag: z.string().trim().optional(),
 });
 
 export const updateOrderStatusSchema = z.object({

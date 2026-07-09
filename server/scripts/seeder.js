@@ -1,13 +1,12 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import Papa from 'papaparse';
 import { User } from '../models/user.model.js';
 import { Category } from '../models/category.model.js';
 import { Subcategory } from '../models/subcategory.model.js';
 import { Product } from '../models/product.model.js';
-import { Variant } from '../models/variant.model.js';
-
+import { Coupon } from '../models/coupon.model.js';
+import { Cart } from '../models/cart.model.js';
+import { Order } from '../models/order.model.js';
 dotenv.config();
 
 // No static catalog — use --csv path for data import

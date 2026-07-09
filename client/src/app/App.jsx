@@ -83,23 +83,23 @@ const AdminSellerProfile = lazy(() =>
 import { SellerLayout } from '../components/SellerLayout.jsx';
 import { SellerRoute } from '../components/SellerRoute.jsx';
 const SellerDashboard = lazy(() =>
-  import('../pages/admin/SellerDashboard.jsx').then((m) => ({ default: m.SellerDashboard })),
+  import('../pages/seller/SellerDashboard.jsx').then((m) => ({ default: m.SellerDashboard })),
 );
 const SellerProducts = lazy(() =>
-  import('../pages/admin/SellerProducts.jsx').then((m) => ({ default: m.SellerProducts })),
+  import('../pages/seller/SellerProducts.jsx').then((m) => ({ default: m.SellerProducts })),
 );
 const AddEditProduct = lazy(() => import('../pages/admin/AddEditProduct.jsx'));
 const SellerOrders = lazy(() =>
-  import('../pages/admin/SellerOrders.jsx').then((m) => ({ default: m.SellerOrders })),
+  import('../pages/seller/SellerOrders.jsx').then((m) => ({ default: m.SellerOrders })),
 );
 const SellerAffiliates = lazy(() =>
-  import('../pages/admin/SellerAffiliates.jsx').then((m) => ({ default: m.SellerAffiliates })),
+  import('../pages/seller/SellerAffiliates.jsx').then((m) => ({ default: m.SellerAffiliates })),
 );
 const SellerStorefront = lazy(() =>
-  import('../pages/admin/SellerStorefront.jsx').then((m) => ({ default: m.SellerStorefront })),
+  import('../pages/seller/SellerStorefront.jsx').then((m) => ({ default: m.SellerStorefront })),
 );
 const SellerBilling = lazy(() =>
-  import('../pages/admin/SellerBilling.jsx').then((m) => ({ default: m.SellerBilling })),
+  import('../pages/seller/SellerBilling.jsx').then((m) => ({ default: m.SellerBilling })),
 );
 const SellerCoupons = lazy(() =>
   import('../pages/seller/SellerCoupons.jsx').then((m) => ({ default: m.default })),

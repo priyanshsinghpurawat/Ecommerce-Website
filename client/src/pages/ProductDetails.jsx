@@ -1,10 +1,28 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById, getProductVariants, getProductReviews, submitReview } from '../services/product.service.js';
-import { 
-  Loader2, ArrowLeft, Star, Heart, ShoppingBag, Clock, Check, X, 
-  ShieldCheck, Sparkles, Shield, Share2, ChevronDown, ChevronUp, Camera 
+import {
+  getProductById,
+  getProductVariants,
+  getProductReviews,
+  submitReview,
+} from '../services/product.service.js';
+import {
+  Loader2,
+  ArrowLeft,
+  Star,
+  Heart,
+  ShoppingBag,
+  Clock,
+  Check,
+  X,
+  ShieldCheck,
+  Sparkles,
+  Shield,
+  Share2,
+  ChevronDown,
+  ChevronUp,
+  Camera,
 } from 'lucide-react';
 import { resolveImageUrl, getDiscountPercent } from '../utils/helpers.js';
 import { toast } from 'react-hot-toast';
@@ -22,7 +40,7 @@ const CLOTHING_MEASUREMENTS = {
   XLT: { chest: '48 in', length: '33.5 in', shoulder: '21.5 in', sleeve: '28 in' },
   '2XLT': { chest: '52 in', length: '34 in', shoulder: '22.5 in', sleeve: '28.5 in' },
   '3XLT': { chest: '56 in', length: '34.5 in', shoulder: '23.5 in', sleeve: '29 in' },
- 
+
   XS: { chest: '40 in', length: '27 in', shoulder: '18.5 in', sleeve: '24 in' },
   S: { chest: '42 in', length: '28 in', shoulder: '19 in', sleeve: '24.5 in' },
   M: { chest: '44 in', length: '29 in', shoulder: '19.5 in', sleeve: '25 in' },
@@ -47,15 +65,15 @@ const BOTTOMS_MEASUREMENTS = {
   '38x36': { waist: '38 in', inseam: '36 in', thigh: '28 in', rise: '13.5 in' },
   '38x38': { waist: '38 in', inseam: '38 in', thigh: '28 in', rise: '13.5 in' },
   // Standard Sizing (Backward Compatibility)
-  '28': { waist: '28 in', inseam: '30 in', thigh: '22 in', rise: '10.5 in' },
-  '30': { waist: '30 in', inseam: '30 in', thigh: '23 in', rise: '11 in' },
-  '32': { waist: '32 in', inseam: '32 in', thigh: '24 in', rise: '11.5 in' },
-  '34': { waist: '34 in', inseam: '32 in', thigh: '25 in', rise: '12 in' },
-  '36': { waist: '36 in', inseam: '32 in', thigh: '26 in', rise: '12.5 in' },
-  '38': { waist: '38 in', inseam: '32 in', thigh: '27 in', rise: '13 in' },
-  '40': { waist: '40 in', inseam: '32 in', thigh: '28 in', rise: '13.5 in' },
-  '42': { waist: '42 in', inseam: '32 in', thigh: '29 in', rise: '14 in' },
-  '44': { waist: '44 in', inseam: '32 in', thigh: '30 in', rise: '14.5 in' },
+  28: { waist: '28 in', inseam: '30 in', thigh: '22 in', rise: '10.5 in' },
+  30: { waist: '30 in', inseam: '30 in', thigh: '23 in', rise: '11 in' },
+  32: { waist: '32 in', inseam: '32 in', thigh: '24 in', rise: '11.5 in' },
+  34: { waist: '34 in', inseam: '32 in', thigh: '25 in', rise: '12 in' },
+  36: { waist: '36 in', inseam: '32 in', thigh: '26 in', rise: '12.5 in' },
+  38: { waist: '38 in', inseam: '32 in', thigh: '27 in', rise: '13 in' },
+  40: { waist: '40 in', inseam: '32 in', thigh: '28 in', rise: '13.5 in' },
+  42: { waist: '42 in', inseam: '32 in', thigh: '29 in', rise: '14 in' },
+  44: { waist: '44 in', inseam: '32 in', thigh: '30 in', rise: '14.5 in' },
 };
 
 const FOOTWEAR_MEASUREMENTS = {
@@ -101,6 +119,8 @@ export const ProductDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewImages, setReviewImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
@@ -110,7 +130,9 @@ export const ProductDetails = () => {
     if (!el) return;
     el.focus();
     const handleKeyDown = (e) => {
-      const focusable = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const focusable = el.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.key === 'Tab') {
@@ -183,14 +205,14 @@ export const ProductDetails = () => {
           try {
             const variantsRes = await getProductVariants(prod._id);
             if (variantsRes?.data?.length) {
-              prod.variants = variantsRes.data.map(v => ({
+              prod.variants = variantsRes.data.map((v) => ({
                 color: v.optionValues?.Color || '',
                 size: v.optionValues?.Size || '',
                 sku: v.sku || '',
                 stock: v.stock ?? 0,
                 price: v.price ?? null,
                 images: v.images || [],
-                variantId: v._id
+                variantId: v._id,
               }));
             }
           } catch {
@@ -199,11 +221,11 @@ export const ProductDetails = () => {
           }
 
           setProduct(prod);
-          
+
           // Set default selected color & size
           let defaultColor = '';
           if (prod.variants?.length > 0) {
-            const firstColorVariant = prod.variants.find(v => v.color);
+            const firstColorVariant = prod.variants.find((v) => v.color);
             if (firstColorVariant) defaultColor = firstColorVariant.color;
           }
           if (defaultColor) setSelectedColor(defaultColor);
@@ -238,7 +260,9 @@ export const ProductDetails = () => {
       }
     };
     fetchReviews();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const handleReviewSubmit = async (e) => {
@@ -253,11 +277,21 @@ export const ProductDetails = () => {
     }
     setReviewSubmitting(true);
     try {
-      const res = await submitReview(id, { rating: reviewRating, comment: reviewComment.trim() });
+      const formData = new FormData();
+      formData.append('rating', reviewRating);
+      formData.append('comment', reviewComment.trim());
+      reviewImages.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const res = await submitReview(id, formData);
       if (res?.success) {
         setReviews((prev) => [res.data, ...prev]);
         setReviewComment('');
         setReviewRating(5);
+        imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+        setReviewImages([]);
+        setImagePreviews([]);
         toast.success('Thank you! Review submitted.');
       }
     } catch (err) {
@@ -268,33 +302,93 @@ export const ProductDetails = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = [];
+    const validPreviews = [];
+
+    const currentCount = reviewImages.length;
+    const remainingSlots = 5 - currentCount;
+
+    if (remainingSlots <= 0) {
+      toast.error('You can upload a maximum of 5 images.');
+      return;
+    }
+
+    const filesToProcess = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      toast.warn(`Only the first ${remainingSlots} images were added.`);
+    }
+
+    for (const file of filesToProcess) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file.`);
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Max 5MB.`);
+        continue;
+      }
+      validFiles.push(file);
+      validPreviews.push(URL.createObjectURL(file));
+    }
+
+    setReviewImages((prev) => [...prev, ...validFiles]);
+    setImagePreviews((prev) => [...prev, ...validPreviews]);
+  };
+
+  const removeReviewImage = (index) => {
+    setReviewImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  // Keep ref of previews for unmount cleanup to avoid memory leaks
+  const previewsRef = useRef(imagePreviews);
+  useEffect(() => {
+    previewsRef.current = imagePreviews;
+  }, [imagePreviews]);
+
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const relatedItems = product?.relatedProducts || [];
 
   const isFootwear = useMemo(() => {
     if (!product) return false;
-    return product.category?.name?.toLowerCase() === 'footwear' || 
-           product.subcategory?.name?.toLowerCase().includes('shoes') || 
-           product.subcategory?.name?.toLowerCase().includes('sneakers');
+    return (
+      product.category?.name?.toLowerCase() === 'footwear' ||
+      product.subcategory?.name?.toLowerCase().includes('shoes') ||
+      product.subcategory?.name?.toLowerCase().includes('sneakers')
+    );
   }, [product]);
 
   const isBottoms = useMemo(() => {
     if (!product) return false;
     const subName = product.subcategory?.name?.toLowerCase() || '';
-    return subName.includes('pants') || 
-           subName.includes('jeans') || 
-           subName.includes('cargo') || 
-           subName.includes('chino');
+    return (
+      subName.includes('pants') ||
+      subName.includes('jeans') ||
+      subName.includes('cargo') ||
+      subName.includes('chino')
+    );
   }, [product]);
 
   const mainImage = useMemo(() => {
     if (selectedImage) return selectedImage;
     if (!product) return '';
-    
+
     if (selectedColor) {
-      const variantImgs = product.variants
-        ?.filter(v => v.color === selectedColor)
-        .flatMap(v => v.images || [])
-        .filter(Boolean) || [];
+      const variantImgs =
+        product.variants
+          ?.filter((v) => v.color === selectedColor)
+          .flatMap((v) => v.images || [])
+          .filter(Boolean) || [];
       if (variantImgs.length > 0) return variantImgs[0];
     }
     return product.image;
@@ -303,14 +397,23 @@ export const ProductDetails = () => {
   const currentVariant = useMemo(() => {
     if (!product) return null;
     return product.variants?.find(
-      (v) => (v.color === selectedColor || !selectedColor) && v.size === selectedSize
+      (v) => (v.color === selectedColor || !selectedColor) && v.size === selectedSize,
     );
   }, [product, selectedColor, selectedSize]);
 
   const priceData = useMemo(() => {
-    if (!product) return { basePrice: 0, discountedPrice: null, displayStock: 0, unitPrice: 0, showOriginalPrice: false };
+    if (!product)
+      return {
+        basePrice: 0,
+        discountedPrice: null,
+        displayStock: 0,
+        unitPrice: 0,
+        showOriginalPrice: false,
+      };
     const basePrice = currentVariant?.price ?? product.price;
-    const discountedPrice = currentVariant?.price ? (currentVariant.discountedPrice ?? null) : product.discountedPrice;
+    const discountedPrice = currentVariant?.price
+      ? (currentVariant.discountedPrice ?? null)
+      : product.discountedPrice;
     const displayStock = currentVariant ? currentVariant.stock : product.stock;
     const hasDiscount = discountedPrice !== null && discountedPrice !== undefined;
     const unitPrice = hasDiscount ? discountedPrice : basePrice;
@@ -320,9 +423,7 @@ export const ProductDetails = () => {
 
   const availableColors = useMemo(() => {
     if (!product) return [];
-    return [...new Set([
-      ...(product.variants?.map(v => v.color).filter(Boolean) || [])
-    ])];
+    return [...new Set([...(product.variants?.map((v) => v.color).filter(Boolean) || [])])];
   }, [product]);
 
   const sizingData = useMemo(() => {
@@ -335,18 +436,18 @@ export const ProductDetails = () => {
     let outOfStockSizes = [];
 
     if (product.variants && product.variants.length > 0) {
-      const variantsForColor = product.variants.filter(v =>
-        !selectedColor || v.color === selectedColor
+      const variantsForColor = product.variants.filter(
+        (v) => !selectedColor || v.color === selectedColor,
       );
-      const availableVariantSizes = [...new Set(
-        variantsForColor.map(v => v.size).filter(Boolean)
-      )];
+      const availableVariantSizes = [
+        ...new Set(variantsForColor.map((v) => v.size).filter(Boolean)),
+      ];
       if (availableVariantSizes.length > 0) {
         sizeOptions = availableVariantSizes;
       }
       outOfStockSizes = variantsForColor
-        .filter(v => v.size && Number(v.stock) === 0)
-        .map(v => v.size);
+        .filter((v) => v.size && Number(v.stock) === 0)
+        .map((v) => v.size);
     }
     return { sizeOptions, outOfStockSizes };
   }, [product, isFootwear, isBottoms, selectedColor]);
@@ -354,10 +455,10 @@ export const ProductDetails = () => {
   const allImages = useMemo(() => {
     if (!product) return [];
     const colorVariantImages = selectedColor
-      ? (product.variants
-          ?.filter(v => v.color === selectedColor)
-          .flatMap(v => v.images || [])
-          .filter(Boolean) || [])
+      ? product.variants
+          ?.filter((v) => v.color === selectedColor)
+          .flatMap((v) => v.images || [])
+          .filter(Boolean) || []
       : [];
 
     return colorVariantImages.length > 0
@@ -367,8 +468,8 @@ export const ProductDetails = () => {
 
   const currentMeasure = useMemo(() => {
     if (!selectedSize) return null;
-    return isFootwear 
-      ? FOOTWEAR_MEASUREMENTS[selectedSize] 
+    return isFootwear
+      ? FOOTWEAR_MEASUREMENTS[selectedSize]
       : isBottoms
         ? BOTTOMS_MEASUREMENTS[selectedSize]
         : CLOTHING_MEASUREMENTS[selectedSize];
@@ -380,13 +481,15 @@ export const ProductDetails = () => {
       toast.error('Please enter a valid 6-digit pincode.');
       return;
     }
-    
+
     setCheckingPincode(true);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     try {
-      const resPost = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, { signal: controller.signal });
+      const resPost = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, {
+        signal: controller.signal,
+      });
       if (resPost.ok) {
         const data = await resPost.json();
         if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
@@ -396,7 +499,7 @@ export const ProductDetails = () => {
           const state = postOffice.State;
           setDeliveryStatus({
             success: true,
-            message: `Delivery available to ${area}, ${district}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
+            message: `Delivery available to ${area}, ${district}, ${state}. Estimated 2-3 business days. Cash on delivery available.`,
           });
           clearTimeout(timeoutId);
           setCheckingPincode(false);
@@ -404,19 +507,21 @@ export const ProductDetails = () => {
         }
       }
     } catch (err) {
-      console.warn("PostalPincode API failed, trying fallback...", err);
+      console.warn('PostalPincode API failed, trying fallback...', err);
     }
 
     try {
-      const resZip = await fetch(`https://api.zippopotam.us/IN/${pincode}`, { signal: controller.signal });
+      const resZip = await fetch(`https://api.zippopotam.us/IN/${pincode}`, {
+        signal: controller.signal,
+      });
       if (resZip.ok) {
         const data = await resZip.json();
         if (data && data.places && data.places[0]) {
-          const area = data.places[0]["place name"];
+          const area = data.places[0]['place name'];
           const state = data.places[0].state;
           setDeliveryStatus({
             success: true,
-            message: `Delivery available to ${area}, ${state}. Estimated 2-3 business days. Cash on delivery available.`
+            message: `Delivery available to ${area}, ${state}. Estimated 2-3 business days. Cash on delivery available.`,
           });
           clearTimeout(timeoutId);
           setCheckingPincode(false);
@@ -424,7 +529,7 @@ export const ProductDetails = () => {
         }
       }
     } catch (err) {
-      console.warn("Zippopotam API failed, trying offline validation...", err);
+      console.warn('Zippopotam API failed, trying offline validation...', err);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -433,12 +538,12 @@ export const ProductDetails = () => {
     if (pinRegex.test(pincode)) {
       setDeliveryStatus({
         success: true,
-        message: 'Valid Pincode format. Assuming deliverable offline. Estimated 2-3 business days.'
+        message: 'Valid Pincode format. Assuming deliverable offline. Estimated 2-3 business days.',
       });
     } else {
       setDeliveryStatus({
         success: false,
-        message: 'Invalid Pincode format. Please enter a valid 6-digit Indian PIN code.'
+        message: 'Invalid Pincode format. Please enter a valid 6-digit Indian PIN code.',
       });
     }
     setCheckingPincode(false);
@@ -446,7 +551,10 @@ export const ProductDetails = () => {
 
   return (
     <div className="space-y-12 pb-20 animate-in fade-in duration-700">
-      <SEO title={product?.title || 'Product Details'} description={product?.description?.slice(0, 160) || 'View product details at MensVibe.'} />
+      <SEO
+        title={product?.title || 'Product Details'}
+        description={product?.description?.slice(0, 160) || 'View product details at MensVibe.'}
+      />
       <ProductJsonLd product={product} />
       <Link
         to="/shop"
@@ -462,8 +570,12 @@ export const ProductDetails = () => {
         </div>
       ) : !product ? (
         <div className="flex flex-col h-[50vh] items-center justify-center gap-4 text-center">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">Product Not Found</h2>
-          <p className="text-xs font-bold text-app-text/45 uppercase tracking-wider">The product you are looking for does not exist or has been removed.</p>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">
+            Product Not Found
+          </h2>
+          <p className="text-xs font-bold text-app-text/45 uppercase tracking-wider">
+            The product you are looking for does not exist or has been removed.
+          </p>
           <Link
             to="/shop"
             className="flex items-center gap-2 rounded-2xl bg-app-text px-6 py-3 font-sans text-xs font-bold uppercase tracking-wider text-app-bg hover:bg-app-text-hover transition-all"
@@ -484,12 +596,16 @@ export const ProductDetails = () => {
                     key={idx}
                     onClick={() => setSelectedImage(img)}
                     className={`relative h-20 w-16 md:w-full shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                      mainImage === img 
-                        ? 'border-brand-primary scale-102 shadow-lg shadow-brand-primary/5' 
+                      mainImage === img
+                        ? 'border-brand-primary scale-102 shadow-lg shadow-brand-primary/5'
                         : 'border-border-base hover:border-app-text/50'
                     }`}
                   >
-                    <img src={resolveImageUrl(img, 200)} className="h-full w-full object-cover" alt={product?.title || 'Product thumbnail'} />
+                    <img
+                      src={resolveImageUrl(img, 200)}
+                      className="h-full w-full object-cover"
+                      alt={product?.title || 'Product thumbnail'}
+                    />
                   </button>
                 ))}
               </div>
@@ -503,7 +619,7 @@ export const ProductDetails = () => {
                 loading="lazy"
                 className="w-full aspect-[4/5] object-cover object-top transition-transform duration-1000 group-hover:scale-108"
               />
-              
+
               {/* Dynamic Badge Overlay */}
               <div className="absolute left-6 top-6 flex flex-col gap-2">
                 {product.badge ? (
@@ -527,7 +643,9 @@ export const ProductDetails = () => {
                   disabled={wishlistLoading}
                   aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
                   className={`p-4 rounded-[1.5rem] backdrop-blur-xl border border-white/20 transition-all hover:scale-110 active:scale-95 shadow-lg ${
-                    isWishlisted ? 'bg-red-500 text-white border-red-500/30' : 'bg-black/40 text-white'
+                    isWishlisted
+                      ? 'bg-red-500 text-white border-red-500/30'
+                      : 'bg-black/40 text-white'
                   }`}
                 >
                   <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -542,7 +660,7 @@ export const ProductDetails = () => {
               <h1 className="text-3xl font-black uppercase tracking-tight text-app-text leading-[1.0]">
                 {product.title}
               </h1>
-              
+
               {currentVariant?.sku ? (
                 <p className="text-[11px] font-bold text-app-text/40 uppercase tracking-widest">
                   SKU: {currentVariant.sku}
@@ -569,7 +687,7 @@ export const ProductDetails = () => {
                   </span>
                 )}
               </div>
-              
+
               <p className="text-[10px] font-bold text-app-text/45 uppercase">Tax included.</p>
             </div>
 
@@ -583,10 +701,11 @@ export const ProductDetails = () => {
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {availableColors.map((color) => {
-                    const variantImgs = product.variants
-                      ?.filter(v => v.color === color)
-                      .flatMap(v => v.images || [])
-                      .filter(Boolean) || [];
+                    const variantImgs =
+                      product.variants
+                        ?.filter((v) => v.color === color)
+                        .flatMap((v) => v.images || [])
+                        .filter(Boolean) || [];
                     const hasOwnImages = variantImgs.length > 0;
                     const thumbUrl = hasOwnImages ? variantImgs[0] : null;
                     const isActive = selectedColor === color;
@@ -622,23 +741,41 @@ export const ProductDetails = () => {
                             className={`w-8 h-8 rounded-full border-2 ${
                               isActive ? 'border-brand-primary' : 'border-border'
                             }`}
-                            style={{ backgroundColor: color.toLowerCase() === 'black' ? '#111' :
-                                                       color.toLowerCase() === 'white' ? '#f5f5f5' :
-                                                       color.toLowerCase() === 'blue' ? '#3b82f6' :
-                                                       color.toLowerCase() === 'red' ? '#ef4444' :
-                                                       color.toLowerCase() === 'green' ? '#22c55e' :
-                                                       color.toLowerCase() === 'sand' ? '#c2b280' :
-                                                       color.toLowerCase() === 'sage' ? '#8fae88' :
-                                                       color.toLowerCase() === 'khaki' ? '#c3b091' :
-                                                       color.toLowerCase() === 'navy' ? '#1e3a5f' :
-                                                       color.toLowerCase() === 'grey' ? '#6b7280' :
-                                                       color.toLowerCase() === 'brown' ? '#92400e' :
-                                                       '#888888' }}
+                            style={{
+                              backgroundColor:
+                                color.toLowerCase() === 'black'
+                                  ? '#111'
+                                  : color.toLowerCase() === 'white'
+                                    ? '#f5f5f5'
+                                    : color.toLowerCase() === 'blue'
+                                      ? '#3b82f6'
+                                      : color.toLowerCase() === 'red'
+                                        ? '#ef4444'
+                                        : color.toLowerCase() === 'green'
+                                          ? '#22c55e'
+                                          : color.toLowerCase() === 'sand'
+                                            ? '#c2b280'
+                                            : color.toLowerCase() === 'sage'
+                                              ? '#8fae88'
+                                              : color.toLowerCase() === 'khaki'
+                                                ? '#c3b091'
+                                                : color.toLowerCase() === 'navy'
+                                                  ? '#1e3a5f'
+                                                  : color.toLowerCase() === 'grey'
+                                                    ? '#6b7280'
+                                                    : color.toLowerCase() === 'brown'
+                                                      ? '#92400e'
+                                                      : '#888888',
+                            }}
                           />
                         )}
-                        <span className={`text-[9px] font-black uppercase tracking-wider ${
-                          isActive ? 'text-brand-primary' : 'text-muted'
-                        }`}>{color}</span>
+                        <span
+                          className={`text-[9px] font-black uppercase tracking-wider ${
+                            isActive ? 'text-brand-primary' : 'text-muted'
+                          }`}
+                        >
+                          {color}
+                        </span>
                       </button>
                     );
                   })}
@@ -649,8 +786,10 @@ export const ProductDetails = () => {
             {/* Sizing & Scarcity section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-app-text">Select Size</span>
-                <button 
+                <span className="text-xs font-black uppercase tracking-wider text-app-text">
+                  Select Size
+                </span>
+                <button
                   onClick={() => setShowSizeGuide(true)}
                   aria-label="Open size guide"
                   className="text-[10px] font-black uppercase tracking-wider text-app-text/45 hover:text-brand-primary underline decoration-dotted"
@@ -663,9 +802,12 @@ export const ProductDetails = () => {
               <UrgencyNudge
                 selectedSize={selectedSize}
                 onSizeChange={setSelectedSize}
-                sizes={sizingData.sizeOptions.map(size => ({
+                sizes={sizingData.sizeOptions.map((size) => ({
                   size,
-                  stock: product.variants?.find(v => (!selectedColor || v.color === selectedColor) && v.size === size)?.stock ?? product.stock
+                  stock:
+                    product.variants?.find(
+                      (v) => (!selectedColor || v.color === selectedColor) && v.size === size,
+                    )?.stock ?? product.stock,
                 }))}
                 remainingCount={priceData.displayStock}
                 viewersLastHour={Math.floor(Math.random() * 34) + 12}
@@ -675,58 +817,104 @@ export const ProductDetails = () => {
               {/* Sizing measurements strip */}
               {currentMeasure ? (
                 <div className="bg-[#161618] border border-white/10 p-3.5 rounded-2xl shadow-soft font-roboto">
-                  <div className={`grid ${isFootwear ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-4`}>
+                  <div
+                    className={`grid ${isFootwear ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-4`}
+                  >
                     {isFootwear ? (
                       <>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Length</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.length}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Length
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.length}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Sole</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.sole}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Sole
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.sole}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Fit</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">Regular</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Fit
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            Regular
+                          </span>
                         </div>
                       </>
                     ) : isBottoms ? (
                       <>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Waist</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.waist}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Waist
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.waist}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Inseam</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.inseam}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Inseam
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.inseam}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Thigh</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.thigh}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Thigh
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.thigh}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Rise</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.rise}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Rise
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.rise}
+                          </span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Chest</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.chest}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Chest
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.chest}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Length</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.length}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Length
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.length}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Shoulder</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.shoulder}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Shoulder
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.shoulder}
+                          </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Sleeve</span>
-                          <span className="text-[12px] font-bold text-white tracking-tight">{currentMeasure.sleeve}</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Sleeve
+                          </span>
+                          <span className="text-[12px] font-bold text-white tracking-tight">
+                            {currentMeasure.sleeve}
+                          </span>
                         </div>
                       </>
                     )}
@@ -769,7 +957,11 @@ export const ProductDetails = () => {
                   className="w-full px-5 py-4 flex items-center justify-between text-xs font-black uppercase tracking-wider text-white hover:bg-white/5 transition-all text-left"
                 >
                   <span>Design Details & Specs</span>
-                  {isDescOpen ? <ChevronUp className="h-4 w-4 text-brand-primary" /> : <ChevronDown className="h-4 w-4 text-brand-primary" />}
+                  {isDescOpen ? (
+                    <ChevronUp className="h-4 w-4 text-brand-primary" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-brand-primary" />
+                  )}
                 </button>
                 {isDescOpen && (
                   <div className="px-5 pb-5 pt-1 text-xs text-white/70 leading-relaxed font-sans border-t border-white/5 animate-in slide-in-from-top-2 duration-300">
@@ -783,7 +975,9 @@ export const ProductDetails = () => {
 
             {/* Check Delivery pincode check */}
             <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-wider text-app-text">Check Delivery:</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider text-app-text">
+                Check Delivery:
+              </h4>
               <form onSubmit={handleCheckPincode} className="flex gap-2">
                 <input
                   type="text"
@@ -792,7 +986,7 @@ export const ProductDetails = () => {
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   className="flex-1 rounded-xl border border-border bg-app-panel px-4 py-2 text-xs font-sans focus:outline-none focus:border-brand-primary"
                 />
-                <button 
+                <button
                   type="submit"
                   disabled={checkingPincode}
                   className="rounded-xl border border-app-text bg-app-text px-6 text-[10px] font-black uppercase tracking-wider text-black hover:opacity-90 active:scale-95 transition-all cursor-pointer"
@@ -801,19 +995,30 @@ export const ProductDetails = () => {
                 </button>
               </form>
               {deliveryStatus ? (
-                <p className={`text-[10px] font-bold uppercase flex items-center gap-1.5 ${deliveryStatus.success ? 'text-brand-primary' : 'text-red-500'}`}>
-                  {deliveryStatus.success ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />} {deliveryStatus.message}
+                <p
+                  className={`text-[10px] font-bold uppercase flex items-center gap-1.5 ${deliveryStatus.success ? 'text-brand-primary' : 'text-red-500'}`}
+                >
+                  {deliveryStatus.success ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <X className="h-3.5 w-3.5" />
+                  )}{' '}
+                  {deliveryStatus.message}
                 </p>
               ) : null}
             </div>
 
             {/* Exclusive Coupon Card (Dashed Border) */}
             <div className="border border-dashed border-brand-primary/30 bg-brand-primary/[0.02] rounded-2xl p-4.5 space-y-2 mt-4">
-              <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">Exclusive Store Offer</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-brand-primary">
+                Exclusive Store Offer
+              </span>
               <div className="flex justify-between items-center gap-4">
                 <div>
                   <p className="text-xs font-black text-white">Get 10% OFF your purchase</p>
-                  <p className="text-[9px] text-white/40 uppercase tracking-wide mt-0.5">Use coupon code at checkout</p>
+                  <p className="text-[9px] text-white/40 uppercase tracking-wide mt-0.5">
+                    Use coupon code at checkout
+                  </p>
                 </div>
                 <span className="font-mono text-[11px] font-black px-3.5 py-1.5 rounded-xl border border-dashed border-brand-primary/50 text-brand-primary bg-brand-primary/10 select-all shrink-0">
                   MENSVIBE10
@@ -826,18 +1031,41 @@ export const ProductDetails = () => {
             {/* Trust Badges Section Redesigned */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: ShieldCheck, label: '100% Genuine', text: 'Authentic Products', id: 'trust-genuine' },
-                { icon: ShoppingBag, label: 'Easy Returns', text: '10-Day Policy', id: 'trust-returns' },
-                { icon: Sparkles, label: 'Quality Check', text: '2-Level Verified', id: 'trust-quality' },
-                { icon: Shield, label: 'Secure Pay', text: 'SSL Encrypted', id: 'trust-secure' }
+                {
+                  icon: ShieldCheck,
+                  label: '100% Genuine',
+                  text: 'Authentic Products',
+                  id: 'trust-genuine',
+                },
+                {
+                  icon: ShoppingBag,
+                  label: 'Easy Returns',
+                  text: '10-Day Policy',
+                  id: 'trust-returns',
+                },
+                {
+                  icon: Sparkles,
+                  label: 'Quality Check',
+                  text: '2-Level Verified',
+                  id: 'trust-quality',
+                },
+                { icon: Shield, label: 'Secure Pay', text: 'SSL Encrypted', id: 'trust-secure' },
               ].map((item) => (
-                <div key={item.id} id={item.id} className="flex items-center gap-3 p-3.5 rounded-2xl border border-brand-primary/15 bg-black hover:border-brand-primary/30 transition-all">
+                <div
+                  key={item.id}
+                  id={item.id}
+                  className="flex items-center gap-3 p-3.5 rounded-2xl border border-brand-primary/15 bg-black hover:border-brand-primary/30 transition-all"
+                >
                   <div className="h-9 w-9 rounded-xl bg-brand-primary flex items-center justify-center text-black shrink-0 shadow-md shadow-brand-primary/20">
                     <item.icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white leading-tight">{item.label}</p>
-                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-tight mt-0.5">{item.text}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white leading-tight">
+                      {item.label}
+                    </p>
+                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-tight mt-0.5">
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -848,9 +1076,9 @@ export const ProductDetails = () => {
 
       {/* Frequently Bought Together (Complete the Look) */}
       <div className="pt-16 border-t border-border">
-        <FrequentlyBoughtTogether 
-          productId={id} 
-          title="Styled With" 
+        <FrequentlyBoughtTogether
+          productId={id}
+          title="Styled With"
           subtitle="Complete the look with these compatible items handpicked for this outfit."
         />
       </div>
@@ -859,8 +1087,12 @@ export const ProductDetails = () => {
       {relatedItems.length > 0 ? (
         <div className="pt-16 space-y-8 border-t border-border">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">Handpicked for you</p>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">You May Also Like</h2>
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">
+              Handpicked for you
+            </p>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">
+              You May Also Like
+            </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {relatedItems.map((p) => (
@@ -874,13 +1106,20 @@ export const ProductDetails = () => {
       <div className="pt-16 space-y-8 border-t border-border">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">User Feedback</p>
-            <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">Product Reviews</h2>
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-primary italic">
+              User Feedback
+            </p>
+            <h2 className="text-2xl font-black uppercase tracking-tight text-app-text">
+              Product Reviews
+            </h2>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex text-brand-primary">
               {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} className={`h-4 w-4 ${s <= Math.round(product?.rating || 0) ? 'fill-current' : ''}`} />
+                <Star
+                  key={s}
+                  className={`h-4 w-4 ${s <= Math.round(product?.rating || 0) ? 'fill-current' : ''}`}
+                />
               ))}
             </div>
             <span className="text-xs font-black uppercase text-white/60">
@@ -892,11 +1131,15 @@ export const ProductDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Write a review Form */}
           <div className="lg:col-span-1 glass-card-premium p-6 rounded-[2rem] h-fit space-y-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-brand-primary">Write A Review</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-brand-primary">
+              Write A Review
+            </h3>
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               {/* Star Rating Select */}
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block">Rating</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block">
+                  Rating
+                </label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -905,7 +1148,9 @@ export const ProductDetails = () => {
                       onClick={() => setReviewRating(star)}
                       className="p-1 hover:scale-110 active:scale-90 transition-transform"
                     >
-                      <Star className={`h-6 w-6 ${star <= reviewRating ? 'fill-brand-primary text-brand-primary' : 'text-white/20'}`} />
+                      <Star
+                        className={`h-6 w-6 ${star <= reviewRating ? 'fill-brand-primary text-brand-primary' : 'text-white/20'}`}
+                      />
                     </button>
                   ))}
                 </div>
@@ -913,7 +1158,9 @@ export const ProductDetails = () => {
 
               {/* Comment text */}
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block">Comment</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block">
+                  Comment
+                </label>
                 <textarea
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
@@ -924,6 +1171,49 @@ export const ProductDetails = () => {
                 />
               </div>
 
+              {/* Photo Upload section */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-white/50 block">
+                  Attach Photos (Optional)
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  {imagePreviews.map((url, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group"
+                    >
+                      <img
+                        src={url}
+                        alt={`preview-${idx}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeReviewImage(idx)}
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {imagePreviews.length < 5 && (
+                    <label className="w-16 h-16 rounded-xl border border-dashed border-white/20 hover:border-brand-primary/50 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/5">
+                      <Camera className="h-5 w-5 text-white/40" />
+                      <span className="text-[8px] font-black uppercase text-white/30 mt-1">
+                        Add
+                      </span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={reviewSubmitting}
@@ -932,7 +1222,6 @@ export const ProductDetails = () => {
                 {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
             </form>
-            
           </div>
 
           {/* Review List */}
@@ -943,32 +1232,69 @@ export const ProductDetails = () => {
               </div>
             ) : reviews.length > 0 ? (
               reviews.map((rev) => {
-                const initials = rev.name ? rev.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
+                const initials = rev.name
+                  ? rev.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)
+                  : 'U';
                 return (
-                  <div key={rev._id} className="p-6 rounded-[2rem] glass-card-premium space-y-4 hover:border-white/15 transition-all">
+                  <div
+                    key={rev._id}
+                    className="p-6 rounded-[2rem] glass-card-premium space-y-4 hover:border-white/15 transition-all"
+                  >
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-brand-primary flex items-center justify-center text-black font-black text-xs">
                           {initials}
                         </div>
                         <div>
-                          <p className="text-xs font-black uppercase tracking-wide text-white">{rev.name}</p>
+                          <p className="text-xs font-black uppercase tracking-wide text-white">
+                            {rev.name}
+                          </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <div className="flex text-brand-primary">
                               {[1, 2, 3, 4, 5].map((s) => (
-                                <Star key={s} className={`h-3 w-3 ${s <= rev.rating ? 'fill-brand-primary' : 'text-white/10'}`} />
+                                <Star
+                                  key={s}
+                                  className={`h-3 w-3 ${s <= rev.rating ? 'fill-brand-primary' : 'text-white/10'}`}
+                                />
                               ))}
                             </div>
-                            <span className="text-[9px] text-white/30 font-bold uppercase tracking-wider">{rev.date}</span>
+                            <span className="text-[9px] text-white/30 font-bold uppercase tracking-wider">
+                              {rev.date}
+                            </span>
                           </div>
                         </div>
                       </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-2 py-0.5 rounded-md">Verified Fit</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-2 py-0.5 rounded-md">
+                        Verified Fit
+                      </span>
                     </div>
 
-                    <p className="text-xs text-white/70 leading-relaxed font-sans">
-                      {rev.comment}
-                    </p>
+                    <p className="text-xs text-white/70 leading-relaxed font-sans">{rev.comment}</p>
+
+                    {rev.images && rev.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2.5 pt-1">
+                        {rev.images.map((img, idx) => (
+                          <a
+                            key={idx}
+                            href={resolveImageUrl(img)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/10 hover:border-brand-primary/40 hover:scale-105 transition-all inline-block"
+                          >
+                            <img
+                              src={resolveImageUrl(img, 300)}
+                              alt={`Review attachment ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })
@@ -982,93 +1308,176 @@ export const ProductDetails = () => {
       </div>
 
       {/* Size Guide Modal Popup */}
-      {showSizeGuide && createPortal(
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-          onKeyDown={(e) => { if (e.key === 'Escape') setShowSizeGuide(false); }}
-          ref={sizeGuideRef}
-          tabIndex={-1}
-        >
-          <div className="bg-app-card text-app-text rounded-[2rem] border border-border p-8 max-w-md w-full relative shadow-2xl">
-            <button 
-              ref={sizeGuideCloseRef}
-              onClick={() => setShowSizeGuide(false)} 
-              className="absolute top-5 right-5 text-app-text/60 hover:text-app-text transition-colors"
-              aria-label="Close size guide"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <h3 className="text-sm font-black uppercase tracking-wider text-app-text mb-4">
-              Size Guide ({isFootwear ? 'Footwear' : isBottoms ? 'Bottoms' : 'Clothing'})
-            </h3>
-            
-            {isFootwear ? (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
-                    <th className="py-2.5">UK Size</th>
-                    <th className="py-2.5">Foot Length</th>
-                    <th className="py-2.5">US Size</th>
-                  </tr>
-                </thead>
-                <tbody className="font-sans text-app-text/75">
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 10.5</td><td className="py-2.5">28.8 cm</td><td className="py-2.5">US 11.5</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 11</td><td className="py-2.5">29.6 cm</td><td className="py-2.5">US 12</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 12</td><td className="py-2.5">30.5 cm</td><td className="py-2.5">US 13</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 13</td><td className="py-2.5">31.3 cm</td><td className="py-2.5">US 14</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">UK 14</td><td className="py-2.5">32.2 cm</td><td className="py-2.5">US 15</td></tr>
-                </tbody>
-              </table>
-            ) : isBottoms ? (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
-                    <th className="py-2.5">Size</th>
-                    <th className="py-2.5">Waist</th>
-                    <th className="py-2.5">Inseam</th>
-                    <th className="py-2.5">Thigh</th>
-                  </tr>
-                </thead>
-                <tbody className="font-sans text-app-text/75">
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">30x34</td><td className="py-2.5">30 in</td><td className="py-2.5">34 in</td><td className="py-2.5">24 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">32x34</td><td className="py-2.5">32 in</td><td className="py-2.5">34 in</td><td className="py-2.5">25 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">32x36</td><td className="py-2.5">32 in</td><td className="py-2.5">36 in</td><td className="py-2.5">25 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">34x34</td><td className="py-2.5">34 in</td><td className="py-2.5">34 in</td><td className="py-2.5">26 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">34x36</td><td className="py-2.5">34 in</td><td className="py-2.5">36 in</td><td className="py-2.5">26 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">36x36</td><td className="py-2.5">36 in</td><td className="py-2.5">36 in</td><td className="py-2.5">27 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">38x36</td><td className="py-2.5">38 in</td><td className="py-2.5">36 in</td><td className="py-2.5">28 in</td></tr>
-                </tbody>
-              </table>
-            ) : (
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
-                    <th className="py-2.5">Size</th>
-                    <th className="py-2.5">Chest</th>
-                    <th className="py-2.5">Length</th>
-                    <th className="py-2.5">Sleeve</th>
-                  </tr>
-                </thead>
-                <tbody className="font-sans text-app-text/75">
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">MT</td><td className="py-2.5">42 in</td><td className="py-2.5">32.5 in</td><td className="py-2.5">27 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">LT</td><td className="py-2.5">45 in</td><td className="py-2.5">33 in</td><td className="py-2.5">27.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">XLT</td><td className="py-2.5">48 in</td><td className="py-2.5">33.5 in</td><td className="py-2.5">28 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">2XLT</td><td className="py-2.5">52 in</td><td className="py-2.5">34 in</td><td className="py-2.5">28.5 in</td></tr>
-                  <tr className="border-b border-border"><td className="py-2.5 font-bold">3XLT</td><td className="py-2.5">56 in</td><td className="py-2.5">34.5 in</td><td className="py-2.5">29 in</td></tr>
-                </tbody>
-              </table>
-            )}
-            <button 
-              onClick={() => setShowSizeGuide(false)}
-              className="mt-6 w-full py-3 bg-app-text text-app-bg rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity select-none cursor-pointer"
-              aria-label="Close size guide"
-            >
-              Close Chart
-            </button>
-          </div>
-        </div>,
-        document.body
-      )}
+      {showSizeGuide &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setShowSizeGuide(false);
+            }}
+            ref={sizeGuideRef}
+            tabIndex={-1}
+          >
+            <div className="bg-app-card text-app-text rounded-[2rem] border border-border p-8 max-w-md w-full relative shadow-2xl">
+              <button
+                ref={sizeGuideCloseRef}
+                onClick={() => setShowSizeGuide(false)}
+                className="absolute top-5 right-5 text-app-text/60 hover:text-app-text transition-colors"
+                aria-label="Close size guide"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h3 className="text-sm font-black uppercase tracking-wider text-app-text mb-4">
+                Size Guide ({isFootwear ? 'Footwear' : isBottoms ? 'Bottoms' : 'Clothing'})
+              </h3>
+
+              {isFootwear ? (
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
+                      <th className="py-2.5">UK Size</th>
+                      <th className="py-2.5">Foot Length</th>
+                      <th className="py-2.5">US Size</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-sans text-app-text/75">
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">UK 10.5</td>
+                      <td className="py-2.5">28.8 cm</td>
+                      <td className="py-2.5">US 11.5</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">UK 11</td>
+                      <td className="py-2.5">29.6 cm</td>
+                      <td className="py-2.5">US 12</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">UK 12</td>
+                      <td className="py-2.5">30.5 cm</td>
+                      <td className="py-2.5">US 13</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">UK 13</td>
+                      <td className="py-2.5">31.3 cm</td>
+                      <td className="py-2.5">US 14</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">UK 14</td>
+                      <td className="py-2.5">32.2 cm</td>
+                      <td className="py-2.5">US 15</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : isBottoms ? (
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
+                      <th className="py-2.5">Size</th>
+                      <th className="py-2.5">Waist</th>
+                      <th className="py-2.5">Inseam</th>
+                      <th className="py-2.5">Thigh</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-sans text-app-text/75">
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">30x34</td>
+                      <td className="py-2.5">30 in</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">24 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">32x34</td>
+                      <td className="py-2.5">32 in</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">25 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">32x36</td>
+                      <td className="py-2.5">32 in</td>
+                      <td className="py-2.5">36 in</td>
+                      <td className="py-2.5">25 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">34x34</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">26 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">34x36</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">36 in</td>
+                      <td className="py-2.5">26 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">36x36</td>
+                      <td className="py-2.5">36 in</td>
+                      <td className="py-2.5">36 in</td>
+                      <td className="py-2.5">27 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">38x36</td>
+                      <td className="py-2.5">38 in</td>
+                      <td className="py-2.5">36 in</td>
+                      <td className="py-2.5">28 in</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-black uppercase text-app-text/45">
+                      <th className="py-2.5">Size</th>
+                      <th className="py-2.5">Chest</th>
+                      <th className="py-2.5">Length</th>
+                      <th className="py-2.5">Sleeve</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-sans text-app-text/75">
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">MT</td>
+                      <td className="py-2.5">42 in</td>
+                      <td className="py-2.5">32.5 in</td>
+                      <td className="py-2.5">27 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">LT</td>
+                      <td className="py-2.5">45 in</td>
+                      <td className="py-2.5">33 in</td>
+                      <td className="py-2.5">27.5 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">XLT</td>
+                      <td className="py-2.5">48 in</td>
+                      <td className="py-2.5">33.5 in</td>
+                      <td className="py-2.5">28 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">2XLT</td>
+                      <td className="py-2.5">52 in</td>
+                      <td className="py-2.5">34 in</td>
+                      <td className="py-2.5">28.5 in</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2.5 font-bold">3XLT</td>
+                      <td className="py-2.5">56 in</td>
+                      <td className="py-2.5">34.5 in</td>
+                      <td className="py-2.5">29 in</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+              <button
+                onClick={() => setShowSizeGuide(false)}
+                className="mt-6 w-full py-3 bg-app-text text-app-bg rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity select-none cursor-pointer"
+                aria-label="Close size guide"
+              >
+                Close Chart
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

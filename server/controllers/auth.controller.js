@@ -126,6 +126,10 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(401, 'Email or password is wrong.');
   }
 
+  if (!user.isActive) {
+    throw new ApiError(403, 'Your account has been deactivated. Please contact support.');
+  }
+
   const token = generateAccessToken(user);
 
   return await sendAuthResponse(res, 200, buildSafeUser(user), token, 'Welcome back.');

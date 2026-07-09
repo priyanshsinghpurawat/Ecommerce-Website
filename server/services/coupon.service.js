@@ -75,7 +75,7 @@ export const calculateCouponDiscount = async (
     if (applicableTotal < coupon.minCartAmount) {
       throw new ApiError(
         400,
-        `Minimum purchase of ₹${coupon.minCartAmount} required for this vendor's items.`,
+        `Minimum purchase of ₹${coupon.minCartAmount} required for this seller's items.`,
       );
     }
   }

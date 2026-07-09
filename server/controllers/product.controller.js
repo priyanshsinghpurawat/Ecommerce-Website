@@ -2,6 +2,7 @@ import { Order } from '../models/order.model.js';
 import { Variant } from '../models/variant.model.js';
 import mongoose from 'mongoose';
 import { Product } from '../models/product.model.js';
+import { Review } from '../models/review.model.js';
 import { ProductService } from '../services/product.service.js';
 import {
   asyncHandler,
@@ -383,6 +384,14 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     if (vi.images?.length) imagesToDelete.push(...vi.images);
   }
   await Variant.updateMany({ product: id, deletedAt: null }, { $set: { deletedAt: new Date() } });
+
+  // Clean up associated reviews and their image attachments
+  const productReviews = await Review.find({ product: id });
+  const reviewImages = productReviews.flatMap((r) => r.images || []).filter(Boolean);
+  if (reviewImages.length > 0) {
+    imagesToDelete.push(...reviewImages);
+  }
+  await Review.deleteMany({ product: id });
 
   await Product.findByIdAndDelete(id);
   await ProductService.deleteImages(imagesToDelete);

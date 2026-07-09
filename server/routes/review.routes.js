@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getProductReviews, submitReview, deleteReview } from '../controllers/review.controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
+import { uploadAny } from '../middleware/upload.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { productIdParamSchema } from '../validators/index.js';
 import { z } from 'zod';
@@ -71,6 +72,7 @@ router.get('/products/:id/reviews', validate({ params: productIdParamSchema }), 
 router.post(
   '/products/:id/reviews',
   verifyJWT,
+  uploadAny(),
   validate({ params: productIdParamSchema, body: reviewBodySchema }),
   submitReview,
 );

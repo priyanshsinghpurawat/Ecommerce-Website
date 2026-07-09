@@ -6,12 +6,15 @@ import {
   deductStock,
   restoreStock,
   incrementProductSales,
+  calculateOrderTotals,
+  createLedgerEntries,
 } from '../../services/order.service.js';
 import { Product } from '../../models/product.model.js';
 import { Variant } from '../../models/variant.model.js';
 import { User } from '../../models/user.model.js';
 import { Category } from '../../models/category.model.js';
 import { Subcategory } from '../../models/subcategory.model.js';
+import { LedgerTransaction } from '../../models/ledger.model.js';
 
 let mongod, user, category, subcategory;
 
@@ -156,5 +159,63 @@ describe('incrementProductSales', () => {
 
   it('handles empty items array', async () => {
     await expect(incrementProductSales([], null)).resolves.not.toThrow();
+  });
+});
+
+describe('calculateOrderTotals', () => {
+  it('calculates order subtotal using variant price instead of product price', async () => {
+    const product = await makeProduct({ price: 500 });
+    const variant = await Variant.create({
+      product: product._id,
+      sku: 'VAR-PR-1',
+      price: 600,
+      stock: 10,
+      optionValues: new Map([['Color', 'Black']]),
+    });
+
+    const mockCart = {
+      items: [
+        {
+          product: product,
+          variant: variant,
+          quantity: 2,
+        },
+      ],
+    };
+
+    const totals = await calculateOrderTotals(mockCart, null, null);
+    expect(totals.subtotal).toBe(1200); // 600 * 2
+    expect(totals.orderItems[0].unitPrice).toBe(600);
+    expect(totals.orderItems[0].seller.toString()).toBe(product.seller.toString());
+  });
+});
+
+describe('createLedgerEntries', () => {
+  it('creates ledger entries with correct seller field alignment', async () => {
+    await LedgerTransaction.deleteMany({});
+    const orderId = new mongoose.Types.ObjectId();
+    const sellerId = new mongoose.Types.ObjectId();
+    const orderItems = [
+      {
+        seller: sellerId,
+        subtotal: 1000,
+      },
+    ];
+
+    await createLedgerEntries(orderId, 'TEST-ORDER-1', orderItems, 'cod', null);
+
+    const entries = await LedgerTransaction.find({ order: orderId });
+    expect(entries.length).toBe(2);
+
+    const sale = entries.find((e) => e.type === 'sale');
+    expect(sale).toBeDefined();
+    expect(sale.seller.toString()).toBe(sellerId.toString());
+    expect(sale.amount).toBe(100000); // 1000 * 100 paise
+    expect(sale.status).toBe('pending'); // COD order
+
+    const comm = entries.find((e) => e.type === 'commission_fee');
+    expect(comm).toBeDefined();
+    expect(comm.seller.toString()).toBe(sellerId.toString());
+    expect(comm.amount).toBe(-10000); // 10% platform fee
   });
 });

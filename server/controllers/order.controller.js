@@ -22,6 +22,8 @@ import {
   fetchAndValidateUserCart,
   calculateOrderTotals,
   createLedgerEntries,
+  resolveVariant,
+  restoreStock,
 } from '../services/order.service.js';
 
 const VALID_ORDER_STATUSES = [
@@ -30,14 +32,16 @@ const VALID_ORDER_STATUSES = [
   'shipped',
   'delivered',
   'cancelled',
+  'returned',
 ];
 
 const VALID_TRANSITIONS = {
   confirmed: ['shipped', 'cancelled'],
   partially_shipped: ['shipped', 'cancelled'],
   shipped: ['delivered', 'cancelled'],
-  delivered: [], // terminal state
+  delivered: ['returned'], // terminal state
   cancelled: ['confirmed'], // reinstatement (requires stock check)
+  returned: [],
 };
 
 /**
@@ -132,8 +136,7 @@ export const getAllOrders = asyncHandler(async (req, res) => {
   const query = buildOrderQuery({ status, search });
 
   if (sellerId) {
-    const sellerProducts = await Product.find({ seller: sellerId }).distinct('_id');
-    query['items.product'] = { $in: sellerProducts };
+    query['items.seller'] = sellerId;
   }
 
   const [orders, total] = await Promise.all([
@@ -250,7 +253,7 @@ export const getOrderAnalytics = asyncHandler(async (req, res) => {
 
   const [dailyRevenue, categoryPerformance, peakHours] = await Promise.all([
     fetchDailyRevenue(thirtyDaysAgo),
-    fetchCategoryPerformance(),
+    fetchCategoryPerformance(thirtyDaysAgo),
     fetchPeakOrderingHours(),
   ]);
 
@@ -344,27 +347,30 @@ export const processReturn = asyncHandler(async (req, res) => {
 
       // Reverse Ledger Transaction
       const saleAmountPaise = Math.round(item.subtotal * 100);
-      const commissionAmountPaise = Math.round(item.subtotal * 0.10 * 100);
+      const commissionAmountPaise = Math.round(item.subtotal * 0.1 * 100);
 
-      await LedgerTransaction.insertMany([
-        {
-          seller: item.seller,
-          type: 'refund',
-          amount: -saleAmountPaise, // deduct sale
-          order: order._id,
-          description: `Refund (RMA) - #${order.orderNumber}`,
-        },
-        {
-          seller: item.seller,
-          type: 'commission_fee', // Revert fee
-          amount: commissionAmountPaise, // credit back the platform fee
-          order: order._id,
-          description: `Fee Reversal (RMA) - #${order.orderNumber}`,
-        },
-      ], { session });
+      await LedgerTransaction.insertMany(
+        [
+          {
+            seller: item.seller,
+            type: 'refund',
+            amount: -saleAmountPaise, // deduct sale
+            order: order._id,
+            description: `Refund (RMA) - #${order.orderNumber}`,
+          },
+          {
+            seller: item.seller,
+            type: 'commission_fee', // Revert fee
+            amount: commissionAmountPaise, // credit back the platform fee
+            order: order._id,
+            description: `Fee Reversal (RMA) - #${order.orderNumber}`,
+          },
+        ],
+        { session },
+      );
 
       // Restore stock
-      await restoreStockForOrder({ items: [item] }, session);
+      await restoreStock([item], session, { decrementSoldCount: true });
     }
 
     recalculateRootOrderStatus(order);
@@ -430,7 +436,13 @@ export const exportOrdersCSV = asyncHandler(async (req, res) => {
   res.end();
 });
 
-async function executeOrderTransaction({ userId, couponCode, shippingAddress, paymentMethod, attributionTag }) {
+async function executeOrderTransaction({
+  userId,
+  couponCode,
+  shippingAddress,
+  paymentMethod,
+  attributionTag,
+}) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -440,7 +452,15 @@ async function executeOrderTransaction({ userId, couponCode, shippingAddress, pa
 
     const cart = await fetchAndValidateUserCart(userId, session);
     const orderCalculations = await calculateOrderTotals(cart, couponCode, userId, session);
-    const { subtotal, taxAmount, discountAmount, total, orderItems, appliedCouponId, appliedCouponCode } = orderCalculations;
+    const {
+      subtotal,
+      taxAmount,
+      discountAmount,
+      total,
+      orderItems,
+      appliedCouponId,
+      appliedCouponCode,
+    } = orderCalculations;
 
     const validItems = cart.items.filter((item) => item.product);
     await deductStock(validItems, session);
@@ -550,7 +570,7 @@ async function transitionOrderStatus(order, newStatus, session) {
   assertValidTransition(oldStatus, newStatus);
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-    await restoreStockForOrder(order, session);
+    await restoreStock(order.items, session, { decrementSoldCount: true, cancelItems: true });
   }
 
   if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
@@ -569,17 +589,7 @@ async function transitionOrderItemStatus(order, item, newStatus, trackingNumber,
   const opts = session ? { session } : {};
 
   // Resolve variant for this item
-  let variant = null;
-  if (item.variant) {
-    variant = await Variant.findById(item.variant).session(session);
-  } else if (item.sku) {
-    variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
-  } else if (item.color || item.size) {
-    const query = { product: item.product, deletedAt: null };
-    if (item.color) query['optionValues.Color'] = item.color;
-    if (item.size) query['optionValues.Size'] = item.size;
-    variant = await Variant.findOne(query).session(session);
-  }
+  let variant = await resolveVariant(item, session);
 
   if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
     if (variant) {
@@ -631,64 +641,22 @@ function recalculateRootOrderStatus(order) {
 
   if (itemStatuses.every((s) => s === 'cancelled')) {
     order.status = 'cancelled';
-  } else if (itemStatuses.every((s) => s === 'delivered' || s === 'cancelled')) {
+  } else if (itemStatuses.every((s) => s === 'returned' || s === 'cancelled')) {
+    order.status = 'returned';
+  } else if (
+    itemStatuses.every((s) => s === 'delivered' || s === 'cancelled' || s === 'returned')
+  ) {
     order.status = 'delivered';
-  } else if (itemStatuses.every((s) => s === 'shipped' || s === 'delivered' || s === 'cancelled')) {
+  } else if (
+    itemStatuses.every(
+      (s) => s === 'shipped' || s === 'delivered' || s === 'cancelled' || s === 'returned',
+    )
+  ) {
     order.status = 'shipped';
-  } else if (itemStatuses.some((s) => s === 'shipped' || s === 'delivered')) {
+  } else if (itemStatuses.some((s) => s === 'shipped' || s === 'delivered' || s === 'returned')) {
     order.status = 'partially_shipped';
   } else {
     order.status = 'confirmed';
-  }
-}
-
-async function restoreStockForOrder(order, session) {
-  const sortedItems = [...order.items].sort((a, b) =>
-    (a.product?.toString() || '').localeCompare(b.product?.toString() || ''),
-  );
-  const productsToRecalculate = new Set();
-
-  for (const item of sortedItems) {
-    if (item.status !== 'cancelled') {
-      // Resolve variant
-      let variant = null;
-      if (item.variant) {
-        variant = await Variant.findById(item.variant).session(session);
-      } else if (item.sku) {
-        variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
-      } else if (item.color || item.size) {
-        const query = { product: item.product, deletedAt: null };
-        if (item.color) query['optionValues.Color'] = item.color;
-        if (item.size) query['optionValues.Size'] = item.size;
-        variant = await Variant.findOne(query).session(session);
-      }
-
-      if (variant) {
-        await Variant.findOneAndUpdate(
-          { _id: variant._id },
-          { $inc: { stock: item.quantity } },
-          session ? { session } : {},
-        );
-        productsToRecalculate.add(item.product.toString());
-      } else {
-        await Product.findByIdAndUpdate(
-          item.product,
-          {
-            $inc: { stock: item.quantity, soldCount: -item.quantity },
-          },
-          session ? { session } : {},
-        );
-      }
-
-      // Preserve 'returned' status for refunded items instead of overwriting to 'cancelled'
-      if (item.status !== 'returned') {
-        item.status = 'cancelled';
-      }
-    }
-  }
-
-  for (const prodId of productsToRecalculate) {
-    await Product.recalculateVariantSummary(prodId, session);
   }
 }
 
@@ -700,17 +668,7 @@ async function reDeductStockForOrder(order, session) {
 
   for (const item of sortedItems) {
     // Resolve variant
-    let variant = null;
-    if (item.variant) {
-      variant = await Variant.findById(item.variant).session(session);
-    } else if (item.sku) {
-      variant = await Variant.findOne({ sku: item.sku, deletedAt: null }).session(session);
-    } else if (item.color || item.size) {
-      const query = { product: item.product, deletedAt: null };
-      if (item.color) query['optionValues.Color'] = item.color;
-      if (item.size) query['optionValues.Size'] = item.size;
-      variant = await Variant.findOne(query).session(session);
-    }
+    let variant = await resolveVariant(item, session);
 
     const opts = { new: true, ...(session ? { session } : {}) };
     let updated;
@@ -734,17 +692,7 @@ async function reDeductStockForOrder(order, session) {
       const deductedItems = sortedItems.slice(0, sortedItems.indexOf(item));
       const rollbackProducts = new Set();
       for (const prev of deductedItems) {
-        let prevVariant = null;
-        if (prev.variant) {
-          prevVariant = await Variant.findById(prev.variant).session(session);
-        } else if (prev.sku) {
-          prevVariant = await Variant.findOne({ sku: prev.sku, deletedAt: null }).session(session);
-        } else if (prev.color || prev.size) {
-          const q = { product: prev.product, deletedAt: null };
-          if (prev.color) q['optionValues.Color'] = prev.color;
-          if (prev.size) q['optionValues.Size'] = prev.size;
-          prevVariant = await Variant.findOne(q).session(session);
-        }
+        let prevVariant = await resolveVariant(prev, session);
 
         if (prevVariant) {
           await Variant.findOneAndUpdate(
@@ -794,9 +742,13 @@ async function fetchDailyRevenue(fromDate) {
   ]);
 }
 
-async function fetchCategoryPerformance() {
+async function fetchCategoryPerformance(startDate = null) {
+  const matchQuery = { status: { $ne: 'cancelled' } };
+  if (startDate) {
+    matchQuery.createdAt = { $gte: startDate };
+  }
   return Order.aggregate([
-    { $match: { status: { $ne: 'cancelled' } } },
+    { $match: matchQuery },
     { $unwind: '$items' },
     {
       $lookup: {

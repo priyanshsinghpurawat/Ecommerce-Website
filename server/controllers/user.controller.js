@@ -635,13 +635,23 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('wishlist').lean();
+  const user = await User.findById(req.user._id).populate('wishlist');
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
+
+  // Filter out null entries due to deleted products
+  const validWishlist = user.wishlist.filter((item) => item !== null);
+
+  // Clean up database if some wishlisted products no longer exist
+  if (validWishlist.length !== user.wishlist.length) {
+    user.wishlist = validWishlist.map((item) => item._id);
+    await user.save();
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user.wishlist, 'Wishlist retrieved successfully'));
+    .json(new ApiResponse(200, validWishlist, 'Wishlist retrieved successfully'));
 });
 
 /**
@@ -660,7 +670,10 @@ export const addToWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  if (user.wishlist.some((id) => id.toString() === productId)) {
+  // Clean database wishlist array of any legacy null/undefined references
+  user.wishlist = user.wishlist.filter(Boolean);
+
+  if (user.wishlist.some((id) => id && id.toString() === productId)) {
     return res.status(200).json(new ApiResponse(200, user.wishlist, 'Product already in wishlist'));
   }
 
@@ -686,7 +699,7 @@ export const removeFromWishlist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User not found');
   }
 
-  user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
+  user.wishlist = user.wishlist.filter((id) => id && id.toString() !== productId);
   await user.save();
 
   return res.status(200).json(new ApiResponse(200, user.wishlist, 'Product removed from wishlist'));

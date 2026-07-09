@@ -31,6 +31,7 @@ export const initInventoryCron = () => {
 
       for (const order of expiredOrders) {
         await restoreStock(order.items, session);
+        logger.info(`[Cron] Recovered stock for order #${order.orderNumber} (${order._id})`);
       }
 
       const orderUpdates = expiredOrders.map((order) => order._id);
