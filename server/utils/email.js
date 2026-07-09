@@ -7,12 +7,20 @@ const getTransporter = () => {
   if (transporter) return transporter;
 
   if (ENV.SMTP_HOST && ENV.SMTP_USER && ENV.SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-      host: ENV.SMTP_HOST,
-      port: ENV.SMTP_PORT || 587,
-      secure: (ENV.SMTP_PORT || 587) === 465,
-      auth: { user: ENV.SMTP_USER, pass: ENV.SMTP_PASS },
-    });
+    const hostLower = ENV.SMTP_HOST.toLowerCase();
+    if (hostLower.includes('gmail.com')) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: ENV.SMTP_USER, pass: ENV.SMTP_PASS },
+      });
+    } else {
+      transporter = nodemailer.createTransport({
+        host: ENV.SMTP_HOST,
+        port: ENV.SMTP_PORT || 587,
+        secure: (ENV.SMTP_PORT || 587) === 465,
+        auth: { user: ENV.SMTP_USER, pass: ENV.SMTP_PASS },
+      });
+    }
   }
 
   return transporter;
@@ -31,12 +39,17 @@ export const sendEmail = async ({ to, subject, html }) => {
     return;
   }
 
-  await t.sendMail({
-    from: ENV.EMAIL_FROM || 'noreply@mensvibe.com',
-    to,
-    subject,
-    html,
-  });
+  try {
+    await t.sendMail({
+      from: ENV.EMAIL_FROM || 'noreply@mensvibe.com',
+      to,
+      subject,
+      html,
+    });
+  } catch (error) {
+    console.error('Nodemailer sendMail error:', error);
+    throw error;
+  }
 };
 
 export const sendPasswordResetEmail = async (email, resetUrl) => {

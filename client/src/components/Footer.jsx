@@ -66,7 +66,7 @@ export const Footer = () => {
         <div className="lg:col-span-2">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary mb-4">NEED HELP</h4>
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-            <li><Link to="/shop" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Footwear</Link></li>
+            <li><Link to="/shop?cat=footwear" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Footwear</Link></li>
             <li><Link to="/contact" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Contact Us</Link></li>
             <li><Link to="/about" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">About Us</Link></li>
             <li><Link to="/orders" className="text-[13px] font-medium text-app-text/55 hover:text-brand-primary transition-colors">Track Order</Link></li>

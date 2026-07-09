@@ -43,17 +43,30 @@ export const WishlistProvider = ({ children }) => {
     
     const isWishlisted = wishlist.some(item => item && (item._id || item) === productId);
     
+    // Optimistic UI update — instant feedback
+    setWishlist(prev =>
+      isWishlisted
+        ? prev.filter(item => item && (item._id || item) !== productId)
+        : [...prev, { _id: productId }],
+    );
+    
     try {
       if (isWishlisted) {
         await wishlistService.removeFromWishlist(productId);
-        setWishlist(prev => prev.filter(item => item && (item._id || item) !== productId));
+        fetchWishlist(); // background refresh
         return { success: true, action: 'removed' };
       } else {
         await wishlistService.addToWishlist(productId);
-        await fetchWishlist();
+        fetchWishlist(); // background refresh
         return { success: true, action: 'added' };
       }
     } catch (err) {
+      // Rollback optimistic update
+      setWishlist(prev =>
+        isWishlisted
+          ? [...prev, { _id: productId }]
+          : prev.filter(item => item && (item._id || item) !== productId),
+      );
       const msg = err?.response?.data?.message || 'Failed to update wishlist.';
       toast.error(msg);
       return { success: false, error: msg };

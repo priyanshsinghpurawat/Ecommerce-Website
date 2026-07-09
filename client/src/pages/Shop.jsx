@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts.js';
 import { useCategories } from '../hooks/useCategories.js';
 import { useShopFilters } from '../hooks/useShopFilters.js';
@@ -69,6 +69,7 @@ export const Shop = () => {
     updateFilters, toggleColor, applyPriceFilter, clearAllFilters
   } = useShopFilters();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [availableColors, setAvailableColors] = useState([]);
@@ -80,6 +81,23 @@ export const Shop = () => {
     fetchCategories();
     fetchSubcategories();
   }, [fetchCategories, fetchSubcategories]);
+
+  // Map ?cat=Name to category _id on mount (e.g. Footer "Footwear" link)
+  useEffect(() => {
+    const catName = searchParams.get('cat');
+    if (catName && categories.length > 0) {
+      const matched = categories.find(
+        (c) => c.name?.toLowerCase() === catName.toLowerCase()
+      );
+      if (matched) {
+        const params = new URLSearchParams(searchParams);
+        params.delete('cat');
+        params.set('category', matched._id);
+        params.set('page', '1');
+        setSearchParams(params, { replace: true });
+      }
+    }
+  }, [searchParams, categories, setSearchParams]);
 
   const filteredSubcategories = useMemo(() => {
     if (!filters.category) return subcategories;
@@ -116,6 +134,24 @@ export const Shop = () => {
   /* ── Filter Sidebar Content (shared between desktop & mobile) ── */
   const renderFilterContent = () => (
     <div className="space-y-2">
+      {/* Price Range */}
+      <CollapsibleSection title="Price Range">
+        <div className="flex items-center gap-2">
+          <input type="number" placeholder="Min" value={priceMin}
+            onChange={(e) => setPriceMin(e.target.value)}
+            className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
+          />
+          <span className="text-app-text/30 text-xs">–</span>
+          <input type="number" placeholder="Max" value={priceMax}
+            onChange={(e) => setPriceMax(e.target.value)}
+            className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
+          />
+        </div>
+        <button type="button" onClick={applyPriceFilter}
+          className="mt-2 w-full rounded-xl bg-app-text py-2 text-[10px] font-black uppercase tracking-widest text-black hover:opacity-90 transition-opacity"
+        >Apply Price</button>
+      </CollapsibleSection>
+
       {/* Category tree */}
       <CollapsibleSection title="Categories">
         <div className="space-y-1">
@@ -154,24 +190,6 @@ export const Shop = () => {
           </div>
         </CollapsibleSection>
       ) : null}
-
-      {/* Price Range */}
-      <CollapsibleSection title="Price Range">
-        <div className="flex items-center gap-2">
-          <input type="number" placeholder="Min" value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-            className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
-          />
-          <span className="text-app-text/30 text-xs">–</span>
-          <input type="number" placeholder="Max" value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-            className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-xs focus:outline-none focus:border-brand-primary"
-          />
-        </div>
-        <button type="button" onClick={applyPriceFilter}
-          className="mt-2 w-full rounded-xl bg-app-text py-2 text-[10px] font-black uppercase tracking-widest text-black hover:opacity-90 transition-opacity"
-        >Apply Price</button>
-      </CollapsibleSection>
 
       {/* Colour Filter — dynamic from actual product variants */}
       {availableColors.length > 0 ? (

@@ -121,6 +121,7 @@ export const Cart = () => {
   };
 
   const handleRemove = async (itemId) => {
+    if (!window.confirm('Remove this item from your bag?')) return;
     const res = await removeFromCart(itemId);
     if (res.success) {
       toast.success('Item removed from cart.');
@@ -465,7 +466,8 @@ export const Cart = () => {
                                       src={resolveImageUrl(prod.image)} 
                                       alt={prod.title} 
                                       style={{ width: '60px', height: '60px', minWidth: '60px', minHeight: '60px', objectFit: 'cover' }}
-                                      className="rounded-xl bg-surface-50 border border-white/10 shadow-sm" 
+                                      className="rounded-xl bg-surface-50 border border-white/10 shadow-sm"
+                                      onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_casual.png'; }}
                                     />
                                   </Link>
                                   <div className="truncate max-w-[180px]">
@@ -559,7 +561,7 @@ export const Cart = () => {
 
               {/* Clear Cart Button */}
               <button
-                onClick={async () => { const r = await clearCart(); if (r?.success) toast.success('Shopping bag cleared.'); }}
+                onClick={async () => { if (!window.confirm('Clear your entire shopping bag?')) return; const r = await clearCart(); if (r?.success) toast.success('Shopping bag cleared.'); }}
                 className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-red-400 hover:text-red-500 border border-red-500/20 hover:bg-red-500/10 px-4 py-2.5 rounded-xl transition-all self-start cursor-pointer"
               >
                 <Trash2 className="h-3.5 w-3.5" />

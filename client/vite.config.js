@@ -1,11 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     sourcemap: false, // Prevents easy inspection of frontend code in production
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     host: !!process.env.VITE_PROXY_URL,
@@ -30,9 +31,9 @@ export default defineConfig({
         lines: 30,
         functions: 20,
         branches: 30,
-        statements: 30
-      }
-    }
+        statements: 30,
+      },
+    },
   },
   preview: {
     host: !!process.env.VITE_PROXY_URL,
@@ -40,6 +41,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['socket.io-client'],
-    include: ['debug']
-  }
-})
+    include: ['debug'],
+  },
+});

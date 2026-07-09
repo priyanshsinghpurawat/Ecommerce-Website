@@ -197,6 +197,18 @@ export const CartProvider = ({ children }) => {
       return { success: true };
     }
 
+    // Save previous state for rollback on API failure
+    const prevCart = cart ? { ...cart, items: [...(cart.items || [])] } : null;
+
+    // Optimistic update — apply immediately, no waiting
+    if (cart?.items) {
+      const updatedItems = cart.items.map((item) =>
+        item._id === itemId ? { ...item, quantity } : item,
+      );
+      setCart({ ...cart, items: updatedItems });
+      computeAggregates(updatedItems);
+    }
+
     try {
       const response = await cartService.updateCartItemQuantity(itemId, quantity);
       if (response && response.success) {
@@ -204,9 +216,14 @@ export const CartProvider = ({ children }) => {
         computeAggregates(response.data.items);
         return { success: true };
       }
-      return { success: false, error: response?.message || 'Failed to update quantity.' };
+      throw new Error(response?.message || 'Failed to update quantity.');
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to update quantity.';
+      // Rollback to previous state
+      if (prevCart) {
+        setCart(prevCart);
+        computeAggregates(prevCart.items || []);
+      }
+      const msg = err.response?.data?.message || err.message || 'Failed to update quantity.';
       return { success: false, error: msg };
     }
   };

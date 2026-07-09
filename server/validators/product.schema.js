@@ -32,8 +32,7 @@ export const productBodySchema = z.object({
 });
 
 export const productIdParamSchema = z.object({
-  id: z.string().min(1, 'Product identifier is required'),
-});
+  id: z.string().trim().min(1, 'Product identifier is required')});
 
 // Variant schemas
 export const generateVariantsSchema = z.object({

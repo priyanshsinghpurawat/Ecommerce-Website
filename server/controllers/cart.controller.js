@@ -26,13 +26,14 @@ const getPopulatedCart = async (userId) => {
   let cart = await Cart.findOne({ user: userId })
     .populate({
       path: 'items.product',
-      select: 'title price discountedPrice image category description stock seller',
+      select: 'title price discountedPrice image category',
       populate: { path: 'category', select: 'name slug' },
     })
     .populate({
       path: 'items.variant',
       select: 'sku stock optionValues price images',
-    });
+    })
+    .lean();
 
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
@@ -46,13 +47,14 @@ const getCartIfExists = async (userId) => {
   return Cart.findOne({ user: userId })
     .populate({
       path: 'items.product',
-      select: 'title price discountedPrice image category description stock seller',
+      select: 'title price discountedPrice image category',
       populate: { path: 'category', select: 'name slug' },
     })
     .populate({
       path: 'items.variant',
       select: 'sku stock optionValues price images',
-    });
+    })
+    .lean();
 };
 
 /**
@@ -224,23 +226,29 @@ export const updateCartItemQuantity = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Item not found in cart');
   }
 
-  const product = await Product.findById(cartItem.product);
+  // Parallelize product + variant lookups
+  const [product, variant] = await Promise.all([
+    Product.findById(cartItem.product).lean(),
+    (() => {
+      if (cartItem.variant) {
+        return Variant.findById(cartItem.variant).lean();
+      }
+      if (cartItem.size || cartItem.color) {
+        const query = { product: cartItem.product, deletedAt: null };
+        if (cartItem.color) query['optionValues.Color'] = cartItem.color;
+        if (cartItem.size) query['optionValues.Size'] = cartItem.size;
+        return Variant.findOne(query).lean();
+      }
+      return Promise.resolve(null);
+    })(),
+  ]);
+
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
 
-  // Resolve stock
   let availableStock = product.stock;
-  if (cartItem.variant) {
-    const variant = await Variant.findById(cartItem.variant);
-    if (variant) availableStock = variant.stock;
-  } else if (cartItem.size || cartItem.color) {
-    const query = { product: product._id, deletedAt: null };
-    if (cartItem.color) query['optionValues.Color'] = cartItem.color;
-    if (cartItem.size) query['optionValues.Size'] = cartItem.size;
-    const variant = await Variant.findOne(query);
-    if (variant) availableStock = variant.stock;
-  }
+  if (variant) availableStock = variant.stock;
 
   if (quantityNum > availableStock) {
     throw new ApiError(400, `Only ${availableStock} units available for this selection`);

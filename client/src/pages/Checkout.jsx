@@ -414,7 +414,8 @@ export const Checkout = () => {
                                 src={resolveImageUrl(prod.image)} 
                                 alt={prod.title} 
                                 style={{ width: '60px', height: '60px', minWidth: '60px', minHeight: '60px', objectFit: 'cover' }}
-                                className="rounded-xl bg-surface-50 border border-white/10 shadow-sm" 
+                                className="rounded-xl bg-surface-50 border border-white/10 shadow-sm"
+                                onError={(e) => { e.target.onerror = null; e.target.src = '/assets/hero_casual.png'; }}
                               />
                             </Link>
                             <div className="truncate max-w-[180px]">

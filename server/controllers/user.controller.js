@@ -635,7 +635,10 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('wishlist');
+  const user = await User.findById(req.user._id).populate({
+    path: 'wishlist',
+    select: 'title price discountedPrice image slug stock',
+  });
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
