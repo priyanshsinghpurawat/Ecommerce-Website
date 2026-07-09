@@ -13,8 +13,8 @@ import { Category } from '../../models/category.model.js';
 import { Subcategory } from '../../models/subcategory.model.js';
 import { generateAccessToken } from '../../utils/jwt.js';
 
-let mongod, buyer, seller, admin, category, subcategory, product, variant;
-let buyerToken, sellerToken, adminToken;
+let mongod, buyer, seller, category, subcategory, product;
+let buyerToken, sellerToken;
 
 beforeAll(async () => {
   if (mongoose.connection.readyState === 0) {
@@ -51,15 +51,6 @@ beforeAll(async () => {
     role: 'seller',
   });
   sellerToken = generateAccessToken(seller);
-
-  admin = await User.create({
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: 'Password@123',
-    role: 'admin',
-  });
-  adminToken = generateAccessToken(admin);
-
   category = await Category.create({ name: 'Apparel' });
   subcategory = await Subcategory.create({ name: 'T-shirts', category: category._id });
 });
@@ -103,7 +94,7 @@ describe('Order Controller Integration Tests', () => {
     });
 
     if (useVariant) {
-      variant = await Variant.create({
+      await Variant.create({
         product: product._id,
         sku: 'DRIP-TEE-RED-M',
         price: 1200,
